@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  material_symbols_icons: ^4.2960.0
 
 dev_dependencies:
   flutter_test:
@@ -17,3 +18,19 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  fonts:
+    - family: Epilogue
+      fonts:
+        - asset: assets/fontes/Epilogue-SemiBold.ttf
+          weight: 600
+        - asset: assets/fontes/Epilogue-Bold.ttf
+          weight: 700
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fontes/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fontes/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fontes/PlusJakartaSans-Bold.ttf
+          weight: 700
