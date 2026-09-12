@@ -11,7 +11,6 @@ import 'fake_api.dart';
 /// O app inteiro com dublês. Sem argumentos: logado, com perfil na API.
 Widget appDeTeste({Autenticador? autenticador, ApiConnactions? api}) =>
     ProviderScope(
-      retry: (_, _) => null,
       overrides: [
         autenticadorProvider.overrideWithValue(
           autenticador ?? AutenticadorFalso(conta: contaDeTeste),

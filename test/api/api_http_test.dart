@@ -106,6 +106,21 @@ void main() {
     expect(chamouRede, isFalse);
   });
 
+  test('obterToken que lança vira ErroDeRede', () async {
+    var chamouRede = false;
+    final futuro = ApiHttp(
+      base: Uri.parse('http://api.local/v1'),
+      obterToken: () async => throw Exception('sem rede'),
+      cliente: MockClient((_) async {
+        chamouRede = true;
+        return http.Response('{}', 200);
+      }),
+    ).obterEu();
+
+    await expectLater(futuro, throwsA(isA<ErroDeRede>()));
+    expect(chamouRede, isFalse);
+  });
+
   test('falha de conexão vira ErroDeRede', () async {
     final futuro = api(
       MockClient((_) async => throw http.ClientException('caiu')),

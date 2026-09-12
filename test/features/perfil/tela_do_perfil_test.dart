@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:connactions_app/api/erro_da_api.dart';
+import 'package:connactions_app/features/perfil/tela_do_perfil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -106,7 +107,10 @@ void main() {
 
   testWidgets('o fundo da tela é a superfície do Stitch', (tester) async {
     await abrirPerfil(tester, FakeApi(eu: euDeTeste()));
-    final scaffold = find.byType(Scaffold).last;
+    final scaffold = find.descendant(
+      of: find.byType(TelaDoPerfil),
+      matching: find.byType(Scaffold),
+    );
     final cor =
         tester.widget<Scaffold>(scaffold).backgroundColor ??
         Theme.of(tester.element(scaffold)).scaffoldBackgroundColor;

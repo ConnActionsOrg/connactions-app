@@ -37,7 +37,12 @@ class ApiHttp implements ApiConnactions {
     String caminho, {
     Map<String, Object?>? corpo,
   }) async {
-    final token = await _obterToken();
+    final String? token;
+    try {
+      token = await _obterToken();
+    } on Exception catch (e) {
+      throw ErroDeRede(e);
+    }
     if (token == null) {
       throw const ErroDaApi(
         status: 401,
@@ -60,7 +65,12 @@ class ApiHttp implements ApiConnactions {
       throw ErroDeRede(e);
     }
 
-    final texto = await resposta.stream.bytesToString();
+    final String texto;
+    try {
+      texto = await resposta.stream.bytesToString();
+    } on Exception catch (e) {
+      throw ErroDeRede(e);
+    }
     final json = _decodificarEnvelope(texto);
     if (json == null) {
       final falha = resposta.statusCode >= 400;

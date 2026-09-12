@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'autenticador.dart';
@@ -61,6 +62,7 @@ class AutenticadorFirebase implements Autenticador {
       if (e.code == GoogleSignInExceptionCode.canceled) {
         throw const ErroDeLogin('Login cancelado.', cancelado: true);
       }
+      debugPrint('GoogleSignIn ${e.code}: ${e.description}');
       throw const ErroDeLogin(
         'Não consegui entrar com o Google. Tente de novo.',
       );
@@ -76,12 +78,13 @@ class AutenticadorFirebase implements Autenticador {
 
   @override
   Future<void> sair() async {
-    // Mesmo se o Google não inicializar, o sign-out do Firebase é o que derruba a sessão do app.
+    // A sessão do app é a do Firebase; o Google é melhor esforço.
     try {
       await _garantirGoogle();
-    } finally {
-      await _auth.signOut();
+      await _google.signOut();
+    } catch (_) {
+      // engolida de propósito: falha do Google não pode impedir a saída do app
     }
-    await _google.signOut();
+    await _auth.signOut();
   }
 }

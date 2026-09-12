@@ -51,6 +51,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Login cancelado.'), findsNothing);
+    expect(autenticador.chamadas, ['entrar']);
   });
 
   testWidgets('logado navega pelas quatro abas', (tester) async {

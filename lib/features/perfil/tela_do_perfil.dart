@@ -142,7 +142,7 @@ class _CartaoDeIdentidade extends StatelessWidget {
             right: -32,
             top: -32,
             child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
               child: Container(
                 width: 112,
                 height: 112,
@@ -185,7 +185,7 @@ class _CartaoDeIdentidade extends StatelessWidget {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: cores.superficieMaisBaixa,
+                      color: cores.superficieMaisBaixa.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(Raios.padrao),
                     ),
                     child: Text(
@@ -236,44 +236,46 @@ class _CartaoDeVisibilidade extends ConsumerWidget {
         boxShadow: Sombras.nivel1,
       ),
       padding: const EdgeInsets.all(Espacos.md),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: cores.superficieContainer,
+      child: MergeSemantics(
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cores.superficieContainer,
+              ),
+              alignment: Alignment.center,
+              child: Icon(Symbols.group, size: 22, color: cores.primaria),
             ),
-            alignment: Alignment.center,
-            child: Icon(Symbols.group, size: 22, color: cores.primaria),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Visibilidade das atividades',
-                  style: tipografia.rotuloTitulo,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  eu.atividadesVisiveis
-                      ? 'Amigos conectados veem o que você concluiu.'
-                      : 'Só você vê o que concluiu.',
-                  style: tipografia.corpoPequeno.copyWith(
-                    color: cores.sobreSuperficieVariante,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Visibilidade das atividades',
+                    style: tipografia.rotuloTitulo,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    eu.atividadesVisiveis
+                        ? 'Amigos conectados veem o que você concluiu.'
+                        : 'Só você vê o que concluiu.',
+                    style: tipografia.corpoPequeno.copyWith(
+                      color: cores.sobreSuperficieVariante,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Switch(
-            value: eu.atividadesVisiveis,
-            onChanged: (visiveis) => _trocar(context, ref, visiveis),
-          ),
-        ],
+            Switch(
+              value: eu.atividadesVisiveis,
+              onChanged: (visiveis) => _trocar(context, ref, visiveis),
+            ),
+          ],
+        ),
       ),
     );
   }
