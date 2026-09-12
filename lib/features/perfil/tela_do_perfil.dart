@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -36,29 +38,13 @@ class TelaDoPerfil extends ConsumerWidget {
                 aoTentarDeNovo: () => ref.invalidate(perfilAtualProvider),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(
-                Espacos.margemDaTela,
-                0,
-                Espacos.margemDaTela,
-                Espacos.xl,
-              ),
-              child: _BotaoSair(),
-            ),
+            const _RodapeComSair(),
           ],
         ),
         _ => const Column(
           children: [
             Expanded(child: Center(child: CircularProgressIndicator())),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                Espacos.margemDaTela,
-                0,
-                Espacos.margemDaTela,
-                Espacos.xl,
-              ),
-              child: _BotaoSair(),
-            ),
+            _RodapeComSair(),
           ],
         ),
       },
@@ -83,6 +69,22 @@ class _BotaoSair extends ConsumerWidget {
     },
     icon: const Icon(Symbols.logout),
     label: const Text('Sair da conta'),
+  );
+}
+
+/// O mesmo rodapé dos ramos de erro e carregando (o de dados usa o botão direto no ListView).
+class _RodapeComSair extends StatelessWidget {
+  const _RodapeComSair();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.fromLTRB(
+      Espacos.margemDaTela,
+      0,
+      Espacos.margemDaTela,
+      Espacos.xl,
+    ),
+    child: _BotaoSair(),
   );
 }
 
@@ -120,20 +122,27 @@ class _CartaoDeIdentidade extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(Raios.grande),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cores.superficieBaixa,
-          boxShadow: Sombras.nivel1,
-        ),
-        padding: const EdgeInsets.all(Espacos.cartao),
-        child: Stack(
-          children: [
-            // a mancha âmbar do canto, como no Stitch
-            Positioned(
-              right: -32,
-              top: -32,
+    return Container(
+      // o clipe mora aqui (não num ClipRRect por fora) para a sombra da decoration pintar sem
+      // ser cortada; só o filho (o Stack) é cortado no raio do cartão.
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: cores.superficieBaixa,
+        borderRadius: BorderRadius.circular(Raios.grande),
+        boxShadow: Sombras.nivel1,
+      ),
+      child: Stack(
+        // sem clipe próprio: um Clip.hardEdge aqui cortaria a mancha num retângulo reto antes do
+        // corte arredondado do Container acontecer — o bug original, um nível abaixo.
+        clipBehavior: Clip.none,
+        children: [
+          // a mancha âmbar do canto, como no Stitch: ancorada na borda do cartão, não no padding
+          // do conteúdo (por isso fica fora do Padding abaixo).
+          Positioned(
+            right: -32,
+            top: -32,
+            child: ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: Container(
                 width: 112,
                 height: 112,
@@ -143,7 +152,10 @@ class _CartaoDeIdentidade extends StatelessWidget {
                 ),
               ),
             ),
-            Column(
+          ),
+          Padding(
+            padding: const EdgeInsets.all(Espacos.cartao),
+            child: Column(
               children: [
                 const SizedBox(height: Espacos.sm),
                 Avatar(
@@ -185,8 +197,8 @@ class _CartaoDeIdentidade extends StatelessWidget {
                 ],
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -220,7 +232,7 @@ class _CartaoDeVisibilidade extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: cores.superficieBaixa,
-        borderRadius: BorderRadius.circular(Raios.medio),
+        borderRadius: BorderRadius.circular(Raios.padrao),
         boxShadow: Sombras.nivel1,
       ),
       padding: const EdgeInsets.all(Espacos.md),

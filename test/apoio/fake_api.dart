@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connactions_app/api/api_connactions.dart';
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/eu.dart';
@@ -11,6 +13,9 @@ class FakeApi implements ApiConnactions {
   Object? falhaAoAtualizar;
   final chamadas = <String>[];
 
+  /// Prende `obterEu` até completar: prova o estado de carregando sem depender de timing.
+  Completer<void>? segurarObterEu;
+
   @override
   Future<Eu> criarEu() async {
     chamadas.add('criarEu');
@@ -20,6 +25,8 @@ class FakeApi implements ApiConnactions {
   @override
   Future<Eu> obterEu() async {
     chamadas.add('obterEu');
+    final segurar = segurarObterEu;
+    if (segurar != null) await segurar.future;
     final falha = falhaAoObter;
     if (falha != null) throw falha;
     final eu = _eu;

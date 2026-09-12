@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -125,6 +127,34 @@ void main() {
     expect(find.text('Tentar de novo'), findsOneWidget);
 
     await tester.tap(find.text('Sair da conta'));
+    await tester.pumpAndSettle();
+
+    expect(autenticador.chamadas, ['sair']);
+    expect(find.text('Entrar com Google'), findsOneWidget);
+  });
+
+  testWidgets('carregando mostra o indicador e ainda dá para sair', (
+    tester,
+  ) async {
+    final autenticador = AutenticadorFalso(conta: contaDeTeste);
+    final api = FakeApi(eu: euDeTeste())..segurarObterEu = Completer<void>();
+    await tester.pumpWidget(appDeTeste(autenticador: autenticador, api: api));
+    // sem pumpAndSettle: o obterEu está preso no Completer, e o indicador tem animação
+    // infinita — os dois pendurariam pumpAndSettle indefinidamente.
+    for (var i = 0; i < 5; i++) {
+      await tester.pump();
+    }
+
+    await tester.tap(find.text('Perfil'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Sair da conta'), findsOneWidget);
+
+    await tester.tap(find.text('Sair da conta'));
+    await tester.pump();
+    api.segurarObterEu!.complete();
     await tester.pumpAndSettle();
 
     expect(autenticador.chamadas, ['sair']);
