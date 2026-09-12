@@ -12,7 +12,20 @@
           "package_name": "app.connactions"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "332546582088-kbhu842r52ddclrj7lp1a8m6mmn1q0ei.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.connactions",
+            "certificate_hash": "3c7fb7435f64258548b792773c07ecaf1591701e"
+          }
+        },
+        {
+          "client_id": "332546582088-3repjdp5suisj5o5vk4r8nqe5o6e8sgk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAMABCCqOnLHDTik1ZsZH_0so6Z7l23Nsg"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "332546582088-3repjdp5suisj5o5vk4r8nqe5o6e8sgk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

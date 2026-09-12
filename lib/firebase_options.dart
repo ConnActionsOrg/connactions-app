@@ -1,4 +1,4 @@
-// Provisório: a Tarefa 9 roda flutterfire configure e substitui este arquivo pelo gerado.
+// Valores gerados por flutterfire configure (projeto connactions). Para atualizar, rode o comando de novo; não edite à mão.
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;

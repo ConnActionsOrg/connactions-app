@@ -11,12 +11,6 @@ import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // initializeApp não valida a apiKey: com o provisório, o erro só apareceria no login.
-  if (DefaultFirebaseOptions.android.apiKey == 'PROVISORIO') {
-    throw StateError(
-      'firebase_options.dart provisório: rode flutterfire configure (Tarefa 9).',
-    );
-  }
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final autenticador = AutenticadorFirebase();
