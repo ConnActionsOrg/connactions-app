@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "332546582088",
+    "project_id": "connactions",
+    "storage_bucket": "connactions.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:332546582088:android:251bea18a640dfd1265a7d",
+        "android_client_info": {
+          "package_name": "app.connactions"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMABCCqOnLHDTik1ZsZH_0so6Z7l23Nsg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

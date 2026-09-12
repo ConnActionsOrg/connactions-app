@@ -22,9 +22,10 @@ abstract final class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'PROVISORIO',
-    appId: 'PROVISORIO',
-    messagingSenderId: 'PROVISORIO',
+    apiKey: 'AIzaSyAMABCCqOnLHDTik1ZsZH_0so6Z7l23Nsg',
+    appId: '1:332546582088:android:251bea18a640dfd1265a7d',
+    messagingSenderId: '332546582088',
     projectId: 'connactions',
+    storageBucket: 'connactions.firebasestorage.app',
   );
 }
