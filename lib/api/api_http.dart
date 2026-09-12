@@ -61,18 +61,40 @@ class ApiHttp implements ApiConnactions {
     }
 
     final texto = await resposta.stream.bytesToString();
-    final json = texto.isEmpty
-        ? <String, dynamic>{}
-        : jsonDecode(texto) as Map<String, dynamic>;
-    if (resposta.statusCode >= 400) {
-      final erro = json['erro'] as Map<String, dynamic>?;
+    final json = _decodificarEnvelope(texto);
+    if (json == null) {
+      final falha = resposta.statusCode >= 400;
       throw ErroDaApi(
         status: resposta.statusCode,
-        codigo: erro?['codigo'] as String? ?? 'erro_desconhecido',
+        codigo: falha ? 'erro_desconhecido' : 'resposta_invalida',
+        mensagem: falha
+            ? 'Algo deu errado. Tente de novo.'
+            : 'A API respondeu de um jeito inesperado. Tente de novo.',
+      );
+    }
+    if (resposta.statusCode >= 400) {
+      final erro = json['erro'];
+      final envelope = erro is Map<String, dynamic> ? erro : null;
+      throw ErroDaApi(
+        status: resposta.statusCode,
+        codigo: envelope?['codigo'] as String? ?? 'erro_desconhecido',
         mensagem:
-            erro?['mensagem'] as String? ?? 'Algo deu errado. Tente de novo.',
+            envelope?['mensagem'] as String? ??
+            'Algo deu errado. Tente de novo.',
       );
     }
     return json;
+  }
+
+  /// `null` quando o corpo não é um objeto JSON válido: JSON inválido, ou JSON válido que não é
+  /// um objeto (lista, string, número). Corpo vazio é `{}`, não falha.
+  Map<String, dynamic>? _decodificarEnvelope(String texto) {
+    if (texto.isEmpty) return <String, dynamic>{};
+    try {
+      final decodificado = jsonDecode(texto);
+      return decodificado is Map<String, dynamic> ? decodificado : null;
+    } on FormatException {
+      return null;
+    }
   }
 }

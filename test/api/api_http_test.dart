@@ -112,4 +112,39 @@ void main() {
     ).obterEu();
     await expectLater(futuro, throwsA(isA<ErroDeRede>()));
   });
+
+  test('502 com HTML do proxy vira ErroDaApi erro_desconhecido', () async {
+    final futuro = api(
+      MockClient((_) async => http.Response('<html>Bad Gateway</html>', 502)),
+    ).obterEu();
+
+    await expectLater(
+      futuro,
+      throwsA(
+        isA<ErroDaApi>()
+            .having((e) => e.status, 'status', 502)
+            .having((e) => e.codigo, 'codigo', 'erro_desconhecido'),
+      ),
+    );
+  });
+
+  test(
+    '200 com corpo que não é JSON vira ErroDaApi resposta_invalida',
+    () async {
+      final futuro = api(
+        MockClient((_) async => http.Response('nao e json', 200)),
+      ).obterEu();
+
+      await expectLater(
+        futuro,
+        throwsA(
+          isA<ErroDaApi>().having(
+            (e) => e.codigo,
+            'codigo',
+            'resposta_invalida',
+          ),
+        ),
+      );
+    },
+  );
 }
