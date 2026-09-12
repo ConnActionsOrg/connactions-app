@@ -6,14 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import '../apoio/autenticador_falso.dart';
 import '../apoio/fake_api.dart';
 
-// retry nulo: o Riverpod 3 repete provider que falhou (até 10x com backoff), o que esconderia o
-// erro e faria o teste esperar segundos.
 ProviderContainer montar({
   required AutenticadorFalso autenticador,
   required FakeApi api,
 }) {
   final container = ProviderContainer.test(
-    retry: (_, _) => null,
     overrides: [
       autenticadorProvider.overrideWithValue(autenticador),
       apiProvider.overrideWithValue(api),
@@ -43,6 +40,25 @@ void main() {
     final eu = await c.read(perfilAtualProvider.future);
     expect(eu?.nome, 'Marina Duarte');
     expect(api.chamadas, ['obterEu', 'criarEu']);
+  });
+
+  test('ErroDaApi que não é perfil_nao_criado sobe sem criar perfil', () async {
+    final api = FakeApi(
+      falhaAoObter: const ErroDaApi(
+        status: 500,
+        codigo: 'erro_interno',
+        mensagem: 'Algo deu errado.',
+      ),
+    );
+    final c = montar(
+      autenticador: AutenticadorFalso(conta: contaDeTeste),
+      api: api,
+    );
+    await expectLater(
+      c.read(perfilAtualProvider.future),
+      throwsA(isA<ErroDaApi>()),
+    );
+    expect(api.chamadas, ['obterEu']);
   });
 
   test('logado com perfil: só obtém', () async {

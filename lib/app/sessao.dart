@@ -51,6 +51,8 @@ class PerfilAtual extends AsyncNotifier<Eu?> {
   }
 }
 
+// Sem retry automático: a tela oferece "Tentar de novo" em vez de martelar a API sozinha.
 final perfilAtualProvider = AsyncNotifierProvider<PerfilAtual, Eu?>(
   PerfilAtual.new,
+  retry: (_, _) => null,
 );
