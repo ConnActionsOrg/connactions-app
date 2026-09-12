@@ -1,4 +1,5 @@
 import 'package:connactions_app/app/autenticador.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../apoio/app_de_teste.dart';
@@ -67,6 +68,13 @@ void main() {
 
     await tester.tap(find.text('Perfil'));
     await tester.pumpAndSettle();
+    // o botão de sair vive no fim do ListView da tela e fica abaixo da dobra no viewport de teste
+    await tester.scrollUntilVisible(
+      find.text('Sair da conta'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Sair da conta'), findsOneWidget);
   });
 
@@ -76,6 +84,13 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Perfil'));
+    await tester.pumpAndSettle();
+    // o botão de sair vive no fim do ListView da tela e fica abaixo da dobra no viewport de teste
+    await tester.scrollUntilVisible(
+      find.text('Sair da conta'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sair da conta'));
     await tester.pumpAndSettle();

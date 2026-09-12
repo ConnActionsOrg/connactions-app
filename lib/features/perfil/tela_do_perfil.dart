@@ -22,62 +22,46 @@ class TelaDoPerfil extends ConsumerWidget {
     final perfil = ref.watch(perfilAtualProvider);
     return Scaffold(
       appBar: const Cabecalho(),
-      // "Sair da conta" fica fora do switch e fora da área rolável: perfil que falha ao
-      // carregar não pode prender quem já está logado, e o cartão de código empurra o botão
-      // para fora da dobra num ListView comum (find.text não acha abaixo da dobra).
       body: switch (perfil) {
-        AsyncData(:final value) when value != null => _ComBotaoDeSair(
-          corpo: _Corpo(eu: value),
-        ),
+        AsyncData(:final value) when value != null => _Corpo(eu: value),
         // deslogando: o roteador troca a tela em seguida
         AsyncData() => const SizedBox.shrink(),
-        AsyncError(:final error) => _ComBotaoDeSair(
-          corpo: EstadoDeErro(
-            mensagem: mensagemDoErro(error),
-            aoTentarDeNovo: () => ref.invalidate(perfilAtualProvider),
-          ),
+        // "Sair da conta" fica fora da área rolável nestes dois ramos: perfil que falha ao
+        // carregar não pode prender quem já está logado.
+        AsyncError(:final error) => Column(
+          children: [
+            Expanded(
+              child: EstadoDeErro(
+                mensagem: mensagemDoErro(error),
+                aoTentarDeNovo: () => ref.invalidate(perfilAtualProvider),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(
+                Espacos.margemDaTela,
+                0,
+                Espacos.margemDaTela,
+                Espacos.xl,
+              ),
+              child: _BotaoSair(),
+            ),
+          ],
         ),
-        _ => const _ComBotaoDeSair(
-          corpo: Center(child: CircularProgressIndicator()),
+        _ => const Column(
+          children: [
+            Expanded(child: Center(child: CircularProgressIndicator())),
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                Espacos.margemDaTela,
+                0,
+                Espacos.margemDaTela,
+                Espacos.xl,
+              ),
+              child: _BotaoSair(),
+            ),
+          ],
         ),
       },
-    );
-  }
-}
-
-/// O corpo do estado (dados, erro ou carregando) com "Sair da conta" fixo embaixo, sobre o
-/// conteúdo: um rodapé que encolhesse a lista (Column+Expanded) empurra o cartão de código
-/// para fora da dobra num viewport baixo. O Stack deixa o corpo com a altura cheia.
-class _ComBotaoDeSair extends StatelessWidget {
-  const _ComBotaoDeSair({required this.corpo});
-
-  final Widget corpo;
-
-  @override
-  Widget build(BuildContext context) {
-    final cores = Cores.de(context);
-    return Stack(
-      children: [
-        Positioned.fill(child: corpo),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: Container(
-            decoration: BoxDecoration(
-              color: cores.superficie,
-              border: const Border(top: BorderSide(color: Color(0x0A2B231E))),
-            ),
-            padding: const EdgeInsets.fromLTRB(
-              Espacos.margemDaTela,
-              Espacos.sm,
-              Espacos.margemDaTela,
-              Espacos.xl,
-            ),
-            child: const _BotaoSair(),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -121,6 +105,8 @@ class _Corpo extends StatelessWidget {
       _CartaoDeVisibilidade(eu: eu),
       const SizedBox(height: Espacos.md),
       _CartaoDoCodigo(codigo: eu.codigoDeAmigo),
+      const SizedBox(height: Espacos.xl),
+      const _BotaoSair(),
     ],
   );
 }
