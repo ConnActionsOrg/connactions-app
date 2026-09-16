@@ -60,7 +60,7 @@ void main() {
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
-    expect(api.chamadas.last, 'atualizarVisibilidade:false');
+    expect(api.chamadas.last, 'atualizarEu:{"atividades_visiveis":false}');
     expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
     expect(find.text('Só você vê o que concluiu.'), findsOneWidget);
   });

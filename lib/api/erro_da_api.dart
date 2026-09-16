@@ -12,6 +12,10 @@ class ErroDaApi implements Exception {
 
   bool get perfilNaoCriado => codigo == 'perfil_nao_criado';
   bool get naoAutenticado => status == 401;
+  bool get codigoInvalido => codigo == 'codigo_invalido';
+  bool get handleEmUso => codigo == 'handle_em_uso';
+  bool get semAcesso => codigo == 'sem_acesso';
+  bool get naoEncontrado => codigo == 'nao_encontrado';
 
   @override
   String toString() => 'ErroDaApi($status $codigo: $mensagem)';

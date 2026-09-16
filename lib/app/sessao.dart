@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../api/api_connactions.dart';
 import '../api/erro_da_api.dart';
+import '../api/modelos/alteracoes_do_eu.dart';
 import '../api/modelos/eu.dart';
 import 'autenticador.dart';
 
@@ -35,17 +36,26 @@ class PerfilAtual extends AsyncNotifier<Eu?> {
     }
   }
 
+  /// Não otimista: a API valida o handle e pode recusar. Devolve o Eu gravado.
+  Future<Eu> atualizar(AlteracoesDoEu alteracoes) async {
+    final salvo = await ref.read(apiProvider).atualizarEu(alteracoes);
+    if (ref.mounted) state = AsyncData(salvo);
+    return salvo;
+  }
+
   /// Otimista: a tela muda na hora e volta se a API recusar; o erro sobe para quem chamou avisar.
   Future<void> definirVisibilidade(bool visiveis) async {
     final atual = state.value;
     if (atual == null) return;
     state = AsyncData(atual.copyWith(atividadesVisiveis: visiveis));
     try {
-      state = AsyncData(
-        await ref.read(apiProvider).atualizarVisibilidade(visiveis: visiveis),
-      );
+      final salvo = await ref
+          .read(apiProvider)
+          .atualizarEu(AlteracoesDoEu(atividadesVisiveis: visiveis));
+      // quem deslogou no meio do PATCH não pode receber o perfil velho de volta
+      if (ref.mounted) state = AsyncData(salvo);
     } catch (_) {
-      state = AsyncData(atual);
+      if (ref.mounted) state = AsyncData(atual);
       rethrow;
     }
   }

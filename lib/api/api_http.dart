@@ -5,7 +5,9 @@ import 'package:http/http.dart' as http;
 
 import 'api_connactions.dart';
 import 'erro_da_api.dart';
+import 'modelos/alteracoes_do_eu.dart';
 import 'modelos/eu.dart';
+import 'modelos/turma.dart';
 
 typedef ObterToken = Future<String?> Function();
 
@@ -28,9 +30,44 @@ class ApiHttp implements ApiConnactions {
   Future<Eu> obterEu() async => Eu.deJson(await _enviar('GET', '/eu'));
 
   @override
-  Future<Eu> atualizarVisibilidade({required bool visiveis}) async => Eu.deJson(
-    await _enviar('PATCH', '/eu', corpo: {'atividades_visiveis': visiveis}),
+  Future<Eu> atualizarEu(AlteracoesDoEu alteracoes) async =>
+      Eu.deJson(await _enviar('PATCH', '/eu', corpo: alteracoes.toJson()));
+
+  @override
+  Future<List<Turma>> listarTurmas() async {
+    final json = await _enviar('GET', '/turmas');
+    return (json['itens'] as List<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .map(Turma.deJson)
+        .toList();
+  }
+
+  @override
+  Future<Turma> criarTurma({
+    required String nome,
+    required String emoji,
+  }) async => Turma.deJson(
+    await _enviar('POST', '/turmas', corpo: {'nome': nome, 'emoji': emoji}),
   );
+
+  @override
+  Future<Turma> entrarNaTurma({required String codigo}) async => Turma.deJson(
+    await _enviar('POST', '/turmas/entrar', corpo: {'codigo': codigo}),
+  );
+
+  @override
+  Future<TurmaDetalhe> obterTurma(String id) async =>
+      TurmaDetalhe.deJson(await _enviar('GET', '/turmas/$id'));
+
+  @override
+  Future<Turma> regenerarConvite(String id) async =>
+      Turma.deJson(await _enviar('POST', '/turmas/$id/convite'));
+
+  @override
+  Future<void> sairDaTurma(String id) async {
+    // 204 sem corpo: o _enviar devolve {} e não há nada a ler
+    await _enviar('DELETE', '/turmas/$id/membros/eu');
+  }
 
   Future<Map<String, dynamic>> _enviar(
     String metodo,

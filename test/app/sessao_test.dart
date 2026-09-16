@@ -1,4 +1,5 @@
 import 'package:connactions_app/api/erro_da_api.dart';
+import 'package:connactions_app/api/modelos/alteracoes_do_eu.dart';
 import 'package:connactions_app/app/sessao.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -110,7 +111,7 @@ void main() {
     await c.read(perfilAtualProvider.notifier).definirVisibilidade(false);
 
     expect(c.read(perfilAtualProvider).value?.atividadesVisiveis, isFalse);
-    expect(api.chamadas.last, 'atualizarVisibilidade:false');
+    expect(api.chamadas.last, 'atualizarEu:{"atividades_visiveis":false}');
   });
 
   test('se a API recusa, o estado volta e o erro sobe', () async {
@@ -129,5 +130,49 @@ void main() {
       throwsA(isA<ErroDeRede>()),
     );
     expect(c.read(perfilAtualProvider).value?.atividadesVisiveis, isTrue);
+  });
+
+  test('atualizar grava só o que mudou e reflete no estado', () async {
+    final api = FakeApi(eu: euDeTeste());
+    final c = montar(
+      autenticador: AutenticadorFalso(conta: contaDeTeste),
+      api: api,
+    );
+    await c.read(perfilAtualProvider.future);
+
+    final salvo = await c
+        .read(perfilAtualProvider.notifier)
+        .atualizar(const AlteracoesDoEu(nome: 'Marina D.'));
+
+    expect(salvo.nome, 'Marina D.');
+    expect(c.read(perfilAtualProvider).value?.nome, 'Marina D.');
+    expect(c.read(perfilAtualProvider).value?.handle, 'marina.d');
+    expect(api.chamadas.last, 'atualizarEu:{"nome":"Marina D."}');
+  });
+
+  test('atualizar que a API recusa sobe sem mexer no estado', () async {
+    final api = FakeApi(
+      eu: euDeTeste(),
+      falhaAoAtualizar: const ErroDaApi(
+        status: 422,
+        codigo: 'handle_em_uso',
+        mensagem: 'Esse @handle já é de outra pessoa.',
+      ),
+    );
+    final c = montar(
+      autenticador: AutenticadorFalso(conta: contaDeTeste),
+      api: api,
+    );
+    await c.read(perfilAtualProvider.future);
+
+    await expectLater(
+      c
+          .read(perfilAtualProvider.notifier)
+          .atualizar(const AlteracoesDoEu(handle: 'outra.pessoa')),
+      throwsA(
+        isA<ErroDaApi>().having((e) => e.handleEmUso, 'handleEmUso', isTrue),
+      ),
+    );
+    expect(c.read(perfilAtualProvider).value?.handle, 'marina.d');
   });
 }
