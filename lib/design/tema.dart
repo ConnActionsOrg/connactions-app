@@ -150,5 +150,25 @@ ThemeData temaClaro() {
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(color: cores.primaria),
     dividerColor: cores.contornoVariante,
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: cores.superficie,
+      surfaceTintColor: Colors.transparent,
+      showDragHandle: true,
+      dragHandleColor: cores.contornoVariante,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Raios.grande)),
+      ),
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: cores.superficieBaixa,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Raios.medio),
+      ),
+      titleTextStyle: tipografia.tituloPequeno,
+      contentTextStyle: tipografia.corpoMedio.copyWith(
+        color: cores.sobreSuperficieVariante,
+      ),
+    ),
   );
 }

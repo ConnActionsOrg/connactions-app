@@ -8,8 +8,11 @@ import 'marca.dart';
 /// Cabeçalho fixo das telas: marca e nome em terracota. É um AppBar por baixo, então numa tela
 /// empilhada a seta de voltar aparece sozinha.
 class Cabecalho extends StatelessWidget implements PreferredSizeWidget {
-  const Cabecalho({super.key, this.acoes = const []});
+  const Cabecalho({super.key, this.titulo, this.acoes = const []});
 
+  /// Com título, a tela é uma página empilhada: ele entra no lugar da marca, e a seta de voltar
+  /// vem sozinha do AppBar.
+  final String? titulo;
   final List<Widget> acoes;
 
   @override
@@ -23,20 +26,26 @@ class Cabecalho extends StatelessWidget implements PreferredSizeWidget {
       toolbarHeight: 64,
       titleSpacing: Espacos.margemDaTela,
       shape: const Border(bottom: BorderSide(color: Color(0x0A2B231E))),
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Marca(tamanho: 32),
-          const SizedBox(width: Espacos.sm),
-          Text(
-            'ConnActions',
-            style: tipografia.tituloPequeno.copyWith(
-              color: cores.primaria,
-              letterSpacing: -0.36,
+      title: titulo == null
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Marca(tamanho: 32),
+                const SizedBox(width: Espacos.sm),
+                Text(
+                  'ConnActions',
+                  style: tipografia.tituloPequeno.copyWith(
+                    color: cores.primaria,
+                    letterSpacing: -0.36,
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              titulo!,
+              style: tipografia.tituloPequeno,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
-      ),
       actions: acoes,
     );
   }

@@ -44,6 +44,20 @@ void main() {
     expect(estilo.shape!.resolve({}), isA<StadiumBorder>());
   });
 
+  test('folha e diálogo saem do tema', () {
+    final tema = temaClaro();
+    final folha = tema.bottomSheetTheme;
+    expect(folha.backgroundColor, superficie);
+    expect(folha.showDragHandle, isTrue);
+    final forma = folha.shape! as RoundedRectangleBorder;
+    expect(
+      (forma.borderRadius as BorderRadius).topLeft,
+      const Radius.circular(32),
+    );
+    expect(tema.dialogTheme.backgroundColor, const Color(0xFFF7F3EC));
+    expect(tema.dialogTheme.titleTextStyle!.fontFamily, 'Epilogue');
+  });
+
   test('as fontes estão empacotadas', () {
     for (final arquivo in [
       'Epilogue-SemiBold',

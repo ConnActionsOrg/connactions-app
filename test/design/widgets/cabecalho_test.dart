@@ -16,4 +16,20 @@ void main() {
     expect(find.byType(Marca), findsOneWidget);
     expect(find.text('ConnActions'), findsOneWidget);
   });
+
+  testWidgets('com título, mostra o título no lugar da marca', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: temaClaro(),
+        home: const Scaffold(
+          appBar: Cabecalho(titulo: 'Nova turma'),
+          body: SizedBox(),
+        ),
+      ),
+    );
+
+    expect(find.text('Nova turma'), findsOneWidget);
+    expect(find.text('ConnActions'), findsNothing);
+    expect(find.byType(Marca), findsNothing);
+  });
 }
