@@ -117,6 +117,11 @@ void main() {
     expect(cor, const Color(0xFFFDF9F2));
   });
 
+  testWidgets('o cartão de identidade tem o botão de editar', (tester) async {
+    await abrirPerfil(tester, FakeApi(eu: euDeTeste()));
+    expect(find.text('Editar perfil'), findsOneWidget);
+  });
+
   testWidgets('com falha ao carregar, ainda dá para sair', (tester) async {
     final autenticador = AutenticadorFalso(conta: contaDeTeste);
     await tester.pumpWidget(
