@@ -18,5 +18,15 @@ void main() {
     expect(eu.atividadesVisiveis, isTrue);
     expect(eu.criadoEm.toUtc(), DateTime.utc(2026, 9, 11, 15));
     expect(eu.copyWith(atividadesVisiveis: false).atividadesVisiveis, isFalse);
+
+    final editado = eu.copyWith(
+      nome: 'Marina D.',
+      handle: 'marina.dd',
+      bio: 'oi',
+    );
+    expect(editado.nome, 'Marina D.');
+    expect(editado.handle, 'marina.dd');
+    expect(editado.bio, 'oi');
+    expect(editado.codigoDeAmigo, 'ABCDEFGH');
   });
 }

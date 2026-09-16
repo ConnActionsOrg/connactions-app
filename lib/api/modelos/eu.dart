@@ -31,12 +31,17 @@ class Eu {
   final bool atividadesVisiveis;
   final DateTime criadoEm;
 
-  Eu copyWith({bool? atividadesVisiveis}) => Eu(
+  Eu copyWith({
+    String? nome,
+    String? handle,
+    String? bio,
+    bool? atividadesVisiveis,
+  }) => Eu(
     id: id,
-    handle: handle,
-    nome: nome,
+    handle: handle ?? this.handle,
+    nome: nome ?? this.nome,
     fotoUrl: fotoUrl,
-    bio: bio,
+    bio: bio ?? this.bio,
     codigoDeAmigo: codigoDeAmigo,
     atividadesVisiveis: atividadesVisiveis ?? this.atividadesVisiveis,
     criadoEm: criadoEm,
