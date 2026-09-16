@@ -1,20 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../api/api_connactions.dart';
 import '../api/erro_da_api.dart';
 import '../api/modelos/alteracoes_do_eu.dart';
 import '../api/modelos/eu.dart';
 import 'autenticador.dart';
-
-/// Pontos de entrada externos. Sem padrão de propósito: o main e os testes têm de sobrescrever.
-final autenticadorProvider = Provider<Autenticador>(
-  (_) => throw UnimplementedError(
-    'sobrescreva autenticadorProvider no ProviderScope',
-  ),
-);
-final apiProvider = Provider<ApiConnactions>(
-  (_) => throw UnimplementedError('sobrescreva apiProvider no ProviderScope'),
-);
+import 'dependencias.dart';
 
 /// Conta logada no Firebase; `null` enquanto deslogado.
 final contaProvider = StreamProvider<ContaLogada?>(

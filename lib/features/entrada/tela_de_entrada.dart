@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../app/autenticador.dart';
-import '../../app/sessao.dart';
+import '../../app/dependencias.dart';
 import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/tipografia.dart';

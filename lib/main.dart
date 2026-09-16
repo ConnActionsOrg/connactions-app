@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'api/api_http.dart';
 import 'app/app.dart';
 import 'app/autenticador_firebase.dart';
+import 'app/compartilhador.dart';
 import 'app/config.dart';
-import 'app/sessao.dart';
+import 'app/dependencias.dart';
+import 'app/preferencias.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -14,6 +16,7 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final autenticador = AutenticadorFirebase();
+  final preferencias = await PreferenciasDoAparelho.abrir();
   runApp(
     ProviderScope(
       overrides: [
@@ -23,6 +26,10 @@ Future<void> main() async {
             base: Uri.parse(Config.apiUrl),
             obterToken: autenticador.obterIdToken,
           ),
+        ),
+        preferenciasProvider.overrideWithValue(preferencias),
+        compartilhadorProvider.overrideWithValue(
+          const CompartilhadorDoSistema(),
         ),
       ],
       child: const AppConnactions(),

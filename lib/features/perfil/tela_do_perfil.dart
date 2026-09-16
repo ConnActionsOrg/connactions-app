@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../api/mensagens.dart';
 import '../../api/modelos/eu.dart';
+import '../../app/dependencias.dart';
 import '../../app/sessao.dart';
 import '../../design/cores.dart';
 import '../../design/medidas.dart';

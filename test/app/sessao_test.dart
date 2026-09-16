@@ -1,5 +1,6 @@
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/alteracoes_do_eu.dart';
+import 'package:connactions_app/app/dependencias.dart';
 import 'package:connactions_app/app/sessao.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

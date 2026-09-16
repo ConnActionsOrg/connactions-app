@@ -18,6 +18,8 @@ dependencies:
   google_sign_in: ^7.2.0
   http: ^1.6.0
   material_symbols_icons: ^4.2960.0
+  share_plus: ^13.3.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
