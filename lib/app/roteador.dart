@@ -10,6 +10,7 @@ import '../features/entrada/tela_de_abertura.dart';
 import '../features/entrada/tela_de_entrada.dart';
 import '../features/feed/tela_do_feed.dart';
 import '../features/perfil/tela_do_perfil.dart';
+import '../features/turmas/tela_da_turma.dart';
 import '../features/turmas/tela_de_entrar_na_turma.dart';
 import '../features/turmas/tela_de_nova_turma.dart';
 import 'sessao.dart';
@@ -51,6 +52,11 @@ final roteadorProvider = Provider<GoRouter>((ref) {
         path: '/turmas/entrar',
         parentNavigatorKey: raiz,
         builder: (_, _) => const TelaDeEntrarNaTurma(),
+      ),
+      GoRoute(
+        path: '/turmas/:id',
+        parentNavigatorKey: raiz,
+        builder: (_, state) => TelaDaTurma(id: state.pathParameters['id']!),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => CascaDeAbas(shell: shell),
