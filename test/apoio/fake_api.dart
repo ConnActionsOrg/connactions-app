@@ -183,20 +183,23 @@ class FakeApi implements ApiConnactions {
     chamadas.add('sairDaTurma:$id');
     final falha = falhaAoSair;
     if (falha != null) throw falha;
-    final removeu = turmas.remove(_minha(id));
-    if (!removeu) {
-      throw const ErroDaApi(
-        status: 403,
-        codigo: 'sem_acesso',
-        mensagem: 'Você não faz parte desta turma.',
-      );
-    }
+    // _minha já lança sem_acesso/não_encontrado; achando, o id está em turmas e o remove não falha.
+    turmas.remove(_minha(id));
     membrosPor.remove(id);
   }
 
   Turma _minha(String id) {
     for (final turma in turmas) {
       if (turma.id == id) return turma;
+    }
+    for (final turma in convites.values) {
+      if (turma.id == id) {
+        throw const ErroDaApi(
+          status: 403,
+          codigo: 'sem_acesso',
+          mensagem: 'Você não faz parte desta turma.',
+        );
+      }
     }
     throw const ErroDaApi(
       status: 404,

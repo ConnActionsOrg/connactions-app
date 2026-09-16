@@ -186,6 +186,19 @@ void main() {
     expect(find.byType(TelaDoFeed), findsOneWidget);
   });
 
+  testWidgets('detalhe negado (403) mostra que saí da turma', (tester) async {
+    final api = apiComTurma()
+      ..falhaAoObterTurma = const ErroDaApi(
+        status: 403,
+        codigo: 'sem_acesso',
+        mensagem: 'Você não faz parte desta turma.',
+      );
+    await abrir(tester, api: api);
+
+    expect(find.text('Você não está mais nesta turma.'), findsOneWidget);
+    expect(find.text('Tentar de novo'), findsNothing);
+  });
+
   testWidgets('erro ao carregar membros oferece tentar de novo', (
     tester,
   ) async {

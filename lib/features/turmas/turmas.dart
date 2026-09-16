@@ -16,6 +16,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   }
 
   Future<Turma> criar({required String nome, required String emoji}) async {
+    await future; // um build em voo sobrescreveria o que gravarmos abaixo
     final turma = await ref
         .read(apiProvider)
         .criarTurma(nome: nome, emoji: emoji);
@@ -26,6 +27,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   }
 
   Future<Turma> entrar(String codigo) async {
+    await future; // um build em voo sobrescreveria o que gravarmos abaixo
     final turma = await ref.read(apiProvider).entrarNaTurma(codigo: codigo);
     if (!ref.mounted) return turma;
     _por(turma);
@@ -34,6 +36,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   }
 
   Future<void> sair(String id) async {
+    await future; // um build em voo sobrescreveria o que gravarmos abaixo
     await ref.read(apiProvider).sairDaTurma(id);
     if (!ref.mounted) return;
     final atuais = state.value ?? const <Turma>[];
@@ -44,6 +47,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   }
 
   Future<Turma> regenerarConvite(String id) async {
+    await future; // um build em voo sobrescreveria o que gravarmos abaixo
     final turma = await ref.read(apiProvider).regenerarConvite(id);
     if (ref.mounted) _por(turma);
     return turma;

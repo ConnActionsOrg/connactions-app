@@ -7,7 +7,7 @@ const turmaJson = {
   'nome': 'Turma do Domingo',
   'emoji': '🌿',
   'codigo_convite': 'ABCD2345',
-  'criador_id': 'u1',
+  'criador_id': 'u9',
   'vez_de': {
     'id': 'u1',
     'handle': 'ana.lima',
@@ -24,7 +24,7 @@ void main() {
     expect(turma.nome, 'Turma do Domingo');
     expect(turma.emoji, '🌿');
     expect(turma.codigoConvite, 'ABCD2345');
-    expect(turma.criadorId, 'u1');
+    expect(turma.criadorId, 'u9');
     expect(turma.vezDe.handle, 'ana.lima');
     expect(turma.vezDe.fotoUrl, isNull);
     expect(turma.totalDeMembros, 2);

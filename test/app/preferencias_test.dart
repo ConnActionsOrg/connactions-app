@@ -19,4 +19,8 @@ void main() {
     final prefs = PreferenciasEmMemoria({ChaveDePreferencia.turmaAtivaId: 'x'});
     expect(prefs.ler('turma_ativa_id'), 'x');
   });
+
+  test('todas as chaves estão no allowList', () {
+    expect(ChaveDePreferencia.todas, contains(ChaveDePreferencia.turmaAtivaId));
+  });
 }

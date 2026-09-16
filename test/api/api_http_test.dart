@@ -169,7 +169,7 @@ void main() {
     'nome': 'Turma do Domingo',
     'emoji': '🌿',
     'codigo_convite': 'ABCD2345',
-    'criador_id': 'a1',
+    'criador_id': 'a9',
     'vez_de': {
       'id': 'a1',
       'handle': 'marina.duarte',

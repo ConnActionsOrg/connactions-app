@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/app/dependencias.dart';
 import 'package:connactions_app/features/turmas/detalhe_da_turma.dart';
@@ -137,6 +139,32 @@ void main() {
     expect(api.chamadas.last, 'criarTurma:Rolê da Firma:🍕');
   });
 
+  test('criar espera a lista assentar antes de gravar', () async {
+    final api = FakeApi(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste(id: 'turma-1')],
+    )..segurarListarTurmas = Completer<void>();
+    final c = montar(api: api);
+
+    final futuro = c
+        .read(turmasProvider.notifier)
+        .criar(nome: 'Nova', emoji: '🍕');
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(api.chamadas, isNot(contains('criarTurma:Nova:🍕')));
+
+    api.segurarListarTurmas!.complete();
+    final turma = await futuro;
+
+    expect(
+      api.chamadas.indexOf('listarTurmas'),
+      lessThan(api.chamadas.indexOf('criarTurma:Nova:🍕')),
+    );
+    expect(idsDe(c), contains(turma.id));
+    expect(c.read(turmaAtivaProvider)?.id, turma.id);
+  });
+
   test('entrar põe na lista sem duplicar e torna ativa', () async {
     final convite = turmaDeTeste(
       id: 'turma-2',
@@ -181,6 +209,28 @@ void main() {
     expect(idsDe(c), ['turma-1']);
     expect(c.read(turmaAtivaProvider)?.id, 'turma-1');
     expect(api.chamadas.last, 'sairDaTurma:turma-2');
+  });
+
+  test('sair de turma de outra pessoa é sem_acesso', () async {
+    final api = FakeApi(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste(id: 'turma-1')],
+      convites: {
+        'WXYZ6789': turmaDeTeste(
+          id: 'turma-2',
+          codigoConvite: 'WXYZ6789',
+          vezDe: pessoaDeTeste(),
+        ),
+      },
+    );
+    final c = montar(api: api);
+    await c.read(turmasProvider.future);
+
+    await expectLater(
+      c.read(turmasProvider.notifier).sair('turma-2'),
+      throwsA(isA<ErroDaApi>().having((e) => e.semAcesso, 'semAcesso', isTrue)),
+    );
+    expect(idsDe(c), ['turma-1']);
   });
 
   test('regenerar substitui a turma na lista', () async {

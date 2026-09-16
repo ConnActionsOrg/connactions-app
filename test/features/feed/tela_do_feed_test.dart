@@ -122,6 +122,27 @@ void main() {
     expect(naPilula('Turma do Domingo'), findsOneWidget);
   });
 
+  testWidgets('erro no perfil também recupera com tentar de novo', (
+    tester,
+  ) async {
+    final api = FakeApi(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste()],
+      falhaAoObter: const ErroDeRede('caiu'),
+    );
+    await abrirFeed(tester, api: api);
+    expect(
+      find.text('Sem conexão com a API. Confira a rede e tente de novo.'),
+      findsOneWidget,
+    );
+
+    api.falhaAoObter = null;
+    await tester.tap(find.text('Tentar de novo'));
+    await tester.pumpAndSettle();
+
+    expect(naPilula('Turma do Domingo'), findsOneWidget);
+  });
+
   testWidgets('carregando mostra o indicador', (tester) async {
     final api = FakeApi(eu: euDeTeste(), turmas: [turmaDeTeste()])
       ..segurarListarTurmas = Completer<void>();

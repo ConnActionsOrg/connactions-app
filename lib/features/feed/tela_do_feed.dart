@@ -35,7 +35,11 @@ class TelaDoFeed extends ConsumerWidget {
     if (lista == null && erro != null) {
       corpo = EstadoDeErro(
         mensagem: mensagemDoErro(erro),
-        aoTentarDeNovo: () => ref.invalidate(turmasProvider),
+        aoTentarDeNovo: () {
+          // a falha pode ter nascido no perfil, que Turmas.build espera; invalidar só as turmas releria o mesmo erro
+          ref.invalidate(perfilAtualProvider);
+          ref.invalidate(turmasProvider);
+        },
       );
     } else if (lista == null) {
       corpo = const Center(child: CircularProgressIndicator());

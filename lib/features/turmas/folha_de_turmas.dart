@@ -17,6 +17,7 @@ Future<void> mostrarFolhaDeTurmas(BuildContext context) =>
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      useRootNavigator: true,
       builder: (_) => const FolhaDeTurmas(),
     );
 
