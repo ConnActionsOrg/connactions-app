@@ -27,14 +27,6 @@ class _TelaDeEntrarNaTurmaState extends ConsumerState<TelaDeEntrarNaTurma> {
   bool _entrando = false;
 
   @override
-  void initState() {
-    super.initState();
-    // Aquece turmasProvider ao abrir a tela: lido pela 1ª vez só em _entrar(), o build() dele
-    // (que chama listarTurmas) corre em paralelo com entrarNaTurma() e termina depois na prática.
-    ref.read(turmasProvider);
-  }
-
-  @override
   void dispose() {
     _codigo.dispose();
     super.dispose();

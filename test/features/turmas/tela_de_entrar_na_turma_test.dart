@@ -59,7 +59,7 @@ void main() {
     await tester.tap(find.text('Entrar na turma'));
     await tester.pumpAndSettle();
 
-    expect(api.chamadas.last, 'entrarNaTurma:ABCD2345');
+    expect(api.chamadas, contains('entrarNaTurma:ABCD2345'));
     expect(
       find.text('Código inválido. Confira com quem te convidou.'),
       findsOneWidget,
@@ -90,7 +90,7 @@ void main() {
     await tester.tap(find.text('Entrar na turma'));
     await tester.pumpAndSettle();
 
-    expect(api.chamadas.last, 'entrarNaTurma:WXYZ6789');
+    expect(api.chamadas, contains('entrarNaTurma:WXYZ6789'));
     expect(prefs.valores['turma_ativa_id'], 'turma-2');
     expect(find.byType(TelaDoFeed), findsOneWidget);
   });

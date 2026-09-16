@@ -26,14 +26,6 @@ class _TelaDeNovaTurmaState extends ConsumerState<TelaDeNovaTurma> {
   bool _salvando = false;
 
   @override
-  void initState() {
-    super.initState();
-    // Aquece turmasProvider ao abrir a tela: lido pela 1ª vez só em _criar(), o build() dele
-    // (que chama listarTurmas) corre em paralelo com criarTurma() e termina depois na prática.
-    ref.read(turmasProvider);
-  }
-
-  @override
   void dispose() {
     _nome.dispose();
     super.dispose();

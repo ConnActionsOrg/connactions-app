@@ -51,7 +51,7 @@ void main() {
     await tester.tap(find.text('Criar turma'));
     await tester.pumpAndSettle();
 
-    expect(api.chamadas.last, 'criarTurma:Rolê da Firma:🍕');
+    expect(api.chamadas, contains('criarTurma:Rolê da Firma:🍕'));
     expect(find.byType(TelaDeNovaTurma), findsNothing);
     expect(find.byType(TelaDoFeed), findsOneWidget);
     expect(prefs.valores['turma_ativa_id'], api.turmas.single.id);
