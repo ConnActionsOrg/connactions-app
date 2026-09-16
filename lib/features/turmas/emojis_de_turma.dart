@@ -1,0 +1,28 @@
+/// Os emojis que uma turma pode ter, na ordem da grade. Lista fixa: a API só exige de 1 a 16
+/// caracteres sem espaço.
+const emojisDeTurma = [
+  '🌿',
+  '☕',
+  '🍕',
+  '🎲',
+  '🥾',
+  '🎬',
+  '🍻',
+  '🎨',
+  '🏕️',
+  '🎸',
+  '⚽',
+  '🧘',
+  '🍜',
+  '📚',
+  '🎳',
+  '🌊',
+  '🎤',
+  '🧁',
+  '🍷',
+  '🎯',
+  '🚴',
+  '🏖️',
+  '🎮',
+  '🌮',
+];

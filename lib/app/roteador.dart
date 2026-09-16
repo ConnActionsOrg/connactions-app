@@ -10,6 +10,8 @@ import '../features/entrada/tela_de_abertura.dart';
 import '../features/entrada/tela_de_entrada.dart';
 import '../features/feed/tela_do_feed.dart';
 import '../features/perfil/tela_do_perfil.dart';
+import '../features/turmas/tela_de_entrar_na_turma.dart';
+import '../features/turmas/tela_de_nova_turma.dart';
 import 'sessao.dart';
 
 /// Um GoRouter por app, num Provider: recriá-lo a cada build perderia a pilha de navegação.
@@ -18,8 +20,11 @@ final roteadorProvider = Provider<GoRouter>((ref) {
   final cutucao = ValueNotifier<int>(0);
   ref.listen(contaProvider, (_, _) => cutucao.value++);
   ref.onDispose(cutucao.dispose);
+  // As telas empilhadas nascem no navigator da raiz: cobrem a barra de abas.
+  final raiz = GlobalKey<NavigatorState>();
 
-  return GoRouter(
+  final roteador = GoRouter(
+    navigatorKey: raiz,
     initialLocation: '/abertura',
     refreshListenable: cutucao,
     redirect: (context, state) {
@@ -36,6 +41,17 @@ final roteadorProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/abertura', builder: (_, _) => const TelaDeAbertura()),
       GoRoute(path: '/entrada', builder: (_, _) => const TelaDeEntrada()),
+      // rotas fixas antes de /turmas/:id (Tarefa 13), senão "nova" e "entrar" virariam ids
+      GoRoute(
+        path: '/turmas/nova',
+        parentNavigatorKey: raiz,
+        builder: (_, _) => const TelaDeNovaTurma(),
+      ),
+      GoRoute(
+        path: '/turmas/entrar',
+        parentNavigatorKey: raiz,
+        builder: (_, _) => const TelaDeEntrarNaTurma(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => CascaDeAbas(shell: shell),
         branches: [
@@ -66,6 +82,8 @@ final roteadorProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+  ref.onDispose(roteador.dispose);
+  return roteador;
 });
 
 /// As quatro abas do Stitch. O IndexedStack preserva o estado de cada uma ao alternar.
