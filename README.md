@@ -26,6 +26,13 @@ O SHA-1 registrado no Firebase é o do keystore de debug do PC, então o login c
 qualquer aparelho. "Fechar pelos recentes" no Samsung não mata o processo: para provar
 persistência, `adb shell am force-stop app.connactions` e reabrir pelo launcher.
 
+## Fotos
+
+Registros e foto do perfil saem do `image_picker` (câmera ou galeria, sem permissão de manifesto no
+Android) já em 1600px, e a API normaliza e serve em `/midia`. No celular físico as URLs vêm em
+`127.0.0.1:8090`, que o `adb reverse` resolve; no emulador a API precisa de
+`MIDIA_BASE_URL=http://10.0.2.2:8090/midia` no `.env`.
+
 ## Gate
 
 `dart format --set-exit-if-changed .` · `dart analyze` · `flutter test`

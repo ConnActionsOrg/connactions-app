@@ -9,6 +9,7 @@ import 'app/compartilhador.dart';
 import 'app/config.dart';
 import 'app/dependencias.dart';
 import 'app/preferencias.dart';
+import 'app/seletor_de_foto.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -31,6 +32,7 @@ Future<void> main() async {
         compartilhadorProvider.overrideWithValue(
           const CompartilhadorDoSistema(),
         ),
+        seletorDeFotoProvider.overrideWithValue(SeletorDeFotoDoAparelho()),
       ],
       child: const AppConnactions(),
     ),
