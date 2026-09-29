@@ -104,6 +104,11 @@ Matrix4 transformacaoDaFoto(WidgetTester tester) {
   return tester.widget<Transform>(transform.first).transform;
 }
 
+/// A página em que o PageView está. As fotos falham igual nos testes (400), então só o controller
+/// diz se ele acompanha o que a barra mostra.
+double? paginaAtual(WidgetTester tester) =>
+    tester.widget<PageView>(find.byType(PageView)).controller?.page;
+
 void main() {
   testWidgets('mostra a foto pedida, o autor, a legenda e a posição', (
     tester,
@@ -122,8 +127,7 @@ void main() {
       indice: 1,
     );
     expect(find.text('2 / 2'), findsOneWidget);
-    // as fotos falham igual (400): só o controller mostra em que página o PageView nasceu
-    expect(tester.widget<PageView>(find.byType(PageView)).controller?.page, 1);
+    expect(paginaAtual(tester), 1);
     expect(find.text('Marina Duarte'), findsOneWidget);
     expect(find.text('Suco · há 2 h'), findsOneWidget);
     expect(find.byTooltip('Apagar'), findsNothing);
@@ -226,6 +230,7 @@ void main() {
       expect(find.textContaining('Meu'), findsNothing);
       expect(find.textContaining('Dela'), findsOneWidget);
       expect(find.text('1 / 2'), findsOneWidget);
+      expect(paginaAtual(tester), 0);
     },
   );
 
@@ -246,6 +251,7 @@ void main() {
       expect(find.textContaining('Meu'), findsNothing);
       expect(find.textContaining('Tres'), findsOneWidget);
       expect(find.text('2 / 2'), findsOneWidget);
+      expect(paginaAtual(tester), 1);
     },
   );
 
@@ -266,6 +272,7 @@ void main() {
       expect(find.textContaining('Meu'), findsNothing);
       expect(find.textContaining('Um'), findsOneWidget);
       expect(find.text('1 / 2'), findsOneWidget);
+      expect(paginaAtual(tester), 0);
     },
   );
 
@@ -291,7 +298,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
     }
     // a medida é DURANTE o arrasto: solto, o PageView voltaria à página 0 de qualquer jeito
-    expect(tester.widget<PageView>(find.byType(PageView)).controller?.page, 0);
+    expect(paginaAtual(tester), 0);
     expect(transformacaoDaFoto(tester).getTranslation().x, lessThan(antes));
     await dedo.up();
     await tester.pumpAndSettle();
