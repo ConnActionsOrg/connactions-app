@@ -6,7 +6,12 @@ import 'package:http/http.dart' as http;
 import 'api_connactions.dart';
 import 'erro_da_api.dart';
 import 'modelos/alteracoes_do_eu.dart';
+import 'modelos/atividade.dart';
 import 'modelos/eu.dart';
+import 'modelos/foto_para_enviar.dart';
+import 'modelos/pagina_do_diario.dart';
+import 'modelos/proposta.dart';
+import 'modelos/registro.dart';
 import 'modelos/turma.dart';
 
 typedef ObterToken = Future<String?> Function();
@@ -22,6 +27,8 @@ class ApiHttp implements ApiConnactions {
   final http.Client _cliente;
 
   static const _tempoLimite = Duration(seconds: 15);
+  // upload no 4G: o tempo limite do JSON (15 s) cortaria a foto pela metade
+  static const _tempoLimiteDoUpload = Duration(seconds: 60);
 
   @override
   Future<Eu> criarEu() async => Eu.deJson(await _enviar('POST', '/eu'));
@@ -69,10 +76,111 @@ class ApiHttp implements ApiConnactions {
     await _enviar('DELETE', '/turmas/$id/membros/eu');
   }
 
+  @override
+  Future<Atividade?> obterAtividadeAberta(String turmaId) async {
+    final json = await _enviar('GET', '/turmas/$turmaId/atividade-aberta');
+    final atividade = json['atividade'];
+    return atividade == null
+        ? null
+        : Atividade.deJson(atividade as Map<String, dynamic>);
+  }
+
+  @override
+  Future<Atividade> lancarAtividade(String turmaId, Proposta proposta) async =>
+      Atividade.deJson(
+        await _enviar(
+          'POST',
+          '/turmas/$turmaId/atividades',
+          corpo: proposta.toJson(),
+        ),
+      );
+
+  @override
+  Future<Encerramento> encerrarAtividade(String atividadeId) async =>
+      Encerramento.deJson(
+        await _enviar('POST', '/atividades/$atividadeId/encerrar'),
+      );
+
+  @override
+  Future<Registro> registrar(
+    String atividadeId, {
+    required FotoParaEnviar foto,
+    String legenda = '',
+  }) async => Registro.deJson(
+    await _enviarMultipart(
+      'POST',
+      '/atividades/$atividadeId/registros',
+      foto: foto,
+      campos: {'legenda': legenda},
+    ),
+  );
+
+  @override
+  Future<void> apagarRegistro(String registroId) async {
+    await _enviar('DELETE', '/registros/$registroId');
+  }
+
+  @override
+  Future<PaginaDoDiario> listarDiario(
+    String turmaId, {
+    String? apos,
+    int limite = 20,
+  }) async => PaginaDoDiario.deJson(
+    await _enviar(
+      'GET',
+      '/turmas/$turmaId/diario',
+      consulta: {'apos': ?apos, 'limite': '$limite'},
+    ),
+  );
+
+  @override
+  Future<TurmaDetalhe> embaralharOrdem(String turmaId) async =>
+      TurmaDetalhe.deJson(await _enviar('POST', '/turmas/$turmaId/embaralhar'));
+
+  @override
+  Future<Eu> trocarFoto(FotoParaEnviar foto) async =>
+      Eu.deJson(await _enviarMultipart('PUT', '/eu/foto', foto: foto));
+
   Future<Map<String, dynamic>> _enviar(
     String metodo,
     String caminho, {
     Map<String, Object?>? corpo,
+    Map<String, String>? consulta,
+  }) {
+    final url = Uri.parse('$_base$caminho');
+    final requisicao = http.Request(
+      metodo,
+      consulta == null ? url : url.replace(queryParameters: consulta),
+    );
+    if (corpo != null) {
+      requisicao.headers['Content-Type'] = 'application/json; charset=utf-8';
+      requisicao.body = jsonEncode(corpo);
+    }
+    return _despachar(requisicao);
+  }
+
+  Future<Map<String, dynamic>> _enviarMultipart(
+    String metodo,
+    String caminho, {
+    required FotoParaEnviar foto,
+    Map<String, String> campos = const {},
+  }) {
+    final requisicao =
+        http.MultipartRequest(metodo, Uri.parse('$_base$caminho'))
+          ..fields.addAll(campos)
+          ..files.add(
+            http.MultipartFile.fromBytes(
+              'foto',
+              foto.bytes,
+              filename: foto.nome,
+            ),
+          );
+    return _despachar(requisicao, tempoLimite: _tempoLimiteDoUpload);
+  }
+
+  Future<Map<String, dynamic>> _despachar(
+    http.BaseRequest requisicao, {
+    Duration tempoLimite = _tempoLimite,
   }) async {
     final String? token;
     try {
@@ -87,17 +195,12 @@ class ApiHttp implements ApiConnactions {
         mensagem: 'Entre para continuar.',
       );
     }
-    final requisicao = http.Request(metodo, Uri.parse('$_base$caminho'))
-      ..headers['Authorization'] = 'Bearer $token'
-      ..headers['Accept'] = 'application/json';
-    if (corpo != null) {
-      requisicao.headers['Content-Type'] = 'application/json; charset=utf-8';
-      requisicao.body = jsonEncode(corpo);
-    }
+    requisicao.headers['Authorization'] = 'Bearer $token';
+    requisicao.headers['Accept'] = 'application/json';
 
     final http.StreamedResponse resposta;
     try {
-      resposta = await _cliente.send(requisicao).timeout(_tempoLimite);
+      resposta = await _cliente.send(requisicao).timeout(tempoLimite);
     } on Exception catch (e) {
       throw ErroDeRede(e);
     }

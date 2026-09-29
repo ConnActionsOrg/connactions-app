@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:connactions_app/api/api_http.dart';
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/alteracoes_do_eu.dart';
+import 'package:connactions_app/api/modelos/atividade.dart';
+import 'package:connactions_app/api/modelos/foto_para_enviar.dart';
+import 'package:connactions_app/api/modelos/proposta.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -22,6 +26,55 @@ ApiHttp api(MockClient cliente, {String? token = 'tok'}) => ApiHttp(
   base: Uri.parse('http://api.local/v1'),
   obterToken: () async => token,
   cliente: cliente,
+);
+
+const pessoaJson = {
+  'id': 'p1',
+  'handle': 'bia',
+  'nome': 'Bia Souza',
+  'foto_url': null,
+};
+
+// Não pode se chamar turmaJson: o `const turmaJson` local de `main` (turma t1) o sombrearia.
+const turmaDaAtividadeJson = {
+  'id': 'turma-1',
+  'nome': 'Turma',
+  'emoji': '🌿',
+  'codigo_convite': 'ABCD2345',
+  'criador_id': 'a1',
+  'vez_de': pessoaJson,
+  'total_de_membros': 2,
+  'criado_em': '2026-09-15T12:00:00Z',
+};
+
+const atividadeJson = {
+  'id': 'ativ-1',
+  'turma_id': 'turma-1',
+  'numero': 1,
+  'proponente': pessoaJson,
+  'titulo': 'Piquenique',
+  'descricao': '',
+  'regras': <String>[],
+  'formato': 'grupo',
+  'publica': true,
+  'prazo': null,
+  'lancada_em': '2026-09-29T12:00:00Z',
+  'encerrada_em': null,
+  'registros': <Object>[],
+};
+
+const registroJson = {
+  'id': 'reg-1',
+  'autor': pessoaJson,
+  'foto_url': 'http://midia.local/midia/registros/x.jpg',
+  'miniatura_url': 'http://midia.local/midia/registros/x.min.jpg',
+  'legenda': 'Bolo',
+  'criado_em': '2026-09-29T13:00:00Z',
+};
+
+final fotoDeTeste = FotoParaEnviar(
+  bytes: Uint8List.fromList([0xFF, 0xD8, 0xFF, 0xE0]),
+  nome: 'foto.jpg',
 );
 
 void main() {
@@ -327,6 +380,199 @@ void main() {
         isA<ErroDaApi>()
             .having((e) => e.codigoInvalido, 'codigoInvalido', isTrue)
             .having((e) => e.handleEmUso, 'handleEmUso', isFalse),
+      ),
+    );
+  });
+
+  test('GET atividade-aberta devolve null quando não há', () async {
+    final api_ = api(
+      MockClient(
+        (_) async => http.Response(jsonEncode({'atividade': null}), 200),
+      ),
+    );
+    expect(await api_.obterAtividadeAberta('turma-1'), isNull);
+  });
+
+  test('GET atividade-aberta devolve a atividade embutida', () async {
+    late http.Request visto;
+    final a = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(jsonEncode({'atividade': atividadeJson}), 200);
+      }),
+    ).obterAtividadeAberta('turma-1');
+    expect(visto.url.path, '/v1/turmas/turma-1/atividade-aberta');
+    expect(a?.id, 'ativ-1');
+  });
+
+  test('POST atividades manda a proposta', () async {
+    late http.Request visto;
+    await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(jsonEncode(atividadeJson), 201);
+      }),
+    ).lancarAtividade(
+      'turma-1',
+      const Proposta(
+        titulo: 'Piquenique',
+        formato: FormatoDeAtividade.grupo,
+        publica: true,
+      ),
+    );
+    expect(visto.method, 'POST');
+    expect(visto.url.path, '/v1/turmas/turma-1/atividades');
+    expect(jsonDecode(visto.body), {
+      'titulo': 'Piquenique',
+      'descricao': '',
+      'formato': 'grupo',
+      'publica': true,
+    });
+  });
+
+  test('POST encerrar devolve atividade e turma', () async {
+    late http.Request visto;
+    final e = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({
+            'atividade': {
+              ...atividadeJson,
+              'encerrada_em': '2026-09-30T10:00:00Z',
+            },
+            'turma': turmaDaAtividadeJson,
+          }),
+          200,
+          headers: const {'content-type': 'application/json'},
+        );
+      }),
+    ).encerrarAtividade('ativ-1');
+    expect(visto.url.path, '/v1/atividades/ativ-1/encerrar');
+    expect(e.atividade.aberta, isFalse);
+    expect(e.turma.vezDe.id, 'p1');
+  });
+
+  test('registrar manda multipart com a foto e a legenda', () async {
+    late http.Request visto;
+    final r = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(jsonEncode(registroJson), 201);
+      }),
+    ).registrar('ativ-1', foto: fotoDeTeste, legenda: 'Bolo');
+    expect(visto.method, 'POST');
+    expect(visto.url.path, '/v1/atividades/ativ-1/registros');
+    expect(visto.headers['Authorization'], 'Bearer tok');
+    expect(visto.headers['content-type'], startsWith('multipart/form-data'));
+    final corpo = String.fromCharCodes(visto.bodyBytes);
+    expect(corpo, contains('name="foto"'));
+    expect(corpo, contains('filename="foto.jpg"'));
+    expect(corpo, contains('name="legenda"'));
+    expect(corpo, contains('Bolo'));
+    expect(r.legenda, 'Bolo');
+  });
+
+  test('DELETE registro aceita 204 sem corpo', () async {
+    late http.Request visto;
+    await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response('', 204);
+      }),
+    ).apagarRegistro('reg-1');
+    expect(visto.method, 'DELETE');
+    expect(visto.url.path, '/v1/registros/reg-1');
+  });
+
+  test('GET diario manda o cursor e o limite', () async {
+    late http.Request visto;
+    final p = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({
+            'itens': [atividadeJson],
+            'proximo': 'c2',
+          }),
+          200,
+        );
+      }),
+    ).listarDiario('turma-1', apos: 'c1', limite: 5);
+    expect(visto.url.path, '/v1/turmas/turma-1/diario');
+    expect(visto.url.queryParameters, {'apos': 'c1', 'limite': '5'});
+    expect(p.itens.single.id, 'ativ-1');
+    expect(p.proximo, 'c2');
+
+    await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({'itens': <Object>[], 'proximo': null}),
+          200,
+        );
+      }),
+    ).listarDiario('turma-1');
+    expect(visto.url.queryParameters, {'limite': '20'});
+  });
+
+  test('POST embaralhar devolve o detalhe', () async {
+    late http.Request visto;
+    final d = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({
+            ...turmaDaAtividadeJson,
+            'membros': [
+              {...pessoaJson, 'ordem': 1, 'entrou_em': '2026-09-15T12:00:00Z'},
+            ],
+          }),
+          200,
+          headers: const {'content-type': 'application/json'},
+        );
+      }),
+    ).embaralharOrdem('turma-1');
+    expect(visto.method, 'POST');
+    expect(visto.url.path, '/v1/turmas/turma-1/embaralhar');
+    expect(d.membros.single.ordem, 1);
+  });
+
+  test('PUT eu/foto manda multipart e devolve o Eu', () async {
+    late http.Request visto;
+    final eu = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({
+            ...euJson,
+            'foto_url': 'http://midia.local/midia/perfis/n.jpg',
+          }),
+          200,
+        );
+      }),
+    ).trocarFoto(fotoDeTeste);
+    expect(visto.method, 'PUT');
+    expect(visto.url.path, '/v1/eu/foto');
+    expect(visto.headers['content-type'], startsWith('multipart/form-data'));
+    expect(eu.fotoUrl, endsWith('perfis/n.jpg'));
+  });
+
+  test('erro no multipart vira ErroDaApi como no JSON', () async {
+    final futuro = api(
+      MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'erro': {'codigo': 'foto_invalida', 'mensagem': 'Envie uma foto.'},
+          }),
+          422,
+        ),
+      ),
+    ).trocarFoto(fotoDeTeste);
+    await expectLater(
+      futuro,
+      throwsA(
+        isA<ErroDaApi>().having((e) => e.fotoInvalida, 'fotoInvalida', isTrue),
       ),
     );
   });
