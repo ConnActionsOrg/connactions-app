@@ -5,7 +5,7 @@ ErroDaApi erro(int status, String codigo) =>
     ErroDaApi(status: status, codigo: codigo, mensagem: 'm');
 
 void main() {
-  test('getters dos códigos da fatia 2', () {
+  test('getters dos códigos de atividade, registro e foto', () {
     expect(erro(409, 'nao_e_sua_vez').naoESuaVez, isTrue);
     expect(erro(409, 'atividade_ja_aberta').atividadeJaAberta, isTrue);
     expect(erro(409, 'atividade_encerrada').atividadeEncerrada, isTrue);
