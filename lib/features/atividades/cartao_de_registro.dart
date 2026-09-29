@@ -99,7 +99,7 @@ class CartaoDeRegistro extends StatelessWidget {
                 const SizedBox(height: Espacos.sm),
                 Text(
                   registro.legenda,
-                  style: tipografia.rotuloTitulo,
+                  style: tipografia.corpoPequeno,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

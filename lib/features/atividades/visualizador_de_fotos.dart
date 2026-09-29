@@ -60,6 +60,7 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
       .toInt();
   late final _paginas = PageController(initialPage: _indice);
   bool _apagando = false;
+  bool _ampliada = false;
 
   @override
   void dispose() {
@@ -97,8 +98,14 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
         Navigator.of(context).pop();
         return;
       }
+      // a pessoa pode ter deslizado enquanto a requisição estava no ar: sai o registro apagado,
+      // não o que está na tela
+      final removido = _registros.indexWhere((r) => r.id == registro.id);
       setState(() {
-        _registros.removeAt(_indice);
+        _registros.removeAt(removido);
+        // da removida em diante as páginas trocam de dono (a chave é o id) e nascem sem zoom
+        if (_indice >= removido) _ampliada = false;
+        if (_indice > removido) _indice--;
         _indice = _indice.clamp(0, _registros.length - 1).toInt();
         _paginas.jumpToPage(_indice);
       });
@@ -146,20 +153,15 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
           Expanded(
             child: PageView.builder(
               controller: _paginas,
+              // ampliada, o arrasto é da foto e não da página
+              physics: _ampliada ? const NeverScrollableScrollPhysics() : null,
               itemCount: _registros.length,
               onPageChanged: (i) => setState(() => _indice = i),
-              itemBuilder: (_, i) => InteractiveViewer(
-                child: Center(
-                  child: Image.network(
-                    _registros[i].fotoUrl,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => Icon(
-                      Symbols.broken_image,
-                      size: 64,
-                      color: cores.sobreSuperficieInversa,
-                    ),
-                  ),
-                ),
+              itemBuilder: (_, i) => _FotoAmpliavel(
+                key: ValueKey(_registros[i].id),
+                url: _registros[i].fotoUrl,
+                aoMudarAmpliacao: (ampliada) =>
+                    setState(() => _ampliada = ampliada),
               ),
             ),
           ),
@@ -203,6 +205,68 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Uma página do visualizador: a foto com zoom por pinça. Avisa o pai quando passa de 1× e quando
+/// volta, porque o arrasto horizontal do PageView vence o do InteractiveViewer: sem parar o
+/// deslize, a foto ampliada não andaria para os lados.
+class _FotoAmpliavel extends StatefulWidget {
+  const _FotoAmpliavel({
+    super.key,
+    required this.url,
+    required this.aoMudarAmpliacao,
+  });
+
+  final String url;
+  final ValueChanged<bool> aoMudarAmpliacao;
+
+  @override
+  State<_FotoAmpliavel> createState() => _FotoAmpliavelState();
+}
+
+class _FotoAmpliavelState extends State<_FotoAmpliavel> {
+  final _transformacao = TransformationController();
+  bool _ampliada = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _transformacao.addListener(_avisarSeMudou);
+  }
+
+  @override
+  void dispose() {
+    _transformacao.dispose();
+    super.dispose();
+  }
+
+  void _avisarSeMudou() {
+    // folga para o arredondamento do float ao voltar a 1×
+    final ampliada = _transformacao.value.getMaxScaleOnAxis() > 1.01;
+    if (ampliada == _ampliada) return;
+    _ampliada = ampliada;
+    widget.aoMudarAmpliacao(ampliada);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = Cores.de(context);
+    return InteractiveViewer(
+      transformationController: _transformacao,
+      minScale: 1,
+      child: Center(
+        child: Image.network(
+          widget.url,
+          fit: BoxFit.contain,
+          errorBuilder: (_, _, _) => Icon(
+            Symbols.broken_image,
+            size: 64,
+            color: cores.sobreSuperficieInversa,
+          ),
+        ),
       ),
     );
   }

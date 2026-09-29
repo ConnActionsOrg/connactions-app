@@ -1,3 +1,4 @@
+import 'package:connactions_app/design/tipografia.dart';
 import 'package:connactions_app/features/atividades/cartao_de_registro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,4 +53,32 @@ void main() {
     expect(find.text('Seu'), findsNothing);
     expect(find.text('Bia'), findsOneWidget);
   });
+
+  testWidgets(
+    'a legenda é corpoPequeno e cabe em uma linha com 200 caracteres',
+    (tester) async {
+      final legenda = List.filled(200, 'a').join();
+      await tester.pumpWidget(
+        montar(
+          Align(
+            alignment: Alignment.topLeft,
+            child: CartaoDeRegistro(
+              registro: registroDeTeste(legenda: legenda),
+              aoTocar: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      final estilo = Tipografia.de(
+        tester.element(find.byType(CartaoDeRegistro)),
+      ).corpoPequeno;
+      expect(
+        tester.getSize(find.text(legenda)).height,
+        closeTo(estilo.fontSize! * estilo.height!, 0.5),
+      );
+    },
+  );
 }
