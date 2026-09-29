@@ -21,7 +21,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
         .read(apiProvider)
         .criarTurma(nome: nome, emoji: emoji);
     if (!ref.mounted) return turma;
-    _por(turma);
+    substituir(turma);
     await ref.read(turmaAtivaIdProvider.notifier).definir(turma.id);
     return turma;
   }
@@ -30,7 +30,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
     await future; // um build em voo sobrescreveria o que gravarmos abaixo
     final turma = await ref.read(apiProvider).entrarNaTurma(codigo: codigo);
     if (!ref.mounted) return turma;
-    _por(turma);
+    substituir(turma);
     await ref.read(turmaAtivaIdProvider.notifier).definir(turma.id);
     return turma;
   }
@@ -49,12 +49,13 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   Future<Turma> regenerarConvite(String id) async {
     await future; // um build em voo sobrescreveria o que gravarmos abaixo
     final turma = await ref.read(apiProvider).regenerarConvite(id);
-    if (ref.mounted) _por(turma);
+    if (ref.mounted) substituir(turma);
     return turma;
   }
 
-  /// Substitui a turma de mesmo id ou acrescenta no fim: a lista nunca duplica.
-  void _por(Turma turma) {
+  /// Substitui a turma de mesmo id ou acrescenta no fim: a lista nunca duplica. Quem encerra uma
+  /// atividade entrega aqui a turma com a vez nova.
+  void substituir(Turma turma) {
     final novas = [...?state.value];
     final indice = novas.indexWhere((t) => t.id == turma.id);
     if (indice < 0) {

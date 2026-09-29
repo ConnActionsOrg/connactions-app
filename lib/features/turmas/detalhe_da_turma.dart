@@ -11,6 +11,13 @@ class DetalheDaTurma extends AsyncNotifier<TurmaDetalhe> {
 
   @override
   Future<TurmaDetalhe> build() => ref.watch(apiProvider).obterTurma(id);
+
+  /// Grava o detalhe devolvido (os membros já na ordem nova).
+  Future<void> embaralhar() async {
+    await future; // um build em voo sobrescreveria o que gravarmos abaixo
+    final detalhe = await ref.read(apiProvider).embaralharOrdem(id);
+    if (ref.mounted) state = AsyncData(detalhe);
+  }
 }
 
 final turmaDetalheProvider = AsyncNotifierProvider.autoDispose

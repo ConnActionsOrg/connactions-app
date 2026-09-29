@@ -12,6 +12,7 @@ import '../../apoio/autenticador_falso.dart';
 import '../../apoio/compartilhador_falso.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/preferencias_em_memoria.dart';
+import '../../apoio/seletor_de_foto_falso.dart';
 
 ProviderContainer montar({
   FakeApi? api,
@@ -28,6 +29,7 @@ ProviderContainer montar({
         preferencias ?? PreferenciasEmMemoria(),
       ),
       compartilhadorProvider.overrideWithValue(CompartilhadorFalso()),
+      seletorDeFotoProvider.overrideWithValue(SeletorDeFotoFalso()),
     ],
   );
   // sem ouvinte o Riverpod pausa a cadeia conta → perfil → turmas e o .future nunca resolve
@@ -293,5 +295,28 @@ void main() {
       'bia',
     ]);
     expect(api.chamadas.last, 'obterTurma:turma-1');
+  });
+
+  test('embaralhar grava o detalhe devolvido', () async {
+    final eu = pessoaDoEu(euDeTeste());
+    final bia = pessoaDeTeste();
+    final api = FakeApi(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste(totalDeMembros: 2)],
+      membrosPor: {
+        'turma-1': [membroDeTeste(eu, 1), membroDeTeste(bia, 2)],
+      },
+    );
+    final c = montar(api: api);
+    // sem isto a cadeia turmas → perfil ainda pode registrar 'listarTurmas' depois da chamada afirmada
+    await c.read(turmasProvider.future);
+    c.listen(turmaDetalheProvider('turma-1'), (_, _) {});
+    await c.read(turmaDetalheProvider('turma-1').future);
+
+    await c.read(turmaDetalheProvider('turma-1').notifier).embaralhar();
+
+    final membros = c.read(turmaDetalheProvider('turma-1')).value!.membros;
+    expect(membros.map((m) => m.pessoa.id), [bia.id, eu.id]);
+    expect(api.chamadas.last, 'embaralharOrdem:turma-1');
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/alteracoes_do_eu.dart';
 import 'package:connactions_app/app/dependencias.dart';
@@ -175,5 +177,47 @@ void main() {
       ),
     );
     expect(c.read(perfilAtualProvider).value?.handle, 'marina.d');
+  });
+
+  test('trocarFoto grava o Eu devolvido', () async {
+    final api = FakeApi(eu: euDeTeste());
+    final c = montar(
+      autenticador: AutenticadorFalso(conta: contaDeTeste),
+      api: api,
+    );
+    await c.read(perfilAtualProvider.future);
+
+    final eu = await c
+        .read(perfilAtualProvider.notifier)
+        .trocarFoto(fotoDeTeste());
+
+    expect(eu.fotoUrl, 'http://midia.local/midia/perfis/foto.jpg');
+    expect(c.read(perfilAtualProvider).value?.fotoUrl, eu.fotoUrl);
+    expect(api.chamadas.last, 'trocarFoto:foto.jpg');
+  });
+
+  test('trocarFoto espera o perfil assentar antes de enviar', () async {
+    final api = FakeApi(eu: euDeTeste())..segurarObterEu = Completer<void>();
+    final c = montar(
+      autenticador: AutenticadorFalso(conta: contaDeTeste),
+      api: api,
+    );
+
+    final futuro = c
+        .read(perfilAtualProvider.notifier)
+        .trocarFoto(fotoDeTeste());
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(api.chamadas, isNot(contains('trocarFoto:foto.jpg')));
+
+    api.segurarObterEu!.complete();
+    final eu = await futuro;
+
+    expect(
+      api.chamadas.indexOf('obterEu'),
+      lessThan(api.chamadas.indexOf('trocarFoto:foto.jpg')),
+    );
+    expect(c.read(perfilAtualProvider).value?.fotoUrl, eu.fotoUrl);
   });
 }
