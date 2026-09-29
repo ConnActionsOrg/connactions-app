@@ -34,13 +34,14 @@ class Eu {
   Eu copyWith({
     String? nome,
     String? handle,
+    String? fotoUrl,
     String? bio,
     bool? atividadesVisiveis,
   }) => Eu(
     id: id,
     handle: handle ?? this.handle,
     nome: nome ?? this.nome,
-    fotoUrl: fotoUrl,
+    fotoUrl: fotoUrl ?? this.fotoUrl,
     bio: bio ?? this.bio,
     codigoDeAmigo: codigoDeAmigo,
     atividadesVisiveis: atividadesVisiveis ?? this.atividadesVisiveis,
