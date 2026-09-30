@@ -16,6 +16,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../apoio/app_de_teste.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/seletor_de_foto_falso.dart';
+import '../../apoio/seletor_que_lanca.dart';
 
 /// Bytes que nenhum decodificador reconhece: a prévia cai sempre no mesmo fundo neutro de 200 px,
 /// e o "Postar" fica dentro dos 800x600. Os de `fotoDeTeste()` começam como um JPEG, e o motor
@@ -84,6 +85,7 @@ void main() {
     final leituras = api.chamadas
         .where((c) => c.startsWith('obterAtividadeAberta'))
         .length;
+    final turmasLidas = api.chamadas.where((c) => c == 'listarTurmas').length;
 
     await tester.tap(find.text('Postar'));
     await tester.pumpAndSettle();
@@ -96,6 +98,11 @@ void main() {
     expect(
       api.chamadas.where((c) => c.startsWith('obterAtividadeAberta')).length,
       greaterThan(leituras),
+    );
+    // o 409 pode significar que a vez andou: o cartão da vez também se relê
+    expect(
+      api.chamadas.where((c) => c == 'listarTurmas').length,
+      turmasLidas + 1,
     );
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
@@ -308,7 +315,7 @@ void main() {
     testWidgets(
       'seletor que lança (sem câmera, permissão negada) avisa e não abre a tela',
       (tester) async {
-        await tocarEmNovaFoto(tester, _SeletorQueLanca());
+        await tocarEmNovaFoto(tester, SeletorQueLanca());
 
         await tester.tap(find.text('Tirar foto'));
         await tester.pumpAndSettle();
@@ -320,11 +327,4 @@ void main() {
       },
     );
   });
-}
-
-/// Sem câmera ou com a permissão negada o plugin lança em vez de devolver null.
-class _SeletorQueLanca implements SeletorDeFoto {
-  @override
-  Future<FotoParaEnviar?> escolher(OrigemDaFoto origem) =>
-      Future.error(PlatformException(code: 'camera_access_denied'));
 }

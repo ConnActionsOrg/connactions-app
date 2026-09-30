@@ -4,13 +4,17 @@ import '../../api/modelos/atividade.dart';
 import '../../api/modelos/foto_para_enviar.dart';
 import '../../api/modelos/proposta.dart';
 import '../../api/modelos/registro.dart';
+import '../../app/assentado.dart';
 import '../../app/dependencias.dart';
 import '../diario/diario.dart';
 import '../turmas/turmas.dart';
 
 /// A atividade aberta de uma turma, por id; nula quando não há. Só é observada com turma ativa,
-/// então o perfil já existe. Toda mutação espera o build assentar (um build em voo sobrescreveria).
-class AtividadeAberta extends AsyncNotifier<Atividade?> {
+/// então o perfil já existe. Toda mutação espera o build assentar (um build em voo sobrescreveria)
+/// e lê do `ref` o que vai usar antes do primeiro await: a família pode ser descartada enquanto a
+/// API responde.
+class AtividadeAberta extends AsyncNotifier<Atividade?>
+    with EsperaOBuild<Atividade?> {
   AtividadeAberta(this.turmaId);
 
   final String turmaId;
@@ -20,53 +24,62 @@ class AtividadeAberta extends AsyncNotifier<Atividade?> {
       ref.watch(apiProvider).obterAtividadeAberta(turmaId);
 
   Future<Atividade> lancar(Proposta proposta) async {
-    await future;
-    final atividade = await ref
-        .read(apiProvider)
-        .lancarAtividade(turmaId, proposta);
+    final api = ref.read(apiProvider);
+    await assentado;
+    final atividade = await api.lancarAtividade(turmaId, proposta);
     if (ref.mounted) state = AsyncData(atividade);
     return atividade;
   }
 
   /// Zera a aberta, entrega a turma (com a vez nova) à lista e manda o Diário reler.
   Future<Encerramento> encerrar() async {
-    final atual = await future;
+    final api = ref.read(apiProvider);
+    final turmas = ref.read(turmasProvider.notifier);
+    final atual = await assentado;
     if (atual == null) {
       throw StateError('não há atividade aberta para encerrar');
     }
-    final encerramento = await ref
-        .read(apiProvider)
-        .encerrarAtividade(atual.id);
+    final encerramento = await api.encerrarAtividade(atual.id);
+    // a vez já andou na API, mesmo que ninguém mais observe esta aberta
+    turmas.substituir(encerramento.turma);
     if (!ref.mounted) return encerramento;
     state = const AsyncData(null);
-    ref.read(turmasProvider.notifier).substituir(encerramento.turma);
     ref.invalidate(diarioProvider(turmaId));
     return encerramento;
   }
 
   Future<Registro> registrar(FotoParaEnviar foto, String legenda) async {
-    final atual = await future;
+    final api = ref.read(apiProvider);
+    final atual = await assentado;
     if (atual == null) {
       throw StateError('não há atividade aberta para registrar');
     }
-    final registro = await ref
-        .read(apiProvider)
-        .registrar(atual.id, foto: foto, legenda: legenda);
+    final registro = await api.registrar(
+      atual.id,
+      foto: foto,
+      legenda: legenda,
+    );
     if (ref.mounted) {
-      final agora = state.value ?? atual;
-      state = AsyncData(
-        agora.copyWith(registros: [...agora.registros, registro]),
-      );
+      final agora = state.value;
+      // um encerrar que chegou antes já zerou a aberta: não a ressuscitar com este registro
+      if (agora != null && agora.id == atual.id) {
+        state = AsyncData(
+          agora.copyWith(registros: [...agora.registros, registro]),
+        );
+      }
     }
     return registro;
   }
 
   Future<void> apagarRegistro(String id) async {
-    final atual = await future;
+    final api = ref.read(apiProvider);
+    final atual = await assentado;
     if (atual == null) return;
-    await ref.read(apiProvider).apagarRegistro(id);
+    await api.apagarRegistro(id);
     if (!ref.mounted) return;
-    final agora = state.value ?? atual;
+    final agora = state.value;
+    // encerrada enquanto a API respondia: não ressuscitar a aberta
+    if (agora == null || agora.id != atual.id) return;
     state = AsyncData(
       agora.copyWith(
         registros: [
@@ -84,3 +97,9 @@ final atividadeAbertaProvider = AsyncNotifierProvider.autoDispose
       AtividadeAberta.new,
       retry: (_, _) => null,
     );
+
+/// O estado mudou embaixo de mim (409): relê a aberta e a lista de turmas, porque encerrar move a vez.
+void invalidarRodada(WidgetRef ref, String turmaId) {
+  ref.invalidate(atividadeAbertaProvider(turmaId));
+  ref.invalidate(turmasProvider);
+}

@@ -8,12 +8,12 @@ import 'package:connactions_app/design/widgets/avatar.dart';
 import 'package:connactions_app/features/perfil/tela_de_editar_perfil.dart';
 import 'package:connactions_app/features/perfil/tela_do_perfil.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/seletor_de_foto_falso.dart';
+import '../../apoio/seletor_que_lanca.dart';
 
 Future<void> abrirEdicao(
   WidgetTester tester,
@@ -231,7 +231,7 @@ void main() {
     'seletor que lança (sem câmera, permissão negada) avisa e não chama a API',
     (tester) async {
       final api = FakeApi(eu: euDeTeste());
-      await abrirEdicao(tester, api, seletor: _SeletorQueLanca());
+      await abrirEdicao(tester, api, seletor: SeletorQueLanca());
 
       await tester.tap(find.text('Trocar foto'));
       await tester.pumpAndSettle();
@@ -278,13 +278,6 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
-}
-
-/// Sem câmera ou com a permissão negada o plugin lança em vez de devolver null.
-class _SeletorQueLanca implements SeletorDeFoto {
-  @override
-  Future<FotoParaEnviar?> escolher(OrigemDaFoto origem) =>
-      Future.error(PlatformException(code: 'camera_access_denied'));
 }
 
 /// Prende o envio da foto até o teste liberar: prova o estado de "enviando" sem depender de tempo.

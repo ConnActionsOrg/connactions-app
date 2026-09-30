@@ -102,10 +102,16 @@ class _ComTurma extends ConsumerWidget {
     final aberta = ref.watch(atividadeAbertaProvider(turma.id));
     final agora = ref.watch(relogioProvider)();
     return RefreshIndicator(
-      onRefresh: () => Future.wait<Object?>([
-        ref.refresh(turmasProvider.future),
-        ref.refresh(atividadeAbertaProvider(turma.id).future),
-      ]),
+      onRefresh: () async {
+        try {
+          await Future.wait<Object?>([
+            ref.refresh(turmasProvider.future),
+            ref.refresh(atividadeAbertaProvider(turma.id).future),
+          ]);
+        } catch (e) {
+          if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
+        }
+      },
       child: ListView(
         padding: const EdgeInsets.fromLTRB(
           Espacos.margemDaTela,
@@ -146,7 +152,8 @@ class _ComTurma extends ConsumerWidget {
         _CartaoDaVez(
           turma: turma,
           souEu: turma.vezDe.id == euId,
-          carregando: aberta.isLoading,
+          // recarga com o valor já na tela (puxar para baixo) não esconde o botão de propor
+          carregando: aberta.isLoading && !aberta.hasValue,
         ),
       ];
     }
@@ -316,14 +323,16 @@ class _Registros extends ConsumerWidget {
   final String? euId;
   final DateTime agora;
 
-  /// O 409 (a atividade foi encerrada em outro aparelho) segue para o visualizador avisar. A aberta só
-  /// é relida quando ele fecha: coberto por ele, o Feed está com o ouvinte pausado.
+  /// O 409 (a atividade foi encerrada em outro aparelho) segue para o visualizador, que fecha e
+  /// avisa. A rodada só é relida quando ele fecha: coberto por ele, o Feed está com o ouvinte pausado.
   Future<void> _apagar(WidgetRef ref, String registroId) async {
     final aberta = atividadeAbertaProvider(atividade.turmaId);
     try {
       await ref.read(aberta.notifier).apagarRegistro(registroId);
     } on ErroDaApi catch (e) {
-      if (e.conflito) ref.invalidate(aberta);
+      if (e.conflito && ref.context.mounted) {
+        invalidarRodada(ref, atividade.turmaId);
+      }
       rethrow;
     }
   }
@@ -488,7 +497,7 @@ class _BotaoEncerrar extends ConsumerWidget {
     } on ErroDaApi catch (e) {
       if (!context.mounted) return;
       mostrarAviso(context, e.mensagem);
-      if (e.conflito) ref.invalidate(atividadeAbertaProvider(turmaId));
+      if (e.conflito) invalidarRodada(ref, turmaId);
     } catch (e) {
       if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
     }

@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/modelos/pagina_do_diario.dart';
+import '../../app/assentado.dart';
 import '../../app/dependencias.dart';
 
 /// As encerradas de uma turma, acumuladas página a página.
-class Diario extends AsyncNotifier<PaginaDoDiario> {
+class Diario extends AsyncNotifier<PaginaDoDiario>
+    with EsperaOBuild<PaginaDoDiario> {
   Diario(this.turmaId);
 
   final String turmaId;
@@ -15,11 +17,7 @@ class Diario extends AsyncNotifier<PaginaDoDiario> {
 
   /// Pede a página seguinte e concatena; sem `proximo`, não faz nada.
   Future<void> carregarMais() async {
-    // Recarga que falhou deixa o erro junto da página que já estava: `await future` repetiria o erro
-    // e o botão nunca mais pediria nada. Com uma recarga em voo, espera por ela.
-    final atual = state.hasError && state.hasValue && !state.isLoading
-        ? state.requireValue
-        : await future;
+    final atual = await assentado;
     final proximo = atual.proximo;
     if (proximo == null) return;
     final pagina = await ref

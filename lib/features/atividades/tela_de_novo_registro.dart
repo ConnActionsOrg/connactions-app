@@ -5,8 +5,6 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../api/erro_da_api.dart';
 import '../../api/mensagens.dart';
 import '../../api/modelos/foto_para_enviar.dart';
-import '../../app/dependencias.dart';
-import '../../app/seletor_de_foto.dart';
 import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/widgets/aviso.dart';
@@ -20,30 +18,13 @@ Future<void> abrirNovoRegistro(
   WidgetRef ref, {
   required String turmaId,
 }) async {
-  final origem = await mostrarFolhaDeOrigemDaFoto(context);
-  if (origem == null || !context.mounted) return;
-  final foto = await _escolherFoto(context, ref, origem);
+  final foto = await escolherFoto(context, ref);
   if (foto == null || !context.mounted) return;
   await Navigator.of(context, rootNavigator: true).push<void>(
     MaterialPageRoute(
       builder: (_) => TelaDeNovoRegistro(turmaId: turmaId, foto: foto),
     ),
   );
-}
-
-/// `null` quando a pessoa cancela e também quando o aparelho não consegue (sem câmera, permissão
-/// negada): o plugin lança em vez de devolver null, e aí o motivo vira aviso.
-Future<FotoParaEnviar?> _escolherFoto(
-  BuildContext context,
-  WidgetRef ref,
-  OrigemDaFoto origem,
-) async {
-  try {
-    return await ref.read(seletorDeFotoProvider).escolher(origem);
-  } catch (e) {
-    if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
-    return null;
-  }
 }
 
 /// Prévia da foto escolhida e a legenda. Posta na atividade aberta da turma.
@@ -80,16 +61,18 @@ class _TelaDeNovoRegistroState extends ConsumerState<TelaDeNovoRegistro> {
       await aberta.registrar(widget.foto, _legenda.text.trim());
       if (!mounted) return;
       Navigator.of(context).pop();
-      mensageiro.showSnackBar(
-        const SnackBar(content: Text('Registro postado!')),
-      );
+      mensageiro
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Registro postado!')));
     } on ErroDaApi catch (e) {
       if (!mounted) return;
       if (e.conflito) {
         // o estado mudou embaixo de mim (já postei em outro aparelho, alguém encerrou): recarrega e volta
-        ref.invalidate(atividadeAbertaProvider(widget.turmaId));
+        invalidarRodada(ref, widget.turmaId);
         Navigator.of(context).pop();
-        mensageiro.showSnackBar(SnackBar(content: Text(e.mensagem)));
+        mensageiro
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(e.mensagem)));
       } else {
         mostrarAviso(context, e.mensagem);
       }

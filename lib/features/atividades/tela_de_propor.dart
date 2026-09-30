@@ -58,7 +58,8 @@ class _TelaDeProporState extends ConsumerState<TelaDePropor> {
   String? get _erroDasRegras {
     final regras = regrasDoTexto(_regras.text);
     if (regras.length > 10) return 'No máximo 10 regras.';
-    if (regras.any((r) => r.length > 100)) {
+    // a API conta pontos de código (runes), não unidades UTF-16: um emoji vale 1
+    if (regras.any((r) => r.runes.length > 100)) {
       return 'Cada regra tem até 100 caracteres.';
     }
     return null;
@@ -110,17 +111,18 @@ class _TelaDeProporState extends ConsumerState<TelaDePropor> {
           .lancar(proposta);
       if (!mounted) return;
       context.pop();
-      mensageiro.showSnackBar(
-        const SnackBar(content: Text('Atividade lançada!')),
-      );
+      mensageiro
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(content: Text('Atividade lançada!')));
     } on ErroDaApi catch (e) {
       if (!mounted) return;
       if (e.conflito) {
         // a vez passou ou alguém lançou antes: recarrega o que o Feed mostra e volta
-        ref.invalidate(atividadeAbertaProvider(widget.turmaId));
-        ref.invalidate(turmasProvider);
+        invalidarRodada(ref, widget.turmaId);
         context.pop();
-        mensageiro.showSnackBar(SnackBar(content: Text(e.mensagem)));
+        mensageiro
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(e.mensagem)));
       } else {
         mostrarAviso(context, e.mensagem);
       }

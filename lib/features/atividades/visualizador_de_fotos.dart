@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../api/erro_da_api.dart';
 import '../../api/mensagens.dart';
 import '../../api/modelos/registro.dart';
 import '../../design/cores.dart';
@@ -90,6 +91,8 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
       ),
     );
     if (confirmou != true || !mounted) return;
+    // o 409 fecha esta tela: o aviso sai pelo messenger da raiz, que sobrevive a ela e aparece no Feed
+    final mensageiro = ScaffoldMessenger.of(context);
     setState(() => _apagando = true);
     try {
       await widget.aoApagar!(registro);
@@ -109,6 +112,17 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
         _indice = _indice.clamp(0, _registros.length - 1).toInt();
         _paginas.jumpToPage(_indice);
       });
+    } on ErroDaApi catch (e) {
+      if (!mounted) return;
+      if (e.conflito) {
+        // encerrada em outro aparelho: estas fotos já não se apagam, então volta ao Feed
+        Navigator.of(context).pop();
+        mensageiro
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(e.mensagem)));
+      } else {
+        mostrarAviso(context, e.mensagem);
+      }
     } catch (e) {
       if (mounted) mostrarAviso(context, mensagemDoErro(e));
     } finally {
@@ -156,7 +170,10 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
               // ampliada, o arrasto é da foto e não da página
               physics: _ampliada ? const NeverScrollableScrollPhysics() : null,
               itemCount: _registros.length,
-              onPageChanged: (i) => setState(() => _indice = i),
+              // ao apagar, o PageView pode avisar de uma página que a lista encolhida já não tem
+              onPageChanged: (i) => setState(
+                () => _indice = i.clamp(0, _registros.length - 1).toInt(),
+              ),
               itemBuilder: (_, i) => _FotoAmpliavel(
                 key: ValueKey(_registros[i].id),
                 url: _registros[i].fotoUrl,

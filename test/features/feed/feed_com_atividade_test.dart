@@ -81,6 +81,9 @@ List<Registro> registrosDe(Pessoa autor, int n) => [
 int leiturasDaAberta(FakeApi api) =>
     api.chamadas.where((c) => c.startsWith('obterAtividadeAberta')).length;
 
+int leiturasDeTurmas(FakeApi api) =>
+    api.chamadas.where((c) => c == 'listarTurmas').length;
+
 void main() {
   testWidgets(
     'faixa, etiquetas, título, descrição, regras e o botão de registro',
@@ -297,6 +300,37 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('409 ao encerrar relê a aberta e a lista de turmas', (
+    tester,
+  ) async {
+    final api = apiCom(
+      aberta: atividadeDeTeste(),
+      falhaAoEncerrar: const ErroDaApi(
+        status: 409,
+        codigo: 'atividade_encerrada',
+        mensagem: 'Esta atividade já foi encerrada.',
+      ),
+    );
+    await abrirFeed(tester, api);
+    final leituras = leiturasDaAberta(api);
+    final turmasLidas = leiturasDeTurmas(api);
+    // encerrada em outro aparelho: a vez já passou para a Bia
+    api.abertaPor['turma-1'] = null;
+    api.turmas[0] = api.turmas.single.copyWith(vezDe: bia);
+    await rolarAte(tester, find.text('Encerrar atividade'));
+    await tester.tap(find.text('Encerrar atividade'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Encerrar'));
+    await tester.pumpAndSettle();
+
+    expect(leiturasDaAberta(api), leituras + 1);
+    expect(leiturasDeTurmas(api), turmasLidas + 1);
+    expect(find.text('É a vez de Bia propor'), findsOneWidget);
+    expect(find.text('É a sua vez de propor!'), findsNothing);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('erro ao carregar a aberta mostra tentar de novo e recupera', (
     tester,
   ) async {
@@ -412,6 +446,52 @@ void main() {
     expect(find.text('É a vez de Bia propor'), findsNothing);
   });
 
+  testWidgets('puxar para baixo sem rede avisa e a atividade continua', (
+    tester,
+  ) async {
+    final api = apiCom(aberta: atividadeDeTeste());
+    await abrirFeed(tester, api);
+    final leituras = leiturasDaAberta(api);
+    api.falhaAoObterAberta = const ErroDeRede('caiu');
+
+    await tester.fling(find.byType(ListView).first, const Offset(0, 300), 1000);
+    await tester.pumpAndSettle();
+
+    expect(leiturasDaAberta(api), leituras + 1);
+    expect(
+      find.text('Sem conexão com a API. Confira a rede e tente de novo.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Piquenique Temático de Comidas Amarelas'),
+      findsOneWidget,
+    );
+    // o erro da releitura não pode escapar do RefreshIndicator para o FlutterError.onError
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('recarga em voo mantém o botão Propor', (tester) async {
+    final api = apiCom();
+    await abrirFeed(tester, api);
+    expect(find.text('Propor atividade'), findsOneWidget);
+    final segurar = api.segurarObterAberta = Completer<void>();
+
+    await tester.fling(find.byType(ListView).first, const Offset(0, 300), 1000);
+    // sem pumpAndSettle: a releitura está presa e o indicador gira para sempre
+    for (var i = 0; i < 20; i++) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('Propor atividade'), findsOneWidget);
+
+    segurar.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Propor atividade'), findsOneWidget);
+  });
+
   group('apagar registro pelo visualizador', () {
     Future<void> abrirVisualizador(WidgetTester tester, FakeApi api) async {
       await abrirFeed(tester, api);
@@ -455,38 +535,38 @@ void main() {
       expect(find.byTooltip('Apagar'), findsNothing);
     });
 
-    testWidgets('409 avisa e o Feed relê a aberta quando o visualizador fecha', (
-      tester,
-    ) async {
-      final api = apiCom(
-        aberta: atividadeDeTeste(registros: [registroDeTeste(autor: eu)]),
-        falhaAoApagarRegistro: const ErroDaApi(
-          status: 409,
-          codigo: 'atividade_encerrada',
-          mensagem: 'Esta atividade já foi encerrada.',
-        ),
-      );
-      await abrirVisualizador(tester, api);
-      final leituras = leiturasDaAberta(api);
-      api.abertaPor['turma-1'] = null; // encerrada em outro aparelho
+    testWidgets(
+      '409 fecha o visualizador, avisa no Feed e o Feed relê a aberta e as turmas',
+      (tester) async {
+        final api = apiCom(
+          aberta: atividadeDeTeste(registros: [registroDeTeste(autor: eu)]),
+          falhaAoApagarRegistro: const ErroDaApi(
+            status: 409,
+            codigo: 'atividade_encerrada',
+            mensagem: 'Esta atividade já foi encerrada.',
+          ),
+        );
+        await abrirVisualizador(tester, api);
+        final leituras = leiturasDaAberta(api);
+        final turmasLidas = leiturasDeTurmas(api);
+        api.abertaPor['turma-1'] = null; // encerrada em outro aparelho
 
-      await apagarPeloVisualizador(tester);
+        await apagarPeloVisualizador(tester);
 
-      expect(find.text('Esta atividade já foi encerrada.'), findsOneWidget);
-      expect(find.byType(VisualizadorDeFotos), findsOneWidget);
-      // com o visualizador por cima o Feed está com o ouvinte pausado: a releitura só acontece ao fechar
-      await tester.tap(find.byTooltip('Fechar'));
-      await tester.pumpAndSettle();
-
-      expect(leiturasDaAberta(api), greaterThan(leituras));
-      expect(
-        find.text('Piquenique Temático de Comidas Amarelas'),
-        findsNothing,
-      );
-      expect(find.text('É a sua vez de propor!'), findsOneWidget);
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pumpAndSettle();
-    });
+        // o visualizador fecha sozinho e o aviso sai pelo messenger da raiz, já no Feed
+        expect(find.byType(VisualizadorDeFotos), findsNothing);
+        expect(find.text('Esta atividade já foi encerrada.'), findsOneWidget);
+        expect(leiturasDaAberta(api), greaterThan(leituras));
+        expect(leiturasDeTurmas(api), turmasLidas + 1);
+        expect(
+          find.text('Piquenique Temático de Comidas Amarelas'),
+          findsNothing,
+        );
+        expect(find.text('É a sua vez de propor!'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 5));
+        await tester.pumpAndSettle();
+      },
+    );
 
     testWidgets('recusa que não é conflito avisa e não relê a aberta', (
       tester,

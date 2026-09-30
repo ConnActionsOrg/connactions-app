@@ -220,4 +220,27 @@ void main() {
     );
     expect(c.read(perfilAtualProvider).value?.fotoUrl, eu.fotoUrl);
   });
+
+  test('trocarFoto depois de recarga do perfil que falhou chama a API', () async {
+    final api = FakeApi(eu: euDeTeste());
+    final c = montar(
+      autenticador: AutenticadorFalso(conta: contaDeTeste),
+      api: api,
+    );
+    await c.read(perfilAtualProvider.future);
+    // o erro da recarga sem rede fica junto do perfil que já estava; a rede volta antes da ação
+    api.falhaAoObter = const ErroDeRede('caiu');
+    await expectLater(
+      c.refresh(perfilAtualProvider.future),
+      throwsA(isA<ErroDeRede>()),
+    );
+    api.falhaAoObter = null;
+
+    final eu = await c
+        .read(perfilAtualProvider.notifier)
+        .trocarFoto(fotoDeTeste());
+
+    expect(api.chamadas.last, 'trocarFoto:foto.jpg');
+    expect(c.read(perfilAtualProvider).value?.fotoUrl, eu.fotoUrl);
+  });
 }

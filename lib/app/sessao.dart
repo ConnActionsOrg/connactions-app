@@ -4,6 +4,7 @@ import '../api/erro_da_api.dart';
 import '../api/modelos/alteracoes_do_eu.dart';
 import '../api/modelos/eu.dart';
 import '../api/modelos/foto_para_enviar.dart';
+import 'assentado.dart';
 import 'autenticador.dart';
 import 'dependencias.dart';
 
@@ -13,7 +14,7 @@ final contaProvider = StreamProvider<ContaLogada?>(
 );
 
 /// Perfil da pessoa logada, vindo da API. A primeira entrada é o cadastro: sem perfil (403), cria.
-class PerfilAtual extends AsyncNotifier<Eu?> {
+class PerfilAtual extends AsyncNotifier<Eu?> with EsperaOBuild<Eu?> {
   @override
   Future<Eu?> build() async {
     final conta = await ref.watch(contaProvider.future);
@@ -36,7 +37,7 @@ class PerfilAtual extends AsyncNotifier<Eu?> {
 
   /// Não otimista: o Eu volta com a URL da foto nova.
   Future<Eu> trocarFoto(FotoParaEnviar foto) async {
-    await future; // um build em voo sobrescreveria o que gravarmos abaixo
+    await assentado; // um build em voo sobrescreveria o que gravarmos abaixo
     final salvo = await ref.read(apiProvider).trocarFoto(foto);
     if (ref.mounted) state = AsyncData(salvo);
     return salvo;

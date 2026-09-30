@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/modelos/turma.dart';
+import '../../app/assentado.dart';
 import '../../app/dependencias.dart';
 
 /// Os membros de uma turma, por id. Descartada quando ninguém mais a observa.
-class DetalheDaTurma extends AsyncNotifier<TurmaDetalhe> {
+class DetalheDaTurma extends AsyncNotifier<TurmaDetalhe>
+    with EsperaOBuild<TurmaDetalhe> {
   DetalheDaTurma(this.id);
 
   final String id;
@@ -14,7 +16,7 @@ class DetalheDaTurma extends AsyncNotifier<TurmaDetalhe> {
 
   /// Grava o detalhe devolvido (os membros já na ordem nova).
   Future<void> embaralhar() async {
-    await future; // um build em voo sobrescreveria o que gravarmos abaixo
+    await assentado; // um build em voo sobrescreveria o que gravarmos abaixo
     final detalhe = await ref.read(apiProvider).embaralharOrdem(id);
     if (ref.mounted) state = AsyncData(detalhe);
   }

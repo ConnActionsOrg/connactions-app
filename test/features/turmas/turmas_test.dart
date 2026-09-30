@@ -319,4 +319,55 @@ void main() {
     expect(membros.map((m) => m.pessoa.id), [bia.id, eu.id]);
     expect(api.chamadas.last, 'embaralharOrdem:turma-1');
   });
+
+  test('criar depois de recarga que falhou chama a API', () async {
+    final api = FakeApi(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste(id: 'turma-1')],
+    );
+    final c = montar(api: api);
+    await c.read(turmasProvider.future);
+    // o erro da recarga sem rede fica junto da lista que já estava; a rede volta antes da ação
+    api.falhaAoListarTurmas = const ErroDeRede('caiu');
+    await expectLater(
+      c.refresh(turmasProvider.future),
+      throwsA(isA<ErroDeRede>()),
+    );
+    api.falhaAoListarTurmas = null;
+
+    final nova = await c
+        .read(turmasProvider.notifier)
+        .criar(nome: 'Rolê da Firma', emoji: '🍕');
+
+    expect(api.chamadas.last, 'criarTurma:Rolê da Firma:🍕');
+    expect(idsDe(c), ['turma-1', nova.id]);
+  });
+
+  test('embaralhar depois de recarga que falhou chama a API', () async {
+    final eu = pessoaDoEu(euDeTeste());
+    final bia = pessoaDeTeste();
+    final api = FakeApi(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste(totalDeMembros: 2)],
+      membrosPor: {
+        'turma-1': [membroDeTeste(eu, 1), membroDeTeste(bia, 2)],
+      },
+    );
+    final c = montar(api: api);
+    await c.read(turmasProvider.future);
+    c.listen(turmaDetalheProvider('turma-1'), (_, _) {});
+    await c.read(turmaDetalheProvider('turma-1').future);
+    api.falhaAoObterTurma = const ErroDeRede('caiu');
+    await expectLater(
+      c.refresh(turmaDetalheProvider('turma-1').future),
+      throwsA(isA<ErroDeRede>()),
+    );
+    api.falhaAoObterTurma = null;
+
+    await c.read(turmaDetalheProvider('turma-1').notifier).embaralhar();
+
+    expect(api.chamadas.last, 'embaralharOrdem:turma-1');
+    final membros = c.read(turmaDetalheProvider('turma-1')).value!.membros;
+    expect(membros.map((m) => m.pessoa.id), [bia.id, eu.id]);
+  });
 }

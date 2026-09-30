@@ -52,7 +52,14 @@ class TelaDaTurma extends ConsumerWidget {
     return Scaffold(
       appBar: Cabecalho(titulo: '${turma.emoji} ${turma.nome}'),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(turmaDetalheProvider(id).future),
+        onRefresh: () async {
+          try {
+            ref.invalidate(turmaDetalheProvider(id));
+            await ref.read(turmaDetalheProvider(id).future);
+          } catch (e) {
+            if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
+          }
+        },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
             Espacos.margemDaTela,
@@ -327,7 +334,7 @@ class _BotaoEmbaralhar extends ConsumerWidget {
     } on ErroDaApi catch (e) {
       if (!context.mounted) return;
       mostrarAviso(context, e.mensagem);
-      if (e.conflito) ref.invalidate(atividadeAbertaProvider(turmaId));
+      if (e.conflito) invalidarRodada(ref, turmaId);
     } catch (e) {
       if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
     }

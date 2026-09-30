@@ -1,13 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/modelos/turma.dart';
+import '../../app/assentado.dart';
 import '../../app/dependencias.dart';
 import '../../app/sessao.dart';
 import 'turma_ativa.dart';
 
 /// Minhas turmas. Espera o perfil antes de listar: garante o cadastro (POST /eu) antes de qualquer
 /// rota com ExigirPerfil, e faz o Feed consultar a API ao abrir.
-class Turmas extends AsyncNotifier<List<Turma>> {
+class Turmas extends AsyncNotifier<List<Turma>> with EsperaOBuild<List<Turma>> {
   @override
   Future<List<Turma>> build() async {
     final eu = await ref.watch(perfilAtualProvider.future);
@@ -16,7 +17,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   }
 
   Future<Turma> criar({required String nome, required String emoji}) async {
-    await future; // um build em voo sobrescreveria o que gravarmos abaixo
+    await assentado; // um build em voo sobrescreveria o que gravarmos abaixo
     final turma = await ref
         .read(apiProvider)
         .criarTurma(nome: nome, emoji: emoji);
@@ -27,7 +28,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   }
 
   Future<Turma> entrar(String codigo) async {
-    await future; // um build em voo sobrescreveria o que gravarmos abaixo
+    await assentado; // um build em voo sobrescreveria o que gravarmos abaixo
     final turma = await ref.read(apiProvider).entrarNaTurma(codigo: codigo);
     if (!ref.mounted) return turma;
     substituir(turma);
@@ -36,7 +37,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   }
 
   Future<void> sair(String id) async {
-    await future; // um build em voo sobrescreveria o que gravarmos abaixo
+    await assentado; // um build em voo sobrescreveria o que gravarmos abaixo
     await ref.read(apiProvider).sairDaTurma(id);
     if (!ref.mounted) return;
     final atuais = state.value ?? const <Turma>[];
@@ -47,7 +48,7 @@ class Turmas extends AsyncNotifier<List<Turma>> {
   }
 
   Future<Turma> regenerarConvite(String id) async {
-    await future; // um build em voo sobrescreveria o que gravarmos abaixo
+    await assentado; // um build em voo sobrescreveria o que gravarmos abaixo
     final turma = await ref.read(apiProvider).regenerarConvite(id);
     if (ref.mounted) substituir(turma);
     return turma;
