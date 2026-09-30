@@ -18,6 +18,7 @@ import '../../design/widgets/disco_de_emoji.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
 import '../../design/widgets/etiqueta.dart';
+import '../atividades/atividade_aberta.dart';
 import 'convite.dart';
 import 'detalhe_da_turma.dart';
 import 'turmas.dart';
@@ -46,6 +47,7 @@ class TelaDaTurma extends ConsumerWidget {
     if (erro is ErroDaApi && (erro.semAcesso || erro.naoEncontrado)) {
       return const _ForaDaTurma();
     }
+    final aberta = ref.watch(atividadeAbertaProvider(id));
     final euId = ref.watch(perfilAtualProvider).value?.id;
     return Scaffold(
       appBar: Cabecalho(titulo: '${turma.emoji} ${turma.nome}'),
@@ -65,7 +67,10 @@ class TelaDaTurma extends ConsumerWidget {
             const SizedBox(height: Espacos.lg),
             _Membros(
               turma: turma,
+              turmaId: id,
               detalhe: detalhe,
+              // enquanto não se sabe se há atividade aberta, trava
+              travado: !aberta.hasValue || aberta.value != null,
               aoTentarDeNovo: () => ref.invalidate(turmaDetalheProvider(id)),
             ),
             const SizedBox(height: Espacos.xl),
@@ -219,12 +224,16 @@ class _CartaoDoConvite extends ConsumerWidget {
 class _Membros extends StatelessWidget {
   const _Membros({
     required this.turma,
+    required this.turmaId,
     required this.detalhe,
+    required this.travado,
     required this.aoTentarDeNovo,
   });
 
   final Turma turma;
+  final String turmaId;
   final AsyncValue<TurmaDetalhe> detalhe;
+  final bool travado;
   final VoidCallback aoTentarDeNovo;
 
   @override
@@ -254,6 +263,8 @@ class _Membros extends StatelessWidget {
             child: Center(child: CircularProgressIndicator()),
           ),
         },
+        const SizedBox(height: Espacos.md),
+        _BotaoEmbaralhar(turmaId: turmaId, travado: travado),
       ],
     );
   }
@@ -297,6 +308,54 @@ class _LinhaDeMembro extends StatelessWidget {
             const Etiqueta(texto: 'Vez', tom: TomDaEtiqueta.ambar),
         ],
       ),
+    );
+  }
+}
+
+/// Qualquer membro embaralha; embaralhar de novo desfaz, então não há confirmação. Com atividade
+/// aberta a ordem está travada (a API recusaria com ordem_travada).
+class _BotaoEmbaralhar extends ConsumerWidget {
+  const _BotaoEmbaralhar({required this.turmaId, required this.travado});
+
+  final String turmaId;
+  final bool travado;
+
+  Future<void> _embaralhar(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(turmaDetalheProvider(turmaId).notifier).embaralhar();
+      if (context.mounted) mostrarAviso(context, 'Ordem embaralhada');
+    } on ErroDaApi catch (e) {
+      if (!context.mounted) return;
+      mostrarAviso(context, e.mensagem);
+      if (e.conflito) ref.invalidate(atividadeAbertaProvider(turmaId));
+    } catch (e) {
+      if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cores = Cores.de(context);
+    final tipografia = Tipografia.de(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton.icon(
+          onPressed: travado ? null : () => _embaralhar(context, ref),
+          icon: const Icon(Symbols.shuffle),
+          label: const Text('Embaralhar a ordem'),
+        ),
+        if (travado) ...[
+          const SizedBox(height: Espacos.xs),
+          Text(
+            'Com uma atividade aberta, a ordem fica travada.',
+            style: tipografia.corpoPequeno.copyWith(
+              color: cores.sobreSuperficieVariante,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ],
     );
   }
 }

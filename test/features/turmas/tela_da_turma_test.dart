@@ -1,4 +1,5 @@
 import 'package:connactions_app/api/erro_da_api.dart';
+import 'package:connactions_app/api/modelos/atividade.dart';
 import 'package:connactions_app/api/modelos/pessoa.dart';
 import 'package:connactions_app/api/modelos/turma.dart';
 import 'package:connactions_app/features/feed/tela_do_feed.dart';
@@ -14,7 +15,7 @@ import '../../apoio/navegar.dart';
 final eu = pessoaDoEu(euDeTeste());
 final bia = pessoaDeTeste();
 
-FakeApi apiComTurma({Pessoa? vezDe, List<Membro>? membros}) {
+FakeApi apiComTurma({Pessoa? vezDe, List<Membro>? membros, Atividade? aberta}) {
   final lista = membros ?? [membroDeTeste(eu, 1)];
   return FakeApi(
     eu: euDeTeste(),
@@ -22,6 +23,7 @@ FakeApi apiComTurma({Pessoa? vezDe, List<Membro>? membros}) {
       turmaDeTeste(id: 'turma-1', vezDe: vezDe, totalDeMembros: lista.length),
     ],
     membrosPor: {'turma-1': lista},
+    abertaPor: {'turma-1': aberta},
   );
 }
 
@@ -123,6 +125,113 @@ void main() {
     expect(api.chamadas.where((c) => c.startsWith('regenerar')), isEmpty);
     expect(find.text('ABCD2345'), findsOneWidget);
   });
+
+  testWidgets('embaralhar reordena os membros e avisa', (tester) async {
+    final api = apiComTurma(
+      membros: [membroDeTeste(eu, 1), membroDeTeste(bia, 2)],
+    );
+    await abrir(tester, api: api);
+    await tester.scrollUntilVisible(
+      find.text('Embaralhar a ordem'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Embaralhar a ordem'));
+    await tester.pumpAndSettle();
+
+    expect(api.chamadas.last, 'embaralharOrdem:turma-1');
+    final nomes = tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Text),
+          ),
+        )
+        .map((t) => t.data)
+        .where((d) => d == 'Bia Souza' || d == 'Marina Duarte')
+        .toList();
+    expect(nomes, ['Bia Souza', 'Marina Duarte']);
+    expect(find.text('Ordem embaralhada'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('com atividade aberta o embaralhar fica travado', (tester) async {
+    await abrir(tester, api: apiComTurma(aberta: atividadeDeTeste()));
+    await tester.scrollUntilVisible(
+      find.text('Embaralhar a ordem'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+    final botao = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Embaralhar a ordem'),
+    );
+    expect(botao.onPressed, isNull);
+    expect(
+      find.text('Com uma atividade aberta, a ordem fica travada.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'sem conseguir ler a atividade aberta, o embaralhar fica travado',
+    (tester) async {
+      final api = apiComTurma()..falhaAoObterAberta = const ErroDeRede('caiu');
+      await abrir(tester, api: api);
+      await tester.scrollUntilVisible(
+        find.text('Embaralhar a ordem'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+
+      final botao = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Embaralhar a ordem'),
+      );
+      expect(botao.onPressed, isNull);
+    },
+  );
+
+  testWidgets(
+    'ordem travada por outro aparelho avisa e passa a travar o botão',
+    (tester) async {
+      final api = apiComTurma();
+      await abrir(tester, api: api);
+      await tester.scrollUntilVisible(
+        find.text('Embaralhar a ordem'),
+        200,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pumpAndSettle();
+      int leiturasDaAberta() =>
+          api.chamadas.where((c) => c == 'obterAtividadeAberta:turma-1').length;
+      final leiturasAntes = leiturasDaAberta();
+      // alguém lançou uma atividade depois que esta tela leu a aberta
+      api.abertaPor['turma-1'] = atividadeDeTeste();
+
+      await tester.tap(find.text('Embaralhar a ordem'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('A ordem não pode ser embaralhada com uma atividade aberta.'),
+        findsOneWidget,
+      );
+      expect(leiturasDaAberta(), leiturasAntes + 1);
+      final botao = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Embaralhar a ordem'),
+      );
+      expect(botao.onPressed, isNull);
+      expect(
+        find.text('Com uma atividade aberta, a ordem fica travada.'),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    },
+  );
 
   testWidgets('sair como último membro avisa que apaga a turma', (
     tester,
