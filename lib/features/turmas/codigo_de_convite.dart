@@ -12,7 +12,9 @@ bool codigoCompleto(String codigo) =>
     codigo.length == tamanhoDoCodigo &&
     codigo.split('').every(alfabetoDoCodigo.contains);
 
-/// Formatador do campo: maiúsculas, só o alfabeto do código, até oito caracteres.
+/// Formatador do campo: maiúsculas, só o alfabeto do código, até oito caracteres. Colar a
+/// mensagem do convite (o WhatsApp copia a mensagem inteira) passa de oito: aí vale o código
+/// escrito nela, e não as primeiras letras de "Vem pra turma".
 class FormatadorDeCodigo extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -21,10 +23,21 @@ class FormatadorDeCodigo extends TextInputFormatter {
   ) {
     final limpo = normalizarCodigo(
       novo.text,
-    ).split('').where(alfabetoDoCodigo.contains).take(tamanhoDoCodigo).join();
+    ).split('').where(alfabetoDoCodigo.contains).join();
+    final codigo = limpo.length <= tamanhoDoCodigo
+        ? limpo
+        : _codigoEscritoEm(novo.text) ?? limpo.substring(0, tamanhoDoCodigo);
     return TextEditingValue(
-      text: limpo,
-      selection: TextSelection.collapsed(offset: limpo.length),
+      text: codigo,
+      selection: TextSelection.collapsed(offset: codigo.length),
     );
   }
 }
+
+/// A última palavra que é um código completo: o convite termina no código, e o nome da turma,
+/// antes dele, pode ter uma palavra de oito letras do alfabeto.
+String? _codigoEscritoEm(String texto) => RegExp(r'[A-Za-z0-9]+')
+    .allMatches(texto)
+    .map((m) => m[0]!.toUpperCase())
+    .where(codigoCompleto)
+    .lastOrNull;

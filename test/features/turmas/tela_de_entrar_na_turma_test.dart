@@ -1,5 +1,6 @@
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/features/feed/tela_do_feed.dart';
+import 'package:connactions_app/features/turmas/convite.dart';
 import 'package:connactions_app/features/turmas/tela_de_entrar_na_turma.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -92,6 +93,30 @@ void main() {
 
     expect(api.chamadas, contains('entrarNaTurma:WXYZ6789'));
     expect(prefs.valores['turma_ativa_id'], 'turma-2');
+    expect(find.byType(TelaDoFeed), findsOneWidget);
+  });
+
+  testWidgets('colar a mensagem inteira do convite entra com o código dela', (
+    tester,
+  ) async {
+    final turma = turmaDeTeste(
+      id: 'turma-2',
+      nome: 'Turma Teste',
+      emoji: '🎲',
+      codigoConvite: 'VKMTANJK',
+      vezDe: pessoaDeTeste(),
+      totalDeMembros: 2,
+    );
+    final api = FakeApi(eu: euDeTeste(), convites: {'VKMTANJK': turma});
+    await abrir(tester, api: api);
+
+    // o "Copiar" do compartilhamento, como o do WhatsApp, leva a mensagem e não só o código
+    await tester.enterText(find.byType(TextField), textoDoConvite(turma));
+    await tester.pump();
+    await tester.tap(find.text('Entrar na turma'));
+    await tester.pumpAndSettle();
+
+    expect(api.chamadas, contains('entrarNaTurma:VKMTANJK'));
     expect(find.byType(TelaDoFeed), findsOneWidget);
   });
 

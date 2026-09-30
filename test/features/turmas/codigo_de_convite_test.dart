@@ -1,5 +1,8 @@
 import 'package:connactions_app/features/turmas/codigo_de_convite.dart';
+import 'package:connactions_app/features/turmas/convite.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../../apoio/fake_api.dart';
 
 void main() {
   test('normalizar tira espaços e sobe para maiúsculas', () {
@@ -30,4 +33,24 @@ void main() {
     expect(saida.text, 'ABCD2345');
     expect(saida.selection.baseOffset, 8);
   });
+
+  test(
+    'no convite colado, o código ganha da palavra do nome com oito letras',
+    () {
+      final convite = textoDoConvite(
+        turmaDeTeste(
+          nome: 'Cervejas de Sexta',
+          emoji: '🍺',
+          codigoConvite: 'VKMTANJK',
+        ),
+      );
+      final saida = FormatadorDeCodigo().formatEditUpdate(
+        TextEditingValue.empty,
+        TextEditingValue(text: convite),
+      );
+      // "Cervejas" também é um código completo; o convite termina no código
+      expect(saida.text, 'VKMTANJK');
+      expect(saida.selection.baseOffset, 8);
+    },
+  );
 }
