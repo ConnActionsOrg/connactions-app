@@ -36,6 +36,7 @@ FakeApi apiCom({
   bool soEu = false,
   Object? falhaAoObterAberta,
   Object? falhaAoEncerrar,
+  Object? falhaAoApagarRegistro,
 }) => FakeApi(
   eu: euDeTeste(),
   turmas: [turmaDeTeste(vezDe: vezDe, totalDeMembros: soEu ? 1 : 2)],
@@ -47,6 +48,7 @@ FakeApi apiCom({
   abertaPor: {'turma-1': aberta},
   falhaAoObterAberta: falhaAoObterAberta,
   falhaAoEncerrar: falhaAoEncerrar,
+  falhaAoApagarRegistro: falhaAoApagarRegistro,
 );
 
 Future<void> abrirFeed(
@@ -183,13 +185,13 @@ void main() {
       apiCom(
         aberta: atividadeDeTeste(
           formato: FormatoDeAtividade.grupo,
-          registros: registrosDe(eu, 3),
+          registros: registrosDe(eu, 9),
         ),
       ),
     );
     expect(find.text('Em grupo'), findsOneWidget);
-    await rolarAte(tester, find.text('Adicionar foto (3/10)'));
-    expect(find.text('3 postados'), findsOneWidget);
+    await rolarAte(tester, find.text('Adicionar foto (9/10)'));
+    expect(find.text('9 postados'), findsOneWidget);
 
     await abrirFeed(
       tester,
@@ -419,6 +421,13 @@ void main() {
       expect(find.byType(VisualizadorDeFotos), findsOneWidget);
     }
 
+    Future<void> apagarPeloVisualizador(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('Apagar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Apagar').last);
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('o meu sai da atividade e o botão de postar volta', (
       tester,
     ) async {
@@ -427,10 +436,7 @@ void main() {
       );
       await abrirVisualizador(tester, api);
 
-      await tester.tap(find.byTooltip('Apagar'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Apagar').last);
-      await tester.pumpAndSettle();
+      await apagarPeloVisualizador(tester);
 
       expect(api.chamadas, contains('apagarRegistro:reg-1'));
       expect(find.byType(VisualizadorDeFotos), findsNothing);
@@ -447,6 +453,64 @@ void main() {
       await abrirVisualizador(tester, api);
 
       expect(find.byTooltip('Apagar'), findsNothing);
+    });
+
+    testWidgets('409 avisa e o Feed relê a aberta quando o visualizador fecha', (
+      tester,
+    ) async {
+      final api = apiCom(
+        aberta: atividadeDeTeste(registros: [registroDeTeste(autor: eu)]),
+        falhaAoApagarRegistro: const ErroDaApi(
+          status: 409,
+          codigo: 'atividade_encerrada',
+          mensagem: 'Esta atividade já foi encerrada.',
+        ),
+      );
+      await abrirVisualizador(tester, api);
+      final leituras = leiturasDaAberta(api);
+      api.abertaPor['turma-1'] = null; // encerrada em outro aparelho
+
+      await apagarPeloVisualizador(tester);
+
+      expect(find.text('Esta atividade já foi encerrada.'), findsOneWidget);
+      expect(find.byType(VisualizadorDeFotos), findsOneWidget);
+      // com o visualizador por cima o Feed está com o ouvinte pausado: a releitura só acontece ao fechar
+      await tester.tap(find.byTooltip('Fechar'));
+      await tester.pumpAndSettle();
+
+      expect(leiturasDaAberta(api), greaterThan(leituras));
+      expect(
+        find.text('Piquenique Temático de Comidas Amarelas'),
+        findsNothing,
+      );
+      expect(find.text('É a sua vez de propor!'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('recusa que não é conflito avisa e não relê a aberta', (
+      tester,
+    ) async {
+      final api = apiCom(
+        aberta: atividadeDeTeste(registros: [registroDeTeste(autor: eu)]),
+        falhaAoApagarRegistro: const ErroDaApi(
+          status: 403,
+          codigo: 'sem_acesso',
+          mensagem: 'Só quem postou pode apagar.',
+        ),
+      );
+      await abrirVisualizador(tester, api);
+      final leituras = leiturasDaAberta(api);
+
+      await apagarPeloVisualizador(tester);
+
+      expect(find.text('Só quem postou pode apagar.'), findsOneWidget);
+      await tester.tap(find.byTooltip('Fechar'));
+      await tester.pumpAndSettle();
+      expect(leiturasDaAberta(api), leituras);
+      expect(find.byType(CartaoDeRegistro), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
     });
   });
 

@@ -316,6 +316,18 @@ class _Registros extends ConsumerWidget {
   final String? euId;
   final DateTime agora;
 
+  /// O 409 (a atividade foi encerrada em outro aparelho) segue para o visualizador avisar. A aberta só
+  /// é relida quando ele fecha: coberto por ele, o Feed está com o ouvinte pausado.
+  Future<void> _apagar(WidgetRef ref, String registroId) async {
+    final aberta = atividadeAbertaProvider(atividade.turmaId);
+    try {
+      await ref.read(aberta.notifier).apagarRegistro(registroId);
+    } on ErroDaApi catch (e) {
+      if (e.conflito) ref.invalidate(aberta);
+      rethrow;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cores = Cores.de(context);
@@ -364,9 +376,7 @@ class _Registros extends ConsumerWidget {
                   indiceInicial: i,
                   agora: agora,
                   podeApagar: (r) => r.autor.id == euId && atividade.aberta,
-                  aoApagar: (r) => ref
-                      .read(atividadeAbertaProvider(atividade.turmaId).notifier)
-                      .apagarRegistro(r.id),
+                  aoApagar: (r) => _apagar(ref, r.id),
                 ),
               ),
             ),
