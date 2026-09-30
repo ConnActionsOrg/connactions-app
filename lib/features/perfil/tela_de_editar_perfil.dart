@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../api/erro_da_api.dart';
 import '../../api/mensagens.dart';
 import '../../api/modelos/alteracoes_do_eu.dart';
 import '../../api/modelos/eu.dart';
+import '../../api/modelos/foto_para_enviar.dart';
+import '../../app/dependencias.dart';
+import '../../app/seletor_de_foto.dart';
 import '../../app/sessao.dart';
 import '../../design/medidas.dart';
 import '../../design/widgets/aviso.dart';
+import '../../design/widgets/avatar.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../atividades/folha_de_origem_da_foto.dart';
 
 /// Nome, @handle e bio. Manda só o que mudou; handle em uso vira erro no campo, não aviso.
 class TelaDeEditarPerfil extends ConsumerStatefulWidget {
@@ -102,6 +108,8 @@ class _TelaDeEditarPerfilState extends ConsumerState<TelaDeEditarPerfil> {
         Espacos.xl,
       ),
       children: [
+        const _Foto(),
+        const SizedBox(height: Espacos.lg),
         TextField(
           controller: _nome,
           maxLength: 80,
@@ -154,6 +162,68 @@ class _TelaDeEditarPerfilState extends ConsumerState<TelaDeEditarPerfil> {
       ],
     ),
   );
+}
+
+/// Avatar atual com "Trocar foto": folha de origem → seletor → PUT /eu/foto. Independente do
+/// Salvar dos campos de texto.
+class _Foto extends ConsumerStatefulWidget {
+  const _Foto();
+
+  @override
+  ConsumerState<_Foto> createState() => _FotoState();
+}
+
+class _FotoState extends ConsumerState<_Foto> {
+  bool _trocando = false;
+
+  Future<void> _trocar() async {
+    final origem = await mostrarFolhaDeOrigemDaFoto(context);
+    if (origem == null || !mounted) return;
+    final foto = await _escolherFoto(origem);
+    if (foto == null || !mounted) return;
+    setState(() => _trocando = true);
+    try {
+      await ref.read(perfilAtualProvider.notifier).trocarFoto(foto);
+      if (mounted) mostrarAviso(context, 'Foto atualizada');
+    } catch (e) {
+      if (mounted) mostrarAviso(context, mensagemDoErro(e));
+    } finally {
+      if (mounted) setState(() => _trocando = false);
+    }
+  }
+
+  /// `null` quando a pessoa cancela e também quando o aparelho não consegue (sem câmera, permissão
+  /// negada): o plugin lança em vez de devolver null, e aí o motivo vira aviso.
+  Future<FotoParaEnviar?> _escolherFoto(OrigemDaFoto origem) async {
+    try {
+      return await ref.read(seletorDeFotoProvider).escolher(origem);
+    } catch (e) {
+      if (mounted) mostrarAviso(context, mensagemDoErro(e));
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final eu = ref.watch(perfilAtualProvider).value;
+    if (eu == null) return const SizedBox.shrink();
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Avatar(nome: eu.nome, fotoUrl: eu.fotoUrl, tamanho: 96),
+            if (_trocando) const CircularProgressIndicator(),
+          ],
+        ),
+        TextButton.icon(
+          onPressed: _trocando ? null : _trocar,
+          icon: const Icon(Symbols.photo_camera),
+          label: const Text('Trocar foto'),
+        ),
+      ],
+    );
+  }
 }
 
 /// Antes do filtro de caracteres: "Marina.D" vira "marina.d" em vez de perder o M.

@@ -1,14 +1,26 @@
+import 'dart:async';
+
 import 'package:connactions_app/api/erro_da_api.dart';
+import 'package:connactions_app/api/modelos/eu.dart';
+import 'package:connactions_app/api/modelos/foto_para_enviar.dart';
+import 'package:connactions_app/app/seletor_de_foto.dart';
+import 'package:connactions_app/design/widgets/avatar.dart';
 import 'package:connactions_app/features/perfil/tela_de_editar_perfil.dart';
 import 'package:connactions_app/features/perfil/tela_do_perfil.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
 import '../../apoio/fake_api.dart';
+import '../../apoio/seletor_de_foto_falso.dart';
 
-Future<void> abrirEdicao(WidgetTester tester, FakeApi api) async {
-  await tester.pumpWidget(appDeTeste(api: api));
+Future<void> abrirEdicao(
+  WidgetTester tester,
+  FakeApi api, {
+  SeletorDeFoto? seletor,
+}) async {
+  await tester.pumpWidget(appDeTeste(api: api, seletorDeFoto: seletor));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Perfil'));
   await tester.pumpAndSettle();
@@ -24,6 +36,13 @@ String textoDo(WidgetTester tester, String rotulo) =>
 
 FilledButton botaoSalvar(WidgetTester tester) =>
     tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Salvar'));
+
+/// O Salvar fica no fim do ListView, abaixo da dobra no viewport de teste.
+Future<void> tocarEmSalvar(WidgetTester tester) async {
+  await tester.ensureVisible(find.text('Salvar'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Salvar'));
+}
 
 void main() {
   testWidgets('abre com os valores atuais e Salvar desabilitado', (
@@ -50,7 +69,7 @@ void main() {
     await tester.pump();
     expect(botaoSalvar(tester).onPressed, isNotNull);
 
-    await tester.tap(find.text('Salvar'));
+    await tocarEmSalvar(tester);
     await tester.pumpAndSettle();
 
     expect(api.chamadas.last, 'atualizarEu:{"nome":"Marina D."}');
@@ -72,7 +91,7 @@ void main() {
     await tester.pump();
     expect(textoDo(tester, '@handle'), 'marina.dd');
 
-    await tester.tap(find.text('Salvar'));
+    await tocarEmSalvar(tester);
     await tester.pumpAndSettle();
     expect(api.chamadas.last, 'atualizarEu:{"handle":"marina.dd"}');
 
@@ -93,7 +112,7 @@ void main() {
 
     await tester.enterText(campo('@handle'), 'outra.pessoa');
     await tester.pump();
-    await tester.tap(find.text('Salvar'));
+    await tocarEmSalvar(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('Esse @handle já é de outra pessoa.'), findsOneWidget);
@@ -110,7 +129,7 @@ void main() {
 
     await tester.enterText(campo('Bio'), 'Colecionando risadas');
     await tester.pump();
-    await tester.tap(find.text('Salvar'));
+    await tocarEmSalvar(tester);
     await tester.pumpAndSettle();
 
     expect(
@@ -149,4 +168,134 @@ void main() {
         Theme.of(tester.element(scaffold)).scaffoldBackgroundColor;
     expect(cor, const Color(0xFFFDF9F2));
   });
+
+  testWidgets('trocar foto passa pela folha, pelo seletor e pela API', (
+    tester,
+  ) async {
+    final api = FakeApi(eu: euDeTeste());
+    final seletor = SeletorDeFotoFalso(foto: fotoDeTeste(nome: 'eu.jpg'));
+    await abrirEdicao(tester, api, seletor: seletor);
+
+    await tester.tap(find.text('Trocar foto'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tirar foto'));
+    await tester.pumpAndSettle();
+
+    expect(seletor.origens, [OrigemDaFoto.camera]);
+    expect(api.chamadas.last, 'trocarFoto:eu.jpg');
+    final avatar = tester.widget<Avatar>(find.byType(Avatar).first);
+    expect(avatar.fotoUrl, 'http://midia.local/midia/perfis/eu.jpg');
+    expect(find.text('Foto atualizada'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('cancelar o seletor não chama a API', (tester) async {
+    final api = FakeApi(eu: euDeTeste());
+    final seletor = SeletorDeFotoFalso();
+    await abrirEdicao(tester, api, seletor: seletor);
+    await tester.tap(find.text('Trocar foto'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Escolher da galeria'));
+    await tester.pumpAndSettle();
+    expect(seletor.origens, [OrigemDaFoto.galeria]);
+    expect(api.chamadas.where((c) => c.startsWith('trocarFoto')), isEmpty);
+    expect(find.byType(SnackBar), findsNothing);
+  });
+
+  testWidgets('foto recusada vira aviso', (tester) async {
+    final api = FakeApi(eu: euDeTeste())
+      ..falhaAoTrocarFoto = const ErroDaApi(
+        status: 422,
+        codigo: 'foto_invalida',
+        mensagem: 'Envie uma foto JPEG ou PNG de até 10 MB.',
+      );
+    await abrirEdicao(
+      tester,
+      api,
+      seletor: SeletorDeFotoFalso(foto: fotoDeTeste()),
+    );
+    await tester.tap(find.text('Trocar foto'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tirar foto'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Envie uma foto JPEG ou PNG de até 10 MB.'),
+      findsOneWidget,
+    );
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+    'seletor que lança (sem câmera, permissão negada) avisa e não chama a API',
+    (tester) async {
+      final api = FakeApi(eu: euDeTeste());
+      await abrirEdicao(tester, api, seletor: _SeletorQueLanca());
+
+      await tester.tap(find.text('Trocar foto'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tirar foto'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Algo deu errado. Tente de novo.'), findsOneWidget);
+      expect(api.chamadas.where((c) => c.startsWith('trocarFoto')), isEmpty);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'enquanto envia, o anel cobre o avatar e o botão não abre outra folha',
+    (tester) async {
+      final api = _ApiQueSegura(eu: euDeTeste());
+      final seletor = SeletorDeFotoFalso(foto: fotoDeTeste(nome: 'eu.jpg'));
+      await abrirEdicao(tester, api, seletor: seletor);
+      final anel = find.descendant(
+        of: find.byType(TelaDeEditarPerfil),
+        matching: find.byType(CircularProgressIndicator),
+      );
+      expect(anel, findsNothing);
+
+      await tester.tap(find.text('Trocar foto'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Tirar foto'));
+      // sem pumpAndSettle: o anel anima para sempre
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(anel, findsOneWidget);
+
+      await tester.tap(find.text('Trocar foto'));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('Tirar foto'), findsNothing);
+      expect(seletor.origens, [OrigemDaFoto.camera]);
+
+      api.liberar.complete();
+      await tester.pumpAndSettle();
+      expect(anel, findsNothing);
+      expect(find.text('Foto atualizada'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    },
+  );
+}
+
+/// Sem câmera ou com a permissão negada o plugin lança em vez de devolver null.
+class _SeletorQueLanca implements SeletorDeFoto {
+  @override
+  Future<FotoParaEnviar?> escolher(OrigemDaFoto origem) =>
+      Future.error(PlatformException(code: 'camera_access_denied'));
+}
+
+/// Prende o envio da foto até o teste liberar: prova o estado de "enviando" sem depender de tempo.
+class _ApiQueSegura extends FakeApi {
+  _ApiQueSegura({super.eu});
+
+  final liberar = Completer<void>();
+
+  @override
+  Future<Eu> trocarFoto(FotoParaEnviar foto) async {
+    await liberar.future;
+    return super.trocarFoto(foto);
+  }
 }
