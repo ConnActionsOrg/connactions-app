@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -147,6 +148,11 @@ class _CartaoDoConvite extends ConsumerWidget {
 
   final Turma turma;
 
+  Future<void> _copiar(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: turma.codigoConvite));
+    if (context.mounted) mostrarAviso(context, 'Código copiado');
+  }
+
   Future<void> _gerarNovo(BuildContext context, WidgetRef ref) async {
     final confirmou = await showDialog<bool>(
       context: context,
@@ -199,9 +205,21 @@ class _CartaoDoConvite extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: Espacos.xs),
-          Text(
-            turma.codigoConvite,
-            style: tipografia.tituloPequeno.copyWith(letterSpacing: 3),
+          Row(
+            children: [
+              Text(
+                turma.codigoConvite,
+                style: tipografia.tituloPequeno.copyWith(letterSpacing: 3),
+              ),
+              IconButton(
+                onPressed: () => _copiar(context),
+                tooltip: 'Copiar código',
+                icon: Icon(
+                  Symbols.content_copy,
+                  color: cores.sobreSuperficieVariante,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: Espacos.xs),
           Text(

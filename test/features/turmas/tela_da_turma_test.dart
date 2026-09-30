@@ -5,6 +5,7 @@ import 'package:connactions_app/api/modelos/turma.dart';
 import 'package:connactions_app/features/feed/tela_do_feed.dart';
 import 'package:connactions_app/features/turmas/tela_da_turma.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
@@ -89,6 +90,39 @@ void main() {
 
     expect(compartilhador.textos.single, contains('ABCD2345'));
     expect(compartilhador.textos.single, contains('Turma do Domingo'));
+  });
+
+  testWidgets('copiar põe só o código na área de transferência e avisa', (
+    tester,
+  ) async {
+    await abrir(tester, api: apiComTurma());
+    final copiados = <Object?>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (chamada) async {
+        if (chamada.method == 'Clipboard.setData') {
+          copiados.add(chamada.arguments);
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Copiar código'));
+    await tester.pumpAndSettle();
+
+    expect(copiados, [
+      {'text': 'ABCD2345'},
+    ]);
+    expect(find.text('Código copiado'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('gerar novo código passa pelo diálogo e atualiza a tela', (
