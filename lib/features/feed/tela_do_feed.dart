@@ -138,7 +138,9 @@ class _ComTurma extends ConsumerWidget {
   ) {
     final atividade = aberta.value;
     final erro = aberta.error;
-    if (atividade == null && erro != null) {
+    // Só a 1ª carga que falhou vira tela de erro: numa recarga que falha o valor anterior (até o
+    // "sem atividade") segue na tela, e o aviso já saiu pelo onRefresh.
+    if (erro != null && !aberta.hasValue) {
       return [
         EstadoDeErro(
           mensagem: mensagemDoErro(erro),

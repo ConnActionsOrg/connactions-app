@@ -402,6 +402,30 @@ void main() {
     expect(botaoLancar(tester).onPressed, isNull);
   });
 
+  testWidgets(
+    'a regra conta runes, não unidades UTF-16: 51 emojis passam e 101 travam',
+    (tester) async {
+      await abrirPeloFeed(tester, apiMinhaVez());
+      await tester.enterText(campo('Nome da atividade'), 'Piquenique');
+      final regras = campo('Regras (opcional), uma por linha');
+
+      // 51 emojis são 102 unidades UTF-16, mas 51 runes: é o que a API conta
+      await tester.enterText(regras, '😀' * 51);
+      await tester.pump();
+      expect(find.text('Cada regra tem até 100 caracteres.'), findsNothing);
+
+      await tester.enterText(regras, '😀' * 100);
+      await tester.pump();
+      expect(find.text('Cada regra tem até 100 caracteres.'), findsNothing);
+
+      await tester.enterText(regras, '😀' * 101);
+      await tester.pump();
+      expect(find.text('Cada regra tem até 100 caracteres.'), findsOneWidget);
+      await rolarAte(tester, find.text('Lançar atividade'));
+      expect(botaoLancar(tester).onPressed, isNull);
+    },
+  );
+
   testWidgets('Sem pressa desfaz a data escolhida', (tester) async {
     final api = apiMinhaVez();
     await abrirPeloFeed(tester, api);

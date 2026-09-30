@@ -7,6 +7,7 @@ import 'package:connactions_app/api/modelos/foto_para_enviar.dart';
 import 'package:connactions_app/api/modelos/pessoa.dart';
 import 'package:connactions_app/api/modelos/registro.dart';
 import 'package:connactions_app/app/seletor_de_foto.dart';
+import 'package:connactions_app/design/widgets/estado_de_erro.dart';
 import 'package:connactions_app/features/atividades/cartao_de_registro.dart';
 import 'package:connactions_app/features/atividades/tela_de_novo_registro.dart';
 import 'package:connactions_app/features/atividades/visualizador_de_fotos.dart';
@@ -471,6 +472,36 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
   });
+
+  testWidgets(
+    'puxar para baixo sem rede, sem atividade aberta, mantém o cartão da vez e avisa uma vez',
+    (tester) async {
+      final api = apiCom();
+      await abrirFeed(tester, api);
+      expect(find.text('Propor atividade'), findsOneWidget);
+      api.falhaAoObterAberta = const ErroDeRede('caiu');
+
+      await tester.fling(
+        find.byType(ListView).first,
+        const Offset(0, 300),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      // com o valor anterior na tela o erro vira só o aviso da SnackBar, sem a tela de erro por baixo
+      expect(
+        find.text('Sem conexão com a API. Confira a rede e tente de novo.'),
+        findsOneWidget,
+      );
+      expect(find.byType(EstadoDeErro), findsNothing);
+      expect(find.text('Tentar de novo'), findsNothing);
+      expect(find.text('É a sua vez de propor!'), findsOneWidget);
+      expect(find.text('Propor atividade'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    },
+  );
 
   testWidgets('recarga em voo mantém o botão Propor', (tester) async {
     final api = apiCom();

@@ -289,6 +289,32 @@ void main() {
     },
   );
 
+  testWidgets(
+    'apagar a última e voltar para a anterior antes da resposta: um arrasto único para a frente não estoura',
+    (tester) async {
+      await apagarEDeslizar(
+        tester,
+        registros: [
+          registroDeTeste(id: 'r1', autor: bia, legenda: 'Um'),
+          registroDeTeste(id: 'r2', autor: eu, legenda: 'Meu'),
+        ],
+        indice: 1,
+        deslizarPara: 0,
+        apagar: 'r2',
+      );
+      expect(find.text('1 / 1'), findsOneWidget);
+
+      // A extensão do PageView ainda é a de duas páginas: um arrasto de um só evento faz o
+      // PageView avisar a página 1, que a lista de uma foto já não tem.
+      await tester.drag(find.byType(PageView), const Offset(-500, 0));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('1 / 1'), findsOneWidget);
+      expect(find.textContaining('Um'), findsOneWidget);
+    },
+  );
+
   testWidgets('ampliada, o arrasto move a foto e não troca de página', (
     tester,
   ) async {
