@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../api/mensagens.dart';
+import '../../api/modelos/turma.dart';
+import '../../app/relogio.dart';
 import '../../design/medidas.dart';
+import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
 import '../turmas/seletor_de_turma.dart';
 import '../turmas/turmas.dart';
+import 'cartao_do_diario.dart';
+import 'diario.dart';
 
-/// O Diário é por turma: a mesma pílula do Feed escolhe qual. O conteúdo chega na fatia 5.
+/// O Diário é por turma: a mesma pílula do Feed escolhe qual. Lista as encerradas, página a página.
 class TelaDoDiario extends ConsumerWidget {
   const TelaDoDiario({super.key});
 
@@ -23,24 +30,104 @@ class TelaDoDiario extends ConsumerWidget {
               titulo: 'O diário começa vazio',
               texto: 'Cada atividade encerrada vira uma memória da turma aqui.',
             )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                Espacos.margemDaTela,
-                Espacos.md,
-                Espacos.margemDaTela,
-                Espacos.xl,
-              ),
-              children: [
-                const SeletorDeTurma(),
-                const SizedBox(height: Espacos.xl),
-                EstadoVazio(
-                  icone: Symbols.auto_stories,
-                  titulo: 'O diário da turma começa vazio',
-                  texto:
-                      'As atividades encerradas de ${turma.emoji} ${turma.nome} vão aparecer aqui.',
-                ),
-              ],
-            ),
+          : _ComTurma(turma: turma),
     );
   }
+}
+
+class _ComTurma extends ConsumerWidget {
+  const _ComTurma({required this.turma});
+
+  final Turma turma;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pagina = ref.watch(diarioProvider(turma.id));
+    final agora = ref.watch(relogioProvider)();
+    final itens = pagina.value?.itens;
+    final erro = pagina.error;
+    final List<Widget> corpo;
+    if (itens == null && erro != null) {
+      corpo = [
+        EstadoDeErro(
+          mensagem: mensagemDoErro(erro),
+          aoTentarDeNovo: () => ref.invalidate(diarioProvider(turma.id)),
+        ),
+      ];
+    } else if (itens == null) {
+      corpo = [const Center(child: CircularProgressIndicator())];
+    } else if (itens.isEmpty) {
+      corpo = [
+        EstadoVazio(
+          icone: Symbols.auto_stories,
+          titulo: 'O diário da turma começa vazio',
+          texto:
+              'As atividades encerradas de ${turma.emoji} ${turma.nome} vão aparecer aqui.',
+        ),
+      ];
+    } else {
+      corpo = [
+        for (final atividade in itens) ...[
+          CartaoDoDiario(atividade: atividade, agora: agora),
+          const SizedBox(height: Espacos.md),
+        ],
+        if (pagina.value?.proximo != null)
+          _BotaoCarregarMais(turmaId: turma.id),
+      ];
+    }
+    return RefreshIndicator(
+      onRefresh: () => ref.refresh(diarioProvider(turma.id).future),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          Espacos.margemDaTela,
+          Espacos.md,
+          Espacos.margemDaTela,
+          Espacos.xl,
+        ),
+        children: [
+          const SeletorDeTurma(),
+          const SizedBox(height: Espacos.xl),
+          ...corpo,
+        ],
+      ),
+    );
+  }
+}
+
+/// `carregarMais` não se protege de chamadas concorrentes: o botão fica desabilitado, com progresso
+/// no lugar do texto, até a resposta voltar.
+class _BotaoCarregarMais extends ConsumerStatefulWidget {
+  const _BotaoCarregarMais({required this.turmaId});
+
+  final String turmaId;
+
+  @override
+  ConsumerState<_BotaoCarregarMais> createState() => _BotaoCarregarMaisState();
+}
+
+class _BotaoCarregarMaisState extends ConsumerState<_BotaoCarregarMais> {
+  bool _carregando = false;
+
+  Future<void> _carregar() async {
+    setState(() => _carregando = true);
+    try {
+      await ref.read(diarioProvider(widget.turmaId).notifier).carregarMais();
+    } catch (e) {
+      if (mounted) mostrarAviso(context, mensagemDoErro(e));
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => TextButton(
+    onPressed: _carregando ? null : _carregar,
+    child: _carregando
+        ? const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : const Text('Carregar mais'),
+  );
 }
