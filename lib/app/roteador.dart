@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../design/widgets/barra_de_abas.dart';
+import '../features/atividades/tela_de_propor.dart';
 import '../features/comunidade/tela_da_comunidade.dart';
 import '../features/diario/tela_do_diario.dart';
 import '../features/entrada/tela_de_abertura.dart';
@@ -53,6 +54,12 @@ final roteadorProvider = Provider<GoRouter>((ref) {
         path: '/turmas/entrar',
         parentNavigatorKey: raiz,
         builder: (_, _) => const TelaDeEntrarNaTurma(),
+      ),
+      GoRoute(
+        path: '/turmas/:id/propor',
+        parentNavigatorKey: raiz,
+        builder: (_, state) =>
+            TelaDePropor(turmaId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/turmas/:id',
