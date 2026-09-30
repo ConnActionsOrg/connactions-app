@@ -109,6 +109,19 @@ Matrix4 transformacaoDaFoto(WidgetTester tester) {
 double? paginaAtual(WidgetTester tester) =>
     tester.widget<PageView>(find.byType(PageView)).controller?.page;
 
+/// Um dedo arrasta 150 px para a esquerda e continua pressionado: as medidas são DURANTE o
+/// arrasto, porque solto o PageView voltaria à página de antes de qualquer jeito.
+Future<TestGesture> arrastaSemSoltar(WidgetTester tester) async {
+  final dedo = await tester.startGesture(
+    tester.getCenter(find.byType(PageView)),
+  );
+  for (var i = 0; i < 15; i++) {
+    await dedo.moveBy(const Offset(-10, 0));
+    await tester.pump(const Duration(milliseconds: 16));
+  }
+  return dedo;
+}
+
 void main() {
   testWidgets('mostra a foto pedida, o autor, a legenda e a posição', (
     tester,
@@ -290,14 +303,7 @@ void main() {
     expect(transformacaoDaFoto(tester).getMaxScaleOnAxis(), greaterThan(1.5));
     final antes = transformacaoDaFoto(tester).getTranslation().x;
 
-    final dedo = await tester.startGesture(
-      tester.getCenter(find.byType(PageView)),
-    );
-    for (var i = 0; i < 15; i++) {
-      await dedo.moveBy(const Offset(-10, 0));
-      await tester.pump(const Duration(milliseconds: 16));
-    }
-    // a medida é DURANTE o arrasto: solto, o PageView voltaria à página 0 de qualquer jeito
+    final dedo = await arrastaSemSoltar(tester);
     expect(paginaAtual(tester), 0);
     expect(transformacaoDaFoto(tester).getTranslation().x, lessThan(antes));
     await dedo.up();
@@ -347,6 +353,41 @@ void main() {
       await tester.drag(find.byType(PageView), const Offset(-500, 0));
       await tester.pumpAndSettle();
       expect(find.text('2 / 2'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'apagar uma foto posterior à ampliada não tira o zoom nem destrava a página',
+    (tester) async {
+      final concluir = Completer<void>();
+      await abrir(
+        tester,
+        registros: [
+          registroDeTeste(id: 'r1', autor: bia, legenda: 'Um'),
+          registroDeTeste(id: 'r2', autor: eu, legenda: 'Meu'),
+          registroDeTeste(id: 'r3', autor: bia, legenda: 'Tres'),
+        ],
+        indice: 1,
+        podeApagar: (r) => r.id == 'r2',
+        aoApagar: (_) => concluir.future,
+      );
+      await tester.tap(find.byTooltip('Apagar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Apagar').last);
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(PageView), const Offset(500, 0));
+      await tester.pumpAndSettle();
+      await pinca(tester, de: 30, ate: 174);
+
+      concluir.complete();
+      await tester.pumpAndSettle();
+      expect(find.text('1 / 2'), findsOneWidget);
+      expect(transformacaoDaFoto(tester).getMaxScaleOnAxis(), greaterThan(1.5));
+
+      final dedo = await arrastaSemSoltar(tester);
+      expect(paginaAtual(tester), 0);
+      await dedo.up();
+      await tester.pumpAndSettle();
     },
   );
 }
