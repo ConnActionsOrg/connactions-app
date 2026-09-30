@@ -3,25 +3,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../../api/erro_da_api.dart';
 import '../../api/mensagens.dart';
+import '../../api/modelos/atividade.dart';
 import '../../api/modelos/turma.dart';
 import '../../app/dependencias.dart';
+import '../../app/relogio.dart';
 import '../../app/sessao.dart';
 import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/avatar.dart';
+import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
+import '../../design/widgets/etiqueta.dart';
 import '../../design/widgets/pilha_de_avatares.dart';
+import '../atividades/atividade_aberta.dart';
+import '../atividades/cartao_da_atividade.dart';
+import '../atividades/cartao_de_registro.dart';
+import '../atividades/tela_de_novo_registro.dart';
+import '../atividades/tempo.dart';
+import '../atividades/visualizador_de_fotos.dart';
 import '../turmas/convite.dart';
 import '../turmas/detalhe_da_turma.dart';
 import '../turmas/seletor_de_turma.dart';
 import '../turmas/turmas.dart';
 
-/// O Feed é a turma ativa. Sem turmas, convida a criar ou entrar; com turma, diz de quem é a vez e
-/// mostra os membros. A atividade aberta chega na fatia 2 e toma o lugar do cartão da vez.
+/// O Feed é a turma ativa. Sem turmas, convida a criar ou entrar; com turma e sem atividade, diz de
+/// quem é a vez; com atividade aberta, mostra a rodada, os registros e a ação de quem está olhando.
 class TelaDoFeed extends ConsumerWidget {
   const TelaDoFeed({super.key});
 
@@ -88,8 +99,13 @@ class _ComTurma extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final euId = ref.watch(perfilAtualProvider).value?.id;
+    final aberta = ref.watch(atividadeAbertaProvider(turma.id));
+    final agora = ref.watch(relogioProvider)();
     return RefreshIndicator(
-      onRefresh: () => ref.refresh(turmasProvider.future),
+      onRefresh: () => Future.wait<Object?>([
+        ref.refresh(turmasProvider.future),
+        ref.refresh(atividadeAbertaProvider(turma.id).future),
+      ]),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(
           Espacos.margemDaTela,
@@ -100,37 +116,167 @@ class _ComTurma extends ConsumerWidget {
         children: [
           const SeletorDeTurma(),
           const SizedBox(height: Espacos.md),
-          _CartaoDaVez(turma: turma, souEu: turma.vezDe.id == euId),
+          ..._miolo(ref, aberta, euId, agora),
           const SizedBox(height: Espacos.md),
           _CartaoDosMembros(turma: turma),
         ],
       ),
     );
   }
+
+  List<Widget> _miolo(
+    WidgetRef ref,
+    AsyncValue<Atividade?> aberta,
+    String? euId,
+    DateTime agora,
+  ) {
+    final atividade = aberta.value;
+    final erro = aberta.error;
+    if (atividade == null && erro != null) {
+      return [
+        EstadoDeErro(
+          mensagem: mensagemDoErro(erro),
+          aoTentarDeNovo: () =>
+              ref.invalidate(atividadeAbertaProvider(turma.id)),
+        ),
+      ];
+    }
+    if (atividade == null) {
+      return [
+        _CartaoDaVez(
+          turma: turma,
+          souEu: turma.vezDe.id == euId,
+          carregando: aberta.isLoading,
+        ),
+      ];
+    }
+    final souProponente = atividade.proponente.id == euId;
+    return [
+      _FaixaDoProponente(
+        atividade: atividade,
+        souEu: souProponente,
+        agora: agora,
+      ),
+      const SizedBox(height: Espacos.md),
+      CartaoDaAtividade(
+        atividade: atividade,
+        agora: agora,
+        rodape: souProponente ? _BotaoEncerrar(turmaId: turma.id) : null,
+      ),
+      const SizedBox(height: Espacos.lg),
+      _Registros(atividade: atividade, euId: euId, agora: agora),
+      const SizedBox(height: Espacos.md),
+      _AcaoDeRegistro(atividade: atividade, euId: euId),
+    ];
+  }
 }
 
-/// Âmbar como o "Vez da rodada" do Stitch. Na fatia 2 vira o cartão da atividade aberta.
+/// Âmbar como o "Vez da rodada" do Stitch. Sem atividade aberta: quem está na vez e, se sou eu, o
+/// botão de propor.
 class _CartaoDaVez extends StatelessWidget {
-  const _CartaoDaVez({required this.turma, required this.souEu});
+  const _CartaoDaVez({
+    required this.turma,
+    required this.souEu,
+    required this.carregando,
+  });
 
   final Turma turma;
   final bool souEu;
+  final bool carregando;
 
   @override
   Widget build(BuildContext context) {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
+    final Widget segundaLinha = carregando
+        ? const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: LinearProgressIndicator(minHeight: 2),
+          )
+        : Text(
+            souEu
+                ? 'Lance a próxima atividade da turma.'
+                : 'Quando ${turma.vezDe.primeiroNome} lançar, a atividade aparece aqui.',
+            style: tipografia.corpoPequeno.copyWith(
+              color: cores.sobreSecundariaFixa,
+            ),
+          );
     return Container(
       decoration: BoxDecoration(
         color: cores.secundariaFixa,
         borderRadius: BorderRadius.circular(Raios.medio),
       ),
       padding: const EdgeInsets.all(Espacos.cartao),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Avatar(
+                nome: turma.vezDe.nome,
+                fotoUrl: turma.vezDe.fotoUrl,
+                tamanho: 48,
+              ),
+              const SizedBox(width: Espacos.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      souEu
+                          ? 'É a sua vez de propor!'
+                          : 'É a vez de ${turma.vezDe.primeiroNome} propor',
+                      style: tipografia.tituloPequeno,
+                    ),
+                    const SizedBox(height: Espacos.xs),
+                    segundaLinha,
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (souEu && !carregando) ...[
+            const SizedBox(height: Espacos.md),
+            FilledButton.icon(
+              onPressed: () => context.push('/turmas/${turma.id}/propor'),
+              icon: const Icon(Symbols.add),
+              label: const Text('Propor atividade'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Quem propôs e há quanto tempo, na mesma faixa âmbar.
+class _FaixaDoProponente extends StatelessWidget {
+  const _FaixaDoProponente({
+    required this.atividade,
+    required this.souEu,
+    required this.agora,
+  });
+
+  final Atividade atividade;
+  final bool souEu;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = Cores.de(context);
+    final tipografia = Tipografia.de(context);
+    final quem = souEu ? 'Você' : atividade.proponente.primeiroNome;
+    return Container(
+      decoration: BoxDecoration(
+        color: cores.secundariaFixa,
+        borderRadius: BorderRadius.circular(Raios.medio),
+      ),
+      padding: const EdgeInsets.all(Espacos.md),
       child: Row(
         children: [
           Avatar(
-            nome: turma.vezDe.nome,
-            fotoUrl: turma.vezDe.fotoUrl,
+            nome: atividade.proponente.nome,
+            fotoUrl: atividade.proponente.fotoUrl,
             tamanho: 48,
           ),
           const SizedBox(width: Espacos.md),
@@ -139,14 +285,12 @@ class _CartaoDaVez extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  souEu
-                      ? 'É a sua vez de propor!'
-                      : 'É a vez de ${turma.vezDe.primeiroNome} propor',
+                  '$quem propôs a rodada ${atividade.numero}',
                   style: tipografia.tituloPequeno,
                 ),
-                const SizedBox(height: Espacos.xs),
+                const SizedBox(height: 2),
                 Text(
-                  'A primeira atividade da turma aparece aqui quando for lançada.',
+                  haQuantoTempo(atividade.lancadaEm, agora),
                   style: tipografia.corpoPequeno.copyWith(
                     color: cores.sobreSecundariaFixa,
                   ),
@@ -158,6 +302,197 @@ class _CartaoDaVez extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "Quem já fez até agora": contagem e a fileira de miniaturas; tocar abre o visualizador.
+class _Registros extends ConsumerWidget {
+  const _Registros({
+    required this.atividade,
+    required this.euId,
+    required this.agora,
+  });
+
+  final Atividade atividade;
+  final String? euId;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cores = Cores.de(context);
+    final tipografia = Tipografia.de(context);
+    final registros = atividade.registros;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Quem já fez até agora',
+                style: tipografia.tituloPequeno,
+              ),
+            ),
+            if (registros.isEmpty)
+              Text(
+                'Ninguém ainda',
+                style: tipografia.corpoPequeno.copyWith(
+                  color: cores.sobreSuperficieVariante,
+                ),
+              )
+            else
+              Etiqueta(
+                texto: registros.length == 1
+                    ? '1 postado'
+                    : '${registros.length} postados',
+              ),
+          ],
+        ),
+        if (registros.isNotEmpty) ...[
+          const SizedBox(height: Espacos.md),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: registros.length,
+              separatorBuilder: (_, _) => const SizedBox(width: Espacos.sm),
+              itemBuilder: (_, i) => CartaoDeRegistro(
+                registro: registros[i],
+                meu: registros[i].autor.id == euId,
+                aoTocar: () => mostrarVisualizadorDeFotos(
+                  context,
+                  registros: registros,
+                  indiceInicial: i,
+                  agora: agora,
+                  podeApagar: (r) => r.autor.id == euId && atividade.aberta,
+                  aoApagar: (r) => ref
+                      .read(atividadeAbertaProvider(atividade.turmaId).notifier)
+                      .apagarRegistro(r.id),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// O que quem está olhando pode fazer, pelas regras de formato; e o consentimento da pública.
+class _AcaoDeRegistro extends ConsumerWidget {
+  const _AcaoDeRegistro({required this.atividade, required this.euId});
+
+  final Atividade atividade;
+  final String? euId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cores = Cores.de(context);
+    final tipografia = Tipografia.de(context);
+    final id = euId;
+    final meu = id == null ? null : atividade.registroDe(id);
+    final souProponente = atividade.proponente.id == euId;
+    final total = atividade.registros.length;
+
+    Widget linha(String texto) => Text(
+      texto,
+      style: tipografia.corpoPequeno.copyWith(
+        color: cores.sobreSuperficieVariante,
+      ),
+      textAlign: TextAlign.center,
+    );
+    Widget botao(String rotulo) => OutlinedButton.icon(
+      onPressed: () =>
+          abrirNovoRegistro(context, ref, turmaId: atividade.turmaId),
+      icon: const Icon(Symbols.photo_camera),
+      label: Text(rotulo),
+    );
+
+    final acao = switch (atividade.formato) {
+      FormatoDeAtividade.individual =>
+        meu == null
+            ? botao('Adicionar meu registro')
+            : linha('Você já postou o seu registro.'),
+      FormatoDeAtividade.grupo when !souProponente => linha(
+        'Só quem propôs posta as fotos desta atividade.',
+      ),
+      FormatoDeAtividade.grupo when total >= 10 => linha(
+        'Esta atividade já tem as 10 fotos.',
+      ),
+      FormatoDeAtividade.grupo => botao('Adicionar foto ($total/10)'),
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        acao,
+        if (atividade.publica) ...[
+          const SizedBox(height: Espacos.sm),
+          // decidido no lançamento e dito antes de alguém postar: é o consentimento da Comunidade
+          linha('As fotos desta atividade ficam visíveis na Comunidade.'),
+        ],
+      ],
+    );
+  }
+}
+
+/// Só o proponente vê. Confirma, encerra, e o Feed volta ao cartão da vez com o nome novo.
+class _BotaoEncerrar extends ConsumerWidget {
+  const _BotaoEncerrar({required this.turmaId});
+
+  final String turmaId;
+
+  Future<void> _encerrar(BuildContext context, WidgetRef ref) async {
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (contexto) => AlertDialog(
+        title: const Text('Encerrar atividade?'),
+        content: const Text(
+          'Ela vai para o Diário e a vez passa para a próxima pessoa da ordem. '
+          'Quem ainda não postou não vai mais poder.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(contexto, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(contexto, true),
+            child: const Text('Encerrar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmou != true || !context.mounted) return;
+    final euId = ref.read(perfilAtualProvider).value?.id;
+    try {
+      final encerramento = await ref
+          .read(atividadeAbertaProvider(turmaId).notifier)
+          .encerrar();
+      if (!context.mounted) return;
+      final proxima = encerramento.turma.vezDe;
+      mostrarAviso(
+        context,
+        proxima.id == euId
+            ? 'Atividade encerrada. Agora é a sua vez!'
+            : 'Atividade encerrada. Agora é a vez de ${proxima.primeiroNome}.',
+      );
+    } on ErroDaApi catch (e) {
+      if (!context.mounted) return;
+      mostrarAviso(context, e.mensagem);
+      if (e.conflito) ref.invalidate(atividadeAbertaProvider(turmaId));
+    } catch (e) {
+      if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Align(
+    alignment: Alignment.centerLeft,
+    child: TextButton.icon(
+      onPressed: () => _encerrar(context, ref),
+      icon: const Icon(Symbols.flag),
+      label: const Text('Encerrar atividade'),
+    ),
+  );
 }
 
 class _CartaoDosMembros extends ConsumerWidget {

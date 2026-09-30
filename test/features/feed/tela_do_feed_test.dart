@@ -83,9 +83,7 @@ void main() {
     expect(naPilula('2 membros · vez de Bia'), findsOneWidget);
     expect(find.text('É a vez de Bia propor'), findsOneWidget);
     expect(
-      find.text(
-        'A primeira atividade da turma aparece aqui quando for lançada.',
-      ),
+      find.text('Quando Bia lançar, a atividade aparece aqui.'),
       findsOneWidget,
     );
     expect(find.text('2 membros'), findsOneWidget);
@@ -99,6 +97,8 @@ void main() {
       api: FakeApi(eu: euDeTeste(), turmas: [turmaDeTeste()]),
     );
     expect(find.text('É a sua vez de propor!'), findsOneWidget);
+    expect(find.text('Lance a próxima atividade da turma.'), findsOneWidget);
+    expect(find.text('Propor atividade'), findsOneWidget);
   });
 
   testWidgets('erro ao listar mostra tentar de novo e recupera', (

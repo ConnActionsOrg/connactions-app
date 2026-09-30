@@ -4,6 +4,7 @@ import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/atividade.dart';
 import 'package:connactions_app/api/modelos/foto_para_enviar.dart';
 import 'package:connactions_app/app/seletor_de_foto.dart';
+import 'package:connactions_app/features/atividades/atividade_aberta.dart';
 import 'package:connactions_app/features/atividades/tela_de_novo_registro.dart';
 import 'package:connactions_app/features/feed/tela_do_feed.dart';
 import 'package:flutter/material.dart';
@@ -151,9 +152,14 @@ void main() {
     'enquanto posta, o botão mostra o progresso e não dispara de novo',
     (tester) async {
       final api = apiComAberta();
-      // a leitura da aberta pendura, e com ela o registrar, que a espera antes de chamar a API
-      final segurar = api.segurarObterAberta = Completer<void>();
       await abrir(tester, api);
+      // a leitura da aberta pendura, e com ela o registrar, que a espera antes de chamar a API
+      // (só depois de abrir: o Feed por baixo também a lê e não assentaria)
+      final segurar = api.segurarObterAberta = Completer<void>();
+      ProviderScope.containerOf(
+        tester.element(find.byType(TelaDeNovoRegistro)),
+      ).invalidate(atividadeAbertaProvider('turma-1'));
+      await tester.pump();
 
       await tester.tap(find.text('Postar'));
       await tester.pump();
