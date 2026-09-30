@@ -74,6 +74,17 @@ void main() {
     addTearDown(tester.view.reset);
   }
 
+  // Depois de paginar, o botão (se ainda existisse) ficaria depois do último cartão, longe da tela:
+  // a lista nem o constrói. Sem rolar até lá, o "não existe" passaria mesmo com o botão sobrando.
+  Future<void> conferirFimSemBotao(WidgetTester tester) async {
+    await tester.scrollUntilVisible(
+      find.text('Atividade 22'),
+      300,
+      scrollable: listaDoDiario(),
+    );
+    expect(find.text('Carregar mais', skipOffstage: false), findsNothing);
+  }
+
   testWidgets('sem turma, o vazio de sempre e nenhuma pílula', (tester) async {
     await abrirDiario(tester, FakeApi(eu: euDeTeste()));
     expect(find.text('O diário começa vazio'), findsOneWidget);
@@ -208,7 +219,8 @@ void main() {
       scrollable: lista,
     );
     expect(find.text('Atividade 22'), findsOneWidget);
-    expect(find.text('Carregar mais'), findsNothing);
+    // o botão ficaria logo abaixo, fora da área visível
+    expect(find.text('Carregar mais', skipOffstage: false), findsNothing);
   });
 
   testWidgets('erro mostra tentar de novo e recupera', (tester) async {
@@ -274,7 +286,7 @@ void main() {
 
       await tester.tap(find.text('Carregar mais'));
       await tester.pump();
-      expect(find.text('Carregar mais'), findsNothing);
+      expect(find.text('Carregar mais', skipOffstage: false), findsNothing);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       // o botão está desabilitado: tocar de novo não dispara outro pedido
       await tester.tap(find.byType(TextButton));
@@ -285,7 +297,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(api.pedidos, pedidosAntes + 1);
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      expect(find.text('Carregar mais'), findsNothing);
+      await conferirFimSemBotao(tester);
     },
   );
 
@@ -328,7 +340,7 @@ void main() {
     api.falhaAoListarDiario = null;
     await tester.tap(find.text('Carregar mais'));
     await tester.pumpAndSettle();
-    expect(find.text('Carregar mais'), findsNothing);
+    await conferirFimSemBotao(tester);
   });
 
   testWidgets('puxar para baixo recarrega a primeira página', (tester) async {
@@ -362,6 +374,44 @@ void main() {
     expect(find.text('Recém-encerrada'), findsOneWidget);
     final leituras = api.chamadas.where((c) => c == 'listarDiario:turma-1:');
     expect(leituras, hasLength(2));
+  });
+
+  testWidgets('recarga que falha avisa, e o carregar mais segue paginando '
+      'quando a rede volta', (tester) async {
+    final api = FakeApi(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste()],
+      diarioPor: {'turma-1': _encerradas(22)},
+    );
+    await abrirDiario(tester, api);
+
+    api.falhaAoListarDiario = const ErroDeRede('caiu');
+    await tester.fling(listaDoDiario(), const Offset(0, 300), 1000);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Sem conexão com a API. Confira a rede e tente de novo.'),
+      findsOneWidget,
+    );
+    // a lista carregada fica, sem o erro de tela cheia
+    expect(find.text('Atividade 1'), findsOneWidget);
+    expect(find.text('Algo não deu certo'), findsNothing);
+
+    // o aviso sai sozinho; com a rede de volta o botão pede a página seguinte à que já estava
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    api.falhaAoListarDiario = null;
+    await tester.scrollUntilVisible(
+      find.text('Carregar mais'),
+      300,
+      scrollable: listaDoDiario(),
+    );
+    await tester.tap(find.text('Carregar mais'));
+    await tester.pumpAndSettle();
+
+    expect(api.chamadas.last, 'listarDiario:turma-1:20');
+    await conferirFimSemBotao(tester);
+    expect(find.text('Atividade 22'), findsOneWidget);
   });
 
   testWidgets('o formato é etiqueta sálvia e a descrição é citação em itálico, '

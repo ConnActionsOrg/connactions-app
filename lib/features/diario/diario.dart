@@ -15,7 +15,11 @@ class Diario extends AsyncNotifier<PaginaDoDiario> {
 
   /// Pede a página seguinte e concatena; sem `proximo`, não faz nada.
   Future<void> carregarMais() async {
-    final atual = await future;
+    // Recarga que falhou deixa o erro junto da página que já estava: `await future` repetiria o erro
+    // e o botão nunca mais pediria nada. Com uma recarga em voo, espera por ela.
+    final atual = state.hasError && state.hasValue && !state.isLoading
+        ? state.requireValue
+        : await future;
     final proximo = atual.proximo;
     if (proximo == null) return;
     final pagina = await ref

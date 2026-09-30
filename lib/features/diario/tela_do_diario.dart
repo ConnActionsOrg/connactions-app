@@ -76,7 +76,14 @@ class _ComTurma extends ConsumerWidget {
       ];
     }
     return RefreshIndicator(
-      onRefresh: () => ref.refresh(diarioProvider(turma.id).future),
+      onRefresh: () async {
+        try {
+          ref.invalidate(diarioProvider(turma.id));
+          await ref.read(diarioProvider(turma.id).future);
+        } catch (e) {
+          if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
+        }
+      },
       child: ListView(
         padding: const EdgeInsets.fromLTRB(
           Espacos.margemDaTela,
