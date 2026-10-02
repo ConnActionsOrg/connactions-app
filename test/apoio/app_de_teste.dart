@@ -3,6 +3,7 @@ import 'package:connactions_app/app/app.dart';
 import 'package:connactions_app/app/autenticador.dart';
 import 'package:connactions_app/app/compartilhador.dart';
 import 'package:connactions_app/app/dependencias.dart';
+import 'package:connactions_app/app/notificador.dart';
 import 'package:connactions_app/app/preferencias.dart';
 import 'package:connactions_app/app/relogio.dart';
 import 'package:connactions_app/app/seletor_de_foto.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'autenticador_falso.dart';
 import 'compartilhador_falso.dart';
 import 'fake_api.dart';
+import 'notificador_falso.dart';
 import 'preferencias_em_memoria.dart';
 import 'seletor_de_foto_falso.dart';
 
@@ -22,6 +24,7 @@ Widget appDeTeste({
   Preferencias? preferencias,
   Compartilhador? compartilhador,
   SeletorDeFoto? seletorDeFoto,
+  Notificador? notificador,
   DateTime? agora,
 }) => ProviderScope(
   overrides: [
@@ -38,6 +41,7 @@ Widget appDeTeste({
     seletorDeFotoProvider.overrideWithValue(
       seletorDeFoto ?? SeletorDeFotoFalso(),
     ),
+    notificadorProvider.overrideWithValue(notificador ?? NotificadorFalso()),
     // sem `agora`, o relógio real; com ele, congelado
     relogioProvider.overrideWithValue(() => agora ?? DateTime.now()),
   ],

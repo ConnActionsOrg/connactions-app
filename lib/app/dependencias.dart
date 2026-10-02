@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/api_connactions.dart';
 import 'autenticador.dart';
 import 'compartilhador.dart';
+import 'notificador.dart';
 import 'preferencias.dart';
 import 'seletor_de_foto.dart';
 
@@ -28,5 +29,10 @@ final compartilhadorProvider = Provider<Compartilhador>(
 final seletorDeFotoProvider = Provider<SeletorDeFoto>(
   (_) => throw UnimplementedError(
     'sobrescreva seletorDeFotoProvider no ProviderScope',
+  ),
+);
+final notificadorProvider = Provider<Notificador>(
+  (_) => throw UnimplementedError(
+    'sobrescreva notificadorProvider no ProviderScope',
   ),
 );

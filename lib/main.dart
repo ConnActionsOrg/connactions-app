@@ -8,6 +8,7 @@ import 'app/autenticador_firebase.dart';
 import 'app/compartilhador.dart';
 import 'app/config.dart';
 import 'app/dependencias.dart';
+import 'app/notificador.dart';
 import 'app/preferencias.dart';
 import 'app/seletor_de_foto.dart';
 import 'firebase_options.dart';
@@ -33,6 +34,7 @@ Future<void> main() async {
           const CompartilhadorDoSistema(),
         ),
         seletorDeFotoProvider.overrideWithValue(SeletorDeFotoDoAparelho()),
+        notificadorProvider.overrideWithValue(NotificadorFirebase()),
       ],
       child: const AppConnactions(),
     ),
