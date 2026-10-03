@@ -26,9 +26,8 @@ class MainActivity : FlutterActivity() {
             }
     }
 
-    // Os ids são o canal que a API manda em cada mensagem; nome e descrição são o que a pessoa vê
-    // nas configurações do Android para silenciar um tipo de aviso. Recriar a cada abertura não
-    // desfaz a escolha dela: o Android só atualiza nome e descrição de um canal que já existe.
+    // Os ids são o canal que a API manda em cada mensagem. Recriar a cada abertura não desfaz o
+    // ajuste da pessoa: num canal que já existe a importância só desce (e só se ela não mexeu).
     private fun criarCanais() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val canais = listOf(

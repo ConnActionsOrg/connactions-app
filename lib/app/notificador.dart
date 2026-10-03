@@ -1,8 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 
-/// Dois estados bastam: "nunca perguntado" e "recusado" dão no mesmo para o app, e quem sabe se ele
-/// já perguntou é a preferência `notificacoes_perguntadas`.
+/// Dois estados, por escolha do app e não por limite do plugin: "nunca perguntado" e "recusado" dão
+/// no mesmo, e quem sabe se ele já perguntou é a preferência `notificacoes_perguntadas`.
 enum PermissaoDeAviso { concedida, negada }
 
 /// O que o app usa de uma mensagem do FCM: a turma diz o que abrir e o que reler; título e corpo
@@ -79,8 +79,8 @@ Stream<Aviso> avisosDasMensagens(Stream<RemoteMessage> mensagens) => mensagens
     .where((aviso) => aviso != null)
     .cast<Aviso>();
 
-/// `notDetermined` e `deniedPermanently` também são negada: o que muda entre eles é se o Android
-/// ainda mostra a caixa, e isso só o pedido descobre.
+/// `notDetermined` e `deniedPermanently` também são negada. O plugin já os separa (só o último não
+/// mostra mais a caixa), mas o app prefere não distinguir.
 PermissaoDeAviso permissaoDoStatus(AuthorizationStatus status) =>
     switch (status) {
       AuthorizationStatus.authorized ||
