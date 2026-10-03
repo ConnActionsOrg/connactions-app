@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- a primária do DS (Cores.claras.primaria, em lib/design/cores.dart), para o FCM tingir o ícone -->
+    <color name="notificacao">#A53616</color>
+</resources>

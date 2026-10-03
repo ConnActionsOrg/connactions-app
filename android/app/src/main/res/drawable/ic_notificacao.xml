@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A xícara da aba Feed: o local_cafe do Material Symbols (contorno, peso 400), tirado da fonte.
+     Branca e sem fundo: na barra de status o Android usa só a silhueta. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M160,840V760H800V840ZM320,680Q254,680 207,633Q160,586 160,520V120H800Q833,120 856.5,143.5Q880,167 880,200V320Q880,353 856.5,376.5Q833,400 800,400H720V520Q720,586 673,633Q626,680 560,680ZM320,600H560Q593,600 616.5,576.5Q640,553 640,520V200H240V520Q240,553 263.5,576.5Q287,600 320,600ZM720,320H800V200H720Z" />
+</vector>
