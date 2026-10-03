@@ -68,7 +68,7 @@ class _TelaDeNovoRegistroState extends ConsumerState<TelaDeNovoRegistro> {
       if (!mounted) return;
       if (e.conflito) {
         // o estado mudou embaixo de mim (já postei em outro aparelho, alguém encerrou): recarrega e volta
-        invalidarRodada(ref, widget.turmaId);
+        invalidarRodada(ref.invalidate, widget.turmaId);
         Navigator.of(context).pop();
         mensageiro
           ..hideCurrentSnackBar()

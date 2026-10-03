@@ -352,7 +352,7 @@ class _BotaoEmbaralhar extends ConsumerWidget {
     } on ErroDaApi catch (e) {
       if (!context.mounted) return;
       mostrarAviso(context, e.mensagem);
-      if (e.conflito) invalidarRodada(ref, turmaId);
+      if (e.conflito) invalidarRodada(ref.invalidate, turmaId);
     } catch (e) {
       if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
     }

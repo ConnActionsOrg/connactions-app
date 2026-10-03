@@ -118,7 +118,7 @@ class _TelaDeProporState extends ConsumerState<TelaDePropor> {
       if (!mounted) return;
       if (e.conflito) {
         // a vez passou ou alguém lançou antes: recarrega o que o Feed mostra e volta
-        invalidarRodada(ref, widget.turmaId);
+        invalidarRodada(ref.invalidate, widget.turmaId);
         context.pop();
         mensageiro
           ..hideCurrentSnackBar()

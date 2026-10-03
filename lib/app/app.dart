@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../design/tema.dart';
+import '../features/notificacoes/ouvinte_de_avisos.dart';
 import '../features/notificacoes/registro_do_aparelho.dart';
 import 'roteador.dart';
 
@@ -26,6 +27,8 @@ class AppConnactions extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      builder: (_, rotas) =>
+          OuvinteDeAvisos(child: rotas ?? const SizedBox.shrink()),
     );
   }
 }

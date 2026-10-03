@@ -336,7 +336,7 @@ class _Registros extends ConsumerWidget {
       await ref.read(aberta.notifier).apagarRegistro(registroId);
     } on ErroDaApi catch (e) {
       if (e.conflito && ref.context.mounted) {
-        invalidarRodada(ref, atividade.turmaId);
+        invalidarRodada(ref.invalidate, atividade.turmaId);
       }
       rethrow;
     }
@@ -502,7 +502,7 @@ class _BotaoEncerrar extends ConsumerWidget {
     } on ErroDaApi catch (e) {
       if (!context.mounted) return;
       mostrarAviso(context, e.mensagem);
-      if (e.conflito) invalidarRodada(ref, turmaId);
+      if (e.conflito) invalidarRodada(ref.invalidate, turmaId);
     } catch (e) {
       if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
     }

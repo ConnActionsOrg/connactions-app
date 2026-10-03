@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 
 import '../../api/modelos/atividade.dart';
 import '../../api/modelos/foto_para_enviar.dart';
@@ -98,8 +99,12 @@ final atividadeAbertaProvider = AsyncNotifierProvider.autoDispose
       retry: (_, _) => null,
     );
 
-/// O estado mudou embaixo de mim (409): relê a aberta e a lista de turmas, porque encerrar move a vez.
-void invalidarRodada(WidgetRef ref, String turmaId) {
-  ref.invalidate(atividadeAbertaProvider(turmaId));
-  ref.invalidate(turmasProvider);
+/// O estado mudou embaixo de mim (409, ou um aviso do FCM): relê a aberta e a lista de turmas,
+/// porque encerrar move a vez. Recebe o `invalidate` de quem chama, tela ou ouvinte de avisos.
+void invalidarRodada(
+  void Function(ProviderOrFamily) invalidar,
+  String turmaId,
+) {
+  invalidar(atividadeAbertaProvider(turmaId));
+  invalidar(turmasProvider);
 }
