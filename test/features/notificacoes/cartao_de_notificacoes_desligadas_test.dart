@@ -28,6 +28,8 @@ Future<void> abrirPerfil(
   await tester.tap(find.text('Perfil'));
   await tester.pumpAndSettle();
   expect(find.byType(TelaDoPerfil), findsOneWidget);
+  // o corpo renderizou: sem isto, "cartão ausente" passaria também no erro ou no carregando
+  expect(find.text('Editar perfil'), findsOneWidget);
 }
 
 Future<void> tocarEmAtivar(WidgetTester tester) async {

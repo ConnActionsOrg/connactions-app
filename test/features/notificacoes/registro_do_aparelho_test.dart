@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
 import '../../apoio/autenticador_falso.dart';
+import '../../apoio/erros_sem_dono.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/notificador_falso.dart';
 
@@ -123,6 +124,28 @@ void main() {
     },
   );
 
+  test('a API que falha com o token renovado não solta erro', () async {
+    final api = FakeApi(eu: euDeTeste());
+    final notificador = NotificadorFalso();
+
+    final soltos = await errosSemDono(() async {
+      final c = montar(api: api, notificador: notificador);
+      await c.read(perfilAtualProvider.future);
+      await c.read(registroDoAparelhoProvider.future);
+
+      api.falhaAoRegistrarDispositivo = const ErroDeRede('caiu');
+      notificador.renovarToken('token-fcm-2');
+      await assentar();
+    });
+
+    // o Stream.listen descarta o Future de cadastrar: a falha tem de morrer lá dentro
+    expect(soltos, isEmpty);
+    expect(cadastros(api), [
+      'registrarDispositivo:token-fcm-1',
+      'registrarDispositivo:token-fcm-2',
+    ]);
+  });
+
   test('o Firebase que não dá o token não quebra nada', () async {
     final api = FakeApi(eu: euDeTeste());
     final notificador = NotificadorFalso()
@@ -165,5 +188,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(cadastros(api), ['registrarDispositivo:token-fcm-1']);
+    expect(api.plataformas, ['android']);
   });
 }

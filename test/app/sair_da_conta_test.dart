@@ -59,6 +59,16 @@ class _ApiQueNaoResponde extends FakeApi {
   Future<void> removerDispositivo(String token) => Completer<void>().future;
 }
 
+/// O logout que não acontece: a única falha que a saída deixa subir.
+class _AutenticadorQueFalhaAoSair extends AutenticadorFalso {
+  _AutenticadorQueFalhaAoSair(this.falha) : super(conta: contaDeTeste);
+
+  final Object falha;
+
+  @override
+  Future<void> sair() async => throw falha;
+}
+
 void main() {
   test('tira o aparelho da API e do Firebase antes de deslogar', () async {
     final caderno = <String>[];
@@ -123,6 +133,22 @@ void main() {
       );
 
       expect(caderno, ['token', 'apagarToken', 'sair']);
+    },
+  );
+
+  test(
+    'o logout que falha sobe: a pessoa segue logada e precisa saber',
+    () async {
+      final falha = Exception('SERVICE_NOT_AVAILABLE');
+
+      await expectLater(
+        sairDaConta(
+          notificador: NotificadorFalso(),
+          api: FakeApi(eu: euDeTeste()),
+          autenticador: _AutenticadorQueFalhaAoSair(falha),
+        ),
+        throwsA(same(falha)),
+      );
     },
   );
 

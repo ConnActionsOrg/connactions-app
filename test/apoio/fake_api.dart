@@ -88,6 +88,9 @@ class FakeApi implements ApiConnactions {
 
   final chamadas = <String>[];
 
+  /// A plataforma de cada cadastro de aparelho, na ordem; `chamadas` guarda só o token.
+  final plataformas = <String>[];
+
   /// Prendem a chamada até completar: provam o estado de carregando sem depender de timing.
   Completer<void>? segurarObterEu;
   Completer<void>? segurarListarTurmas;
@@ -478,6 +481,7 @@ class FakeApi implements ApiConnactions {
     required String plataforma,
   }) async {
     chamadas.add('registrarDispositivo:$token');
+    plataformas.add(plataforma);
     final falha = falhaAoRegistrarDispositivo;
     if (falha != null) throw falha;
   }
