@@ -16,6 +16,7 @@ import '../../design/widgets/avatar.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
 import '../../design/widgets/estado_de_erro.dart';
+import '../notificacoes/cartao_de_notificacoes_desligadas.dart';
 
 /// Perfil próprio. É a fatia vertical da fundação: tema, login, API e banco numa tela real.
 class TelaDoPerfil extends ConsumerWidget {
@@ -110,6 +111,7 @@ class _Corpo extends StatelessWidget {
     children: [
       _CartaoDeIdentidade(eu: eu),
       const SizedBox(height: Espacos.md),
+      const CartaoDeNotificacoesDesligadas(),
       _CartaoDeVisibilidade(eu: eu),
       const SizedBox(height: Espacos.md),
       _CartaoDoCodigo(codigo: eu.codigoDeAmigo),
