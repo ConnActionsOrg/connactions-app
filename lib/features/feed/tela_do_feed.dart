@@ -26,6 +26,7 @@ import '../atividades/cartao_de_registro.dart';
 import '../atividades/tela_de_novo_registro.dart';
 import '../atividades/tempo.dart';
 import '../atividades/visualizador_de_fotos.dart';
+import '../notificacoes/cartao_de_permissao.dart';
 import '../turmas/convite.dart';
 import '../turmas/detalhe_da_turma.dart';
 import '../turmas/seletor_de_turma.dart';
@@ -122,6 +123,8 @@ class _ComTurma extends ConsumerWidget {
         children: [
           const SeletorDeTurma(),
           const SizedBox(height: Espacos.md),
+          // só aqui, com turma: antes da primeira não há vez de ninguém para avisar
+          const CartaoDePermissao(),
           ..._miolo(ref, aberta, euId, agora),
           const SizedBox(height: Espacos.md),
           _CartaoDosMembros(turma: turma),

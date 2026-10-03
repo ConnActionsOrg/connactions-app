@@ -21,6 +21,20 @@ void main() {
   });
 
   test('todas as chaves estão no allowList', () {
-    expect(ChaveDePreferencia.todas, contains(ChaveDePreferencia.turmaAtivaId));
+    // fora dele o SharedPreferencesWithCache recusa a gravação, e só no aparelho
+    expect(
+      ChaveDePreferencia.todas,
+      containsAll([
+        ChaveDePreferencia.turmaAtivaId,
+        ChaveDePreferencia.notificacoesPerguntadas,
+      ]),
+    );
+  });
+
+  test('a marca das notificações tem o nome que o aparelho já guarda', () {
+    expect(
+      ChaveDePreferencia.notificacoesPerguntadas,
+      'notificacoes_perguntadas',
+    );
   });
 }

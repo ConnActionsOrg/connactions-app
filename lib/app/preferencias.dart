@@ -3,7 +3,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Chaves que o app guarda no aparelho. A lista fecha o allowList do shared_preferences.
 abstract final class ChaveDePreferencia {
   static const turmaAtivaId = 'turma_ativa_id';
-  static const todas = <String>{turmaAtivaId};
+
+  /// `'true'` depois que o app perguntou pela permissão, ou a achou já concedida: daí em diante
+  /// quem cobra é o Perfil, e não o Feed.
+  static const notificacoesPerguntadas = 'notificacoes_perguntadas';
+  static const todas = <String>{turmaAtivaId, notificacoesPerguntadas};
 }
 
 /// O que o app guarda no aparelho entre aberturas. Leitura síncrona: a implementação real
