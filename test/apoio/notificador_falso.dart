@@ -23,6 +23,8 @@ class NotificadorFalso implements Notificador {
   String? tokenAtual;
   Object? falhaAoLerToken;
   Object? falhaAoApagarToken;
+  Object? falhaAoPedirPermissao;
+  Object? falhaAoAbrirConfiguracoes;
 
   /// Prende o apagar do token, como o Firebase sem rede.
   Completer<void>? segurarApagarToken;
@@ -56,6 +58,8 @@ class NotificadorFalso implements Notificador {
   @override
   Future<PermissaoDeAviso> pedirPermissao() async {
     chamadas.add('pedirPermissao');
+    final falha = falhaAoPedirPermissao;
+    if (falha != null) throw falha;
     return permissaoAtual = permissaoAoPedir;
   }
 
@@ -95,5 +99,9 @@ class NotificadorFalso implements Notificador {
       avisosDasMensagens(_recebidas.stream);
 
   @override
-  Future<void> abrirConfiguracoes() async => chamadas.add('abrirConfiguracoes');
+  Future<void> abrirConfiguracoes() async {
+    chamadas.add('abrirConfiguracoes');
+    final falha = falhaAoAbrirConfiguracoes;
+    if (falha != null) throw falha;
+  }
 }

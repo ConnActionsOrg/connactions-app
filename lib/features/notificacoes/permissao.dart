@@ -37,7 +37,14 @@ class Permissao extends AsyncNotifier<EstadoDaPermissao> {
   Future<PermissaoDeAviso> ativar() async {
     final notificador = ref.read(notificadorProvider);
     await _marcarQuePerguntou();
-    final permissao = await notificador.pedirPermissao();
+    PermissaoDeAviso permissao;
+    try {
+      permissao = await notificador.pedirPermissao();
+    } catch (_) {
+      // o plugin lança com um pedido já em andamento ou sem Activity: segue negada, e o Perfil
+      // ainda cai nas configurações
+      permissao = PermissaoDeAviso.negada;
+    }
     if (ref.mounted) state = AsyncData((permissao: permissao, perguntou: true));
     return permissao;
   }
@@ -49,8 +56,9 @@ class Permissao extends AsyncNotifier<EstadoDaPermissao> {
     await ref
         .read(preferenciasProvider)
         .gravar(ChaveDePreferencia.notificacoesPerguntadas, 'true');
+    if (!ref.mounted) return;
     final atual = state.value;
-    if (ref.mounted && atual != null) {
+    if (atual != null) {
       state = AsyncData((permissao: atual.permissao, perguntou: true));
     }
   }

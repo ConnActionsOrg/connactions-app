@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/erros_sem_dono.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/notificador_falso.dart';
 import '../../apoio/preferencias_em_memoria.dart';
@@ -114,6 +115,33 @@ void main() {
     // recusou na caixa, e mesmo assim o Feed não pergunta de novo: daqui em diante é com o Perfil
     expect(find.text(pergunta), findsNothing);
   });
+
+  testWidgets(
+    '"Ativar" com o pedido que lança não quebra nada e a marca fica',
+    (tester) async {
+      final preferencias = PreferenciasEmMemoria();
+      final notificador =
+          NotificadorFalso(permissaoAtual: PermissaoDeAviso.negada)
+            ..falhaAoPedirPermissao = Exception(
+              'A request for permissions is running',
+            );
+      await abrirFeed(
+        tester,
+        notificador: notificador,
+        preferencias: preferencias,
+      );
+
+      final soltos = await errosSemDono(() async {
+        await tester.tap(find.text('Ativar'));
+        await tester.pumpAndSettle();
+      });
+
+      expect(soltos, isEmpty);
+      expect(notificador.chamadas, contains('pedirPermissao'));
+      expect(preferencias.valores['notificacoes_perguntadas'], 'true');
+      expect(find.text(pergunta), findsNothing);
+    },
+  );
 
   testWidgets('com a permissão já concedida não aparece, e a marca é gravada', (
     tester,

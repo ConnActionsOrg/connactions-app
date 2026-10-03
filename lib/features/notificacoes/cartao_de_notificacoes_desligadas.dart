@@ -7,6 +7,7 @@ import '../../app/notificador.dart';
 import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
+import '../../design/widgets/aviso.dart';
 import 'permissao.dart';
 
 /// No Perfil, para quem já respondeu ao Feed e ficou sem notificações. Some quando a permissão
@@ -14,12 +15,21 @@ import 'permissao.dart';
 class CartaoDeNotificacoesDesligadas extends ConsumerWidget {
   const CartaoDeNotificacoesDesligadas({super.key});
 
-  Future<void> _ativar(WidgetRef ref) async {
+  Future<void> _ativar(BuildContext context, WidgetRef ref) async {
     final permissao = ref.read(permissaoProvider.notifier);
     final notificador = ref.read(notificadorProvider);
     if (await permissao.ativar() == PermissaoDeAviso.negada) {
       // depois de duas recusas o Android não mostra mais a caixa: só as configurações ligam
-      await notificador.abrirConfiguracoes();
+      try {
+        await notificador.abrirConfiguracoes();
+      } catch (_) {
+        if (context.mounted) {
+          mostrarAviso(
+            context,
+            'Não consegui abrir as configurações. Tente de novo.',
+          );
+        }
+      }
     }
   }
 
@@ -84,7 +94,7 @@ class CartaoDeNotificacoesDesligadas extends ConsumerWidget {
             ),
             const SizedBox(height: Espacos.md),
             OutlinedButton(
-              onPressed: () => _ativar(ref),
+              onPressed: () => _ativar(context, ref),
               child: const Text('Ativar'),
             ),
           ],

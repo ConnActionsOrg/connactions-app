@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
 import '../../apoio/ciclo_de_vida.dart';
+import '../../apoio/erros_sem_dono.dart';
 import '../../apoio/notificador_falso.dart';
 import '../../apoio/preferencias_em_memoria.dart';
 
@@ -79,6 +80,50 @@ void main() {
       ['pedirPermissao', 'abrirConfiguracoes'],
     );
     expect(find.text(titulo), findsOneWidget);
+  });
+
+  testWidgets('"Ativar" com o pedido que lança também abre as configurações', (
+    tester,
+  ) async {
+    final notificador =
+        NotificadorFalso(permissaoAtual: PermissaoDeAviso.negada)
+          ..falhaAoPedirPermissao = Exception(
+            'A request for permissions is running',
+          );
+    await abrirPerfil(tester, notificador: notificador);
+
+    final soltos = await errosSemDono(() => tocarEmAtivar(tester));
+
+    expect(soltos, isEmpty);
+    expect(
+      notificador.chamadas.where(
+        (c) => c == 'pedirPermissao' || c == 'abrirConfiguracoes',
+      ),
+      ['pedirPermissao', 'abrirConfiguracoes'],
+    );
+    expect(find.text(titulo), findsOneWidget);
+  });
+
+  testWidgets('as configurações que não abrem viram um aviso na tela', (
+    tester,
+  ) async {
+    final notificador = NotificadorFalso(
+      permissaoAtual: PermissaoDeAviso.negada,
+      permissaoAoPedir: PermissaoDeAviso.negada,
+    )..falhaAoAbrirConfiguracoes = Exception('ActivityNotFoundException');
+    await abrirPerfil(tester, notificador: notificador);
+
+    final soltos = await errosSemDono(() => tocarEmAtivar(tester));
+
+    expect(soltos, isEmpty);
+    expect(
+      find.text('Não consegui abrir as configurações. Tente de novo.'),
+      findsOneWidget,
+    );
+
+    // o SnackBar arma um Timer de 4 s; deixá-lo pendente reprova o teste no teardown
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
   });
 
   testWidgets(
