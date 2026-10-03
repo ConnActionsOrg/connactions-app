@@ -62,7 +62,11 @@ class _BotaoSair extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => OutlinedButton.icon(
     onPressed: () async {
       try {
-        await ref.read(autenticadorProvider).sair();
+        await sairDaConta(
+          notificador: ref.read(notificadorProvider),
+          api: ref.read(apiProvider),
+          autenticador: ref.read(autenticadorProvider),
+        );
       } catch (_) {
         if (context.mounted) {
           mostrarAviso(context, 'Não consegui sair. Tente de novo.');

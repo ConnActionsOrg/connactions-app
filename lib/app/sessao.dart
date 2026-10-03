@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../api/api_connactions.dart';
 import '../api/erro_da_api.dart';
 import '../api/modelos/alteracoes_do_eu.dart';
 import '../api/modelos/eu.dart';
@@ -7,6 +8,7 @@ import '../api/modelos/foto_para_enviar.dart';
 import 'assentado.dart';
 import 'autenticador.dart';
 import 'dependencias.dart';
+import 'notificador.dart';
 
 /// Conta logada no Firebase; `null` enquanto deslogado.
 final contaProvider = StreamProvider<ContaLogada?>(
@@ -66,3 +68,26 @@ final perfilAtualProvider = AsyncNotifierProvider<PerfilAtual, Eu?>(
   PerfilAtual.new,
   retry: (_, _) => null,
 );
+
+/// Sai da conta tirando o aparelho antes: o `DELETE /dispositivos` precisa do login, e apagar o
+/// token no Firebase cobre o DELETE que falhou. Nenhum dos dois pode prender a saída.
+Future<void> sairDaConta({
+  required Notificador notificador,
+  required ApiConnactions api,
+  required Autenticador autenticador,
+}) async {
+  await _tentarNoPrazo(() async {
+    final token = await notificador.token();
+    if (token != null) await api.removerDispositivo(token);
+  });
+  await _tentarNoPrazo(notificador.apagarToken);
+  await autenticador.sair();
+}
+
+Future<void> _tentarNoPrazo(Future<void> Function() passo) async {
+  try {
+    await passo().timeout(const Duration(seconds: 5));
+  } catch (_) {
+    // engolida de propósito: tirar o aparelho é melhor esforço, sair não
+  }
+}

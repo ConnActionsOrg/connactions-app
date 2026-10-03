@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../apoio/app_de_teste.dart';
 import '../../apoio/autenticador_falso.dart';
 import '../../apoio/fake_api.dart';
+import '../../apoio/notificador_falso.dart';
 
 Future<void> abrirPerfil(WidgetTester tester, FakeApi api) async {
   await tester.pumpWidget(appDeTeste(api: api));
@@ -166,6 +167,39 @@ void main() {
     api.segurarObterEu!.complete();
     await tester.pumpAndSettle();
 
+    expect(autenticador.chamadas, ['sair']);
+    expect(find.text('Entrar com Google'), findsOneWidget);
+  });
+
+  testWidgets('"Sair da conta" tira o aparelho da API e do Firebase', (
+    tester,
+  ) async {
+    final autenticador = AutenticadorFalso(conta: contaDeTeste);
+    final api = FakeApi(eu: euDeTeste());
+    final notificador = NotificadorFalso();
+    await tester.pumpWidget(
+      appDeTeste(
+        autenticador: autenticador,
+        api: api,
+        notificador: notificador,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Perfil'));
+    await tester.pumpAndSettle();
+    // o botão vive no fim do ListView, abaixo da dobra no viewport de teste
+    await tester.scrollUntilVisible(
+      find.text('Sair da conta'),
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sair da conta'));
+    await tester.pumpAndSettle();
+
+    expect(api.chamadas, contains('removerDispositivo:token-fcm-1'));
+    expect(notificador.chamadas, contains('apagarToken'));
     expect(autenticador.chamadas, ['sair']);
     expect(find.text('Entrar com Google'), findsOneWidget);
   });
