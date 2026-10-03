@@ -69,4 +69,13 @@ abstract class ApiConnactions {
 
   /// PUT /eu/foto (multipart).
   Future<Eu> trocarFoto(FotoParaEnviar foto);
+
+  /// PUT /dispositivos: o aparelho passa a ser de quem está logado, mesmo que fosse de outra conta.
+  Future<void> registrarDispositivo({
+    required String token,
+    required String plataforma,
+  });
+
+  /// DELETE /dispositivos/{token}: 204 sempre; a API só apaga se o aparelho for de quem chamou.
+  Future<void> removerDispositivo(String token);
 }

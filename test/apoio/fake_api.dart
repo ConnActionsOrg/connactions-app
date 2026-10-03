@@ -39,6 +39,8 @@ class FakeApi implements ApiConnactions {
     this.falhaAoListarDiario,
     this.falhaAoEmbaralhar,
     this.falhaAoTrocarFoto,
+    this.falhaAoRegistrarDispositivo,
+    this.falhaAoRemoverDispositivo,
   }) : _eu = eu, // ignore: prefer_initializing_formals
        turmas = List.of(turmas),
        membrosPor = {
@@ -81,6 +83,8 @@ class FakeApi implements ApiConnactions {
   Object? falhaAoListarDiario;
   Object? falhaAoEmbaralhar;
   Object? falhaAoTrocarFoto;
+  Object? falhaAoRegistrarDispositivo;
+  Object? falhaAoRemoverDispositivo;
 
   final chamadas = <String>[];
 
@@ -466,6 +470,23 @@ class FakeApi implements ApiConnactions {
     return _eu = _eu!.copyWith(
       fotoUrl: 'http://midia.local/midia/perfis/${foto.nome}',
     );
+  }
+
+  @override
+  Future<void> registrarDispositivo({
+    required String token,
+    required String plataforma,
+  }) async {
+    chamadas.add('registrarDispositivo:$token');
+    final falha = falhaAoRegistrarDispositivo;
+    if (falha != null) throw falha;
+  }
+
+  @override
+  Future<void> removerDispositivo(String token) async {
+    chamadas.add('removerDispositivo:$token');
+    final falha = falhaAoRemoverDispositivo;
+    if (falha != null) throw falha;
   }
 
   /// A turma cuja aberta tem este id; 404 se nenhuma, 409 se ela já está no Diário.

@@ -141,6 +141,28 @@ class ApiHttp implements ApiConnactions {
   Future<Eu> trocarFoto(FotoParaEnviar foto) async =>
       Eu.deJson(await _enviarMultipart('PUT', '/eu/foto', foto: foto));
 
+  @override
+  Future<void> registrarDispositivo({
+    required String token,
+    required String plataforma,
+  }) async {
+    await _enviar(
+      'PUT',
+      '/dispositivos',
+      corpo: {'token': token, 'plataforma': plataforma},
+    );
+  }
+
+  @override
+  Future<void> removerDispositivo(String token) async {
+    // segmento de caminho, não componente: o ':' do token do FCM vai literal, e um '/' viraria %2F
+    // em vez de partir a rota
+    await _enviar(
+      'DELETE',
+      '/${Uri(pathSegments: ['dispositivos', token]).path}',
+    );
+  }
+
   Future<Map<String, dynamic>> _enviar(
     String metodo,
     String caminho, {

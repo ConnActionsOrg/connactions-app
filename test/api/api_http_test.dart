@@ -576,4 +576,62 @@ void main() {
       ),
     );
   });
+
+  test('PUT /dispositivos manda o token e a plataforma e aceita 204', () async {
+    late http.Request visto;
+    await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response('', 204);
+      }),
+    ).registrarDispositivo(token: 'token-fcm-1', plataforma: 'android');
+
+    expect(visto.method, 'PUT');
+    expect(visto.url.toString(), 'http://api.local/v1/dispositivos');
+    expect(visto.headers['Authorization'], 'Bearer tok');
+    expect(visto.headers['Content-Type'], startsWith('application/json'));
+    expect(jsonDecode(visto.body), {
+      'token': 'token-fcm-1',
+      'plataforma': 'android',
+    });
+  });
+
+  test(
+    'DELETE /dispositivos/{token} leva o token do FCM inteiro num segmento',
+    () async {
+      // o formato do FCM: id da instância, ':' e o resto, com '-' e '_' pelo meio
+      const token =
+          'fGx3Tq9ZRkqW1c2v-_Ab:APA91bHq7sL0v_mP3xK9dQ2rT5uY8wZ1aB4cD7eF0gH3iJ6kL9mN2oP5qR8sT1uV4wX7yZ0aB3cD6eF9gH2iJ5kL8mN1oP4qR7sT0uV3wX6yZ9-_aB2cD5eF8gH1iJ4kL7mN0oP3qR6';
+      late http.Request visto;
+      await api(
+        MockClient((req) async {
+          visto = req;
+          return http.Response('', 204);
+        }),
+      ).removerDispositivo(token);
+
+      expect(token.length, 160);
+      expect(visto.method, 'DELETE');
+      // ':' vale num segmento de caminho: vai literal, e a rota do chi entrega o token sem decodificar
+      expect(visto.url.toString(), 'http://api.local/v1/dispositivos/$token');
+      expect(visto.url.pathSegments, ['v1', 'dispositivos', token]);
+      expect(visto.body, isEmpty);
+    },
+  );
+
+  test(
+    'DELETE /dispositivos/{token}: um "/" no token não parte a rota',
+    () async {
+      late http.Request visto;
+      await api(
+        MockClient((req) async {
+          visto = req;
+          return http.Response('', 204);
+        }),
+      ).removerDispositivo('a/b');
+
+      expect(visto.url.path, '/v1/dispositivos/a%2Fb');
+      expect(visto.url.pathSegments, ['v1', 'dispositivos', 'a/b']);
+    },
+  );
 }
