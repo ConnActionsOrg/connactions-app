@@ -6,7 +6,7 @@ import '../../app/sessao.dart';
 /// Cadastra este aparelho para a conta logada, depois do perfil (o `PUT /dispositivos` exige o
 /// `POST /eu` feito), e de novo a cada token que o Firebase renovar. Falha não derruba nada: a
 /// próxima abertura do app tenta outra vez. Fica vivo por um `ref.listen` em `AppConnactions`.
-final registroDoAparelhoProvider = FutureProvider<void>((ref) async {
+final cadastroDoAparelhoProvider = FutureProvider<void>((ref) async {
   // só o id: editar o perfil não é motivo para cadastrar de novo
   final euId = ref.watch(
     perfilAtualProvider.select((perfil) => perfil.value?.id),

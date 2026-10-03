@@ -3,8 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../design/tema.dart';
+import '../features/notificacoes/cadastro_do_aparelho.dart';
 import '../features/notificacoes/ouvinte_de_avisos.dart';
-import '../features/notificacoes/registro_do_aparelho.dart';
 import 'roteador.dart';
 
 class AppConnactions extends ConsumerWidget {
@@ -15,7 +15,7 @@ class AppConnactions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // sem ouvinte o provider nem nasce: é daqui que o cadastro do aparelho vive o app inteiro
-    ref.listen(registroDoAparelhoProvider, (_, _) {});
+    ref.listen(cadastroDoAparelhoProvider, (_, _) {});
     return MaterialApp.router(
       title: 'ConnActions',
       theme: _tema,

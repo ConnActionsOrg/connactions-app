@@ -15,11 +15,11 @@ class CartaoDePermissao extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final estado = ref.watch(permissaoProvider).value;
-    final pergunta =
+    final devePerguntar =
         estado != null &&
         !estado.perguntou &&
         estado.permissao == PermissaoDeAviso.negada;
-    if (!pergunta) return const SizedBox.shrink();
+    if (!devePerguntar) return const SizedBox.shrink();
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
     return Padding(

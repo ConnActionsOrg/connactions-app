@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/app/dependencias.dart';
 import 'package:connactions_app/app/sessao.dart';
-import 'package:connactions_app/features/notificacoes/registro_do_aparelho.dart';
+import 'package:connactions_app/features/notificacoes/cadastro_do_aparelho.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,8 +27,8 @@ ProviderContainer montar({
       notificadorProvider.overrideWithValue(notificador),
     ],
   );
-  // sem ouvinte o Riverpod pausa a cadeia conta → perfil → registro e nada acontece
-  container.listen(registroDoAparelhoProvider, (_, _) {});
+  // sem ouvinte o Riverpod pausa a cadeia conta → perfil → cadastro e nada acontece
+  container.listen(cadastroDoAparelhoProvider, (_, _) {});
   return container;
 }
 
@@ -48,7 +48,7 @@ void main() {
       autenticador: AutenticadorFalso(),
     );
 
-    await c.read(registroDoAparelhoProvider.future);
+    await c.read(cadastroDoAparelhoProvider.future);
 
     expect(notificador.chamadas, isEmpty);
     expect(api.chamadas, isEmpty);
@@ -66,7 +66,7 @@ void main() {
 
     api.segurarObterEu!.complete();
     await c.read(perfilAtualProvider.future);
-    await c.read(registroDoAparelhoProvider.future);
+    await c.read(cadastroDoAparelhoProvider.future);
 
     expect(api.chamadas, ['obterEu', 'registrarDispositivo:token-fcm-1']);
   });
@@ -76,7 +76,7 @@ void main() {
     final c = montar(api: api, notificador: NotificadorFalso());
 
     await c.read(perfilAtualProvider.future);
-    await c.read(registroDoAparelhoProvider.future);
+    await c.read(cadastroDoAparelhoProvider.future);
 
     expect(api.chamadas, [
       'obterEu',
@@ -90,7 +90,7 @@ void main() {
     final notificador = NotificadorFalso();
     final c = montar(api: api, notificador: notificador);
     await c.read(perfilAtualProvider.future);
-    await c.read(registroDoAparelhoProvider.future);
+    await c.read(cadastroDoAparelhoProvider.future);
 
     notificador.renovarToken('token-fcm-2');
     await assentar();
@@ -112,7 +112,7 @@ void main() {
       final c = montar(api: api, notificador: notificador);
       await c.read(perfilAtualProvider.future);
 
-      await expectLater(c.read(registroDoAparelhoProvider.future), completes);
+      await expectLater(c.read(cadastroDoAparelhoProvider.future), completes);
 
       api.falhaAoRegistrarDispositivo = null;
       notificador.renovarToken('token-fcm-2');
@@ -131,7 +131,7 @@ void main() {
     final soltos = await errosSemDono(() async {
       final c = montar(api: api, notificador: notificador);
       await c.read(perfilAtualProvider.future);
-      await c.read(registroDoAparelhoProvider.future);
+      await c.read(cadastroDoAparelhoProvider.future);
 
       api.falhaAoRegistrarDispositivo = const ErroDeRede('caiu');
       notificador.renovarToken('token-fcm-2');
@@ -153,7 +153,7 @@ void main() {
     final c = montar(api: api, notificador: notificador);
     await c.read(perfilAtualProvider.future);
 
-    await expectLater(c.read(registroDoAparelhoProvider.future), completes);
+    await expectLater(c.read(cadastroDoAparelhoProvider.future), completes);
     expect(cadastros(api), isEmpty);
   });
 
@@ -169,12 +169,12 @@ void main() {
         autenticador: autenticador,
       );
       await c.read(perfilAtualProvider.future);
-      await c.read(registroDoAparelhoProvider.future);
+      await c.read(cadastroDoAparelhoProvider.future);
 
       await autenticador.sair();
       await assentar();
       expect(await c.read(perfilAtualProvider.future), isNull);
-      await c.read(registroDoAparelhoProvider.future);
+      await c.read(cadastroDoAparelhoProvider.future);
       notificador.renovarToken('token-fcm-2');
       await assentar();
 
