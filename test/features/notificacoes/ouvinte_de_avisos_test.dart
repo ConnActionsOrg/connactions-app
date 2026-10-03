@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
 import '../../apoio/autenticador_falso.dart';
+import '../../apoio/erros_sem_dono.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/notificador_falso.dart';
 import '../../apoio/preferencias_em_memoria.dart';
@@ -29,6 +30,17 @@ FakeApi apiComDuasTurmas() => FakeApi(
     turmaDeTeste(id: 'turma-2', nome: 'Cozinha & Prosa', emoji: '☕'),
   ],
 );
+
+/// O aparelho que não consegue gravar a turma ativa: o toque não pode ficar mudo por isso.
+class _PreferenciasQueNaoGravamATurma extends PreferenciasEmMemoria {
+  _PreferenciasQueNaoGravamATurma(super.iniciais);
+
+  @override
+  Future<void> gravar(String chave, String valor) async {
+    if (chave == 'turma_ativa_id') throw Exception('sem espaço');
+    await super.gravar(chave, valor);
+  }
+}
 
 Finder naPilula(String texto) => find.descendant(
   of: find.byType(SeletorDeTurma),
@@ -126,6 +138,35 @@ void main() {
       expect(leiturasDeTurmas(api), turmasLidas + 1);
     },
   );
+
+  testWidgets('o toque chega ao Feed mesmo que a gravação da turma falhe', (
+    tester,
+  ) async {
+    final notificador = NotificadorFalso();
+    final preferencias = _PreferenciasQueNaoGravamATurma({
+      'turma_ativa_id': 'turma-1',
+    });
+
+    final soltos = await errosSemDono(() async {
+      await abrir(
+        tester,
+        api: apiComDuasTurmas(),
+        notificador: notificador,
+        preferencias: preferencias,
+      );
+      await tester.tap(find.text('Perfil'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TelaDoPerfil), findsOneWidget);
+
+      notificador.tocar(mensagem(turmaId: 'turma-2'));
+      await tester.pumpAndSettle();
+    });
+
+    expect(soltos, isEmpty);
+    expect(find.byType(TelaDoFeed), findsOneWidget);
+    // a escolha vale nesta sessão mesmo sem a gravação
+    expect(naPilula('Cozinha & Prosa'), findsOneWidget);
+  });
 
   testWidgets('com o app aberto, o aviso vai para a tela e a turma é relida', (
     tester,

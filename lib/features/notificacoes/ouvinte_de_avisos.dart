@@ -11,9 +11,8 @@ import '../atividades/atividade_aberta.dart';
 import '../diario/diario.dart';
 import '../turmas/turma_ativa.dart';
 
-/// Os avisos do FCM dentro do app: o toque abre o Feed da turma do aviso, e o aviso que chega com
-/// o app aberto vai para a tela. Mora no `builder` do MaterialApp.router: abaixo do
-/// ScaffoldMessenger, que mostra o aviso, e acima das rotas, que o toque troca.
+/// Mora no `builder` do MaterialApp.router: abaixo do ScaffoldMessenger, que mostra o aviso, e
+/// acima das rotas, que o toque troca.
 class OuvinteDeAvisos extends ConsumerStatefulWidget {
   const OuvinteDeAvisos({super.key, required this.child});
 
@@ -59,14 +58,17 @@ class _OuvinteDeAvisosState extends ConsumerState<OuvinteDeAvisos> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// O toque: a turma do aviso vira a ativa, os dados dela são relidos e o app vai ao Feed. A frio
-/// a sessão ainda pode estar carregando: o redirect termina a viagem, no Feed ou, sem ninguém
-/// logado, na entrada.
+/// A frio a sessão ainda pode estar carregando: o redirect termina a viagem, no Feed ou, sem
+/// ninguém logado, na entrada.
 Future<void> abrirAviso(WidgetRef ref, Aviso aviso) async {
   final roteador = ref.read(roteadorProvider);
   final turmaAtiva = ref.read(turmaAtivaIdProvider.notifier);
   _reler(ref, aviso.turmaId);
-  await turmaAtiva.definir(aviso.turmaId);
+  try {
+    await turmaAtiva.definir(aviso.turmaId);
+  } catch (_) {
+    // o state já mudou antes da gravação: só a próxima abertura a frio perde a escolha
+  }
   roteador.go('/feed');
 }
 
