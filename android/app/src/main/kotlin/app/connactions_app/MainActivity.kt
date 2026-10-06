@@ -5,12 +5,23 @@ import android.app.NotificationManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        // Recriada depois que o Android mata o processo, a Activity volta com o intent do toque
+        // antigo, e o firebase_messaging o entregaria de novo como se fosse um toque novo.
+        if (savedInstanceState != null) {
+            intent.removeExtra("google.message_id")
+            intent.removeExtra("message_id")
+        }
+        super.onCreate(savedInstanceState)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         criarCanais()
