@@ -6,8 +6,11 @@ import 'package:connactions_app/api/api_connactions.dart';
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/alteracoes_do_eu.dart';
 import 'package:connactions_app/api/modelos/atividade.dart';
+import 'package:connactions_app/api/modelos/atividade_da_comunidade.dart';
 import 'package:connactions_app/api/modelos/eu.dart';
 import 'package:connactions_app/api/modelos/foto_para_enviar.dart';
+import 'package:connactions_app/api/modelos/ideia.dart';
+import 'package:connactions_app/api/modelos/pagina_da_comunidade.dart';
 import 'package:connactions_app/api/modelos/pagina_do_diario.dart';
 import 'package:connactions_app/api/modelos/pessoa.dart';
 import 'package:connactions_app/api/modelos/proposta.dart';
@@ -23,6 +26,8 @@ class FakeApi implements ApiConnactions {
     Map<String, Turma> convites = const {},
     Map<String, Atividade?> abertaPor = const {},
     Map<String, List<Atividade>> diarioPor = const {},
+    Map<String, List<Ideia>> ideiasPor = const {},
+    List<AtividadeDaComunidade> comunidade = const [],
     this.falhaAoObter,
     this.falhaAoAtualizar,
     this.falhaAoListarTurmas,
@@ -41,6 +46,11 @@ class FakeApi implements ApiConnactions {
     this.falhaAoTrocarFoto,
     this.falhaAoRegistrarDispositivo,
     this.falhaAoRemoverDispositivo,
+    this.falhaAoListarIdeias,
+    this.falhaAoCriarIdeia,
+    this.falhaAoApagarIdeia,
+    this.falhaAoSalvarDaComunidade,
+    this.falhaAoListarComunidade,
   }) : _eu = eu, // ignore: prefer_initializing_formals
        turmas = List.of(turmas),
        membrosPor = {
@@ -48,7 +58,9 @@ class FakeApi implements ApiConnactions {
        },
        convites = Map.of(convites),
        abertaPor = Map.of(abertaPor),
-       diarioPor = {for (final e in diarioPor.entries) e.key: List.of(e.value)};
+       diarioPor = {for (final e in diarioPor.entries) e.key: List.of(e.value)},
+       ideiasPor = {for (final e in ideiasPor.entries) e.key: List.of(e.value)},
+       comunidade = List.of(comunidade);
 
   Eu? _eu;
 
@@ -66,6 +78,15 @@ class FakeApi implements ApiConnactions {
 
   /// Encerradas por id de turma, da mais recente para a mais antiga.
   final Map<String, List<Atividade>> diarioPor;
+
+  /// As ideias livres por id de turma, da mais nova para a mais antiga.
+  final Map<String, List<Ideia>> ideiasPor;
+
+  /// O que a Comunidade mostra para mim (a API já tira as turmas de que sou membro).
+  final List<AtividadeDaComunidade> comunidade;
+
+  /// A última proposta que chegou a `lancarAtividade`, para afirmar a origem que o app mandou.
+  Proposta? ultimaProposta;
 
   Object? falhaAoObter;
   Object? falhaAoAtualizar;
@@ -85,6 +106,11 @@ class FakeApi implements ApiConnactions {
   Object? falhaAoTrocarFoto;
   Object? falhaAoRegistrarDispositivo;
   Object? falhaAoRemoverDispositivo;
+  Object? falhaAoListarIdeias;
+  Object? falhaAoCriarIdeia;
+  Object? falhaAoApagarIdeia;
+  Object? falhaAoSalvarDaComunidade;
+  Object? falhaAoListarComunidade;
 
   final chamadas = <String>[];
 
@@ -95,11 +121,13 @@ class FakeApi implements ApiConnactions {
   Completer<void>? segurarObterEu;
   Completer<void>? segurarListarTurmas;
   Completer<void>? segurarObterAberta;
+  Completer<void>? segurarListarComunidade;
 
   var _criadas = 0;
   var _regenerados = 0;
   var _lancadas = 0;
   var _registrados = 0;
+  var _ideias = 0;
 
   @override
   Future<Eu> criarEu() async {
@@ -244,6 +272,7 @@ class FakeApi implements ApiConnactions {
   @override
   Future<Atividade> lancarAtividade(String turmaId, Proposta proposta) async {
     chamadas.add('lancarAtividade:$turmaId:${proposta.titulo}');
+    ultimaProposta = proposta;
     final falha = falhaAoLancar;
     if (falha != null) throw falha;
     final turma = _minha(turmaId);
@@ -260,6 +289,27 @@ class FakeApi implements ApiConnactions {
         codigo: 'atividade_ja_aberta',
         mensagem:
             'A turma já tem uma atividade aberta. Encerre-a antes de propor outra.',
+      );
+    }
+    final ideiaId = proposta.origemIdeiaId;
+    if (ideiaId != null) {
+      final livres = ideiasPor[turmaId] ?? <Ideia>[];
+      final ideia = livres.where((i) => i.id == ideiaId).firstOrNull;
+      if (ideia == null) {
+        throw const ErroDaApi(
+          status: 409,
+          codigo: 'ideia_indisponivel',
+          mensagem: 'Essa ideia já foi usada ou apagada.',
+        );
+      }
+      livres.remove(ideia);
+    }
+    final origemId = proposta.origemAtividadeId;
+    if (origemId != null && !comunidade.any((a) => a.id == origemId)) {
+      throw const ErroDaApi(
+        status: 422,
+        codigo: 'dados_invalidos',
+        mensagem: 'A atividade de origem não está na Comunidade.',
       );
     }
     _lancadas++;
@@ -493,6 +543,148 @@ class FakeApi implements ApiConnactions {
     if (falha != null) throw falha;
   }
 
+  @override
+  Future<List<Ideia>> listarIdeias(String turmaId) async {
+    chamadas.add('listarIdeias:$turmaId');
+    final falha = falhaAoListarIdeias;
+    if (falha != null) throw falha;
+    _minha(turmaId);
+    return List.of(ideiasPor[turmaId] ?? const <Ideia>[]);
+  }
+
+  @override
+  Future<Ideia> criarIdeia(
+    String turmaId, {
+    required String titulo,
+    String descricao = '',
+  }) async {
+    chamadas.add('criarIdeia:$turmaId:$titulo');
+    final falha = falhaAoCriarIdeia;
+    if (falha != null) throw falha;
+    _minha(turmaId);
+    _exigirVagaNoBacklog(turmaId);
+    return _guardarIdeia(turmaId, titulo: titulo, descricao: descricao);
+  }
+
+  @override
+  Future<void> apagarIdeia(String ideiaId) async {
+    chamadas.add('apagarIdeia:$ideiaId');
+    final falha = falhaAoApagarIdeia;
+    if (falha != null) throw falha;
+    for (final livres in ideiasPor.values) {
+      final ideia = livres.where((i) => i.id == ideiaId).firstOrNull;
+      if (ideia == null) continue;
+      if (ideia.autor.id != _eu!.id) {
+        throw const ErroDaApi(
+          status: 403,
+          codigo: 'sem_acesso',
+          mensagem: 'Só quem sugeriu pode apagar a ideia.',
+        );
+      }
+      livres.remove(ideia);
+      return;
+    }
+    throw const ErroDaApi(
+      status: 404,
+      codigo: 'nao_encontrado',
+      mensagem: 'Não encontramos o que você procura.',
+    );
+  }
+
+  @override
+  Future<Ideia> salvarDaComunidade(
+    String atividadeId, {
+    required String turmaId,
+  }) async {
+    chamadas.add('salvarDaComunidade:$atividadeId:$turmaId');
+    final falha = falhaAoSalvarDaComunidade;
+    if (falha != null) throw falha;
+    _minha(turmaId);
+    final origem = comunidade.where((a) => a.id == atividadeId).firstOrNull;
+    if (origem == null) {
+      throw const ErroDaApi(
+        status: 404,
+        codigo: 'nao_encontrado',
+        mensagem: 'Não encontramos o que você procura.',
+      );
+    }
+    final livres = ideiasPor[turmaId] ?? const <Ideia>[];
+    // a duplicata informa mais do que "cheio": vem antes do teto
+    if (livres.any((i) => i.origemAtividadeId == atividadeId)) {
+      throw const ErroDaApi(
+        status: 409,
+        codigo: 'ja_no_backlog',
+        mensagem: 'Essa ideia já está no backlog da turma.',
+      );
+    }
+    _exigirVagaNoBacklog(turmaId);
+    return _guardarIdeia(
+      turmaId,
+      titulo: origem.titulo,
+      descricao: origem.descricao,
+      regras: origem.regras,
+      formato: origem.formato,
+      origemAtividadeId: origem.id,
+    );
+  }
+
+  @override
+  Future<PaginaDaComunidade> listarComunidade({
+    String? apos,
+    int limite = 20,
+  }) async {
+    chamadas.add('listarComunidade:${apos ?? ''}');
+    final segurar = segurarListarComunidade;
+    if (segurar != null) await segurar.future;
+    final falha = falhaAoListarComunidade;
+    if (falha != null) throw falha;
+    // o cursor do dublê é o índice de onde a página começa
+    final inicio = apos == null ? 0 : int.parse(apos);
+    final itens = comunidade.skip(inicio).take(limite).toList();
+    final fim = inicio + itens.length;
+    return PaginaDaComunidade(
+      itens: itens,
+      proximo: fim < comunidade.length ? '$fim' : null,
+    );
+  }
+
+  void _exigirVagaNoBacklog(String turmaId) {
+    final minhas = (ideiasPor[turmaId] ?? const <Ideia>[])
+        .where((i) => i.autor.id == _eu!.id)
+        .length;
+    if (minhas >= 5) {
+      throw const ErroDaApi(
+        status: 409,
+        codigo: 'backlog_cheio',
+        mensagem:
+            'Você já tem 5 ideias guardadas nesta turma. Use ou apague uma para guardar outra.',
+      );
+    }
+  }
+
+  Ideia _guardarIdeia(
+    String turmaId, {
+    required String titulo,
+    required String descricao,
+    List<String> regras = const [],
+    FormatoDeAtividade? formato,
+    String? origemAtividadeId,
+  }) {
+    _ideias++;
+    final ideia = Ideia(
+      id: 'ideia-nova-$_ideias',
+      titulo: titulo,
+      descricao: descricao,
+      regras: regras,
+      formato: formato,
+      origemAtividadeId: origemAtividadeId,
+      autor: pessoaDoEu(_eu!),
+      criadoEm: DateTime.utc(2026, 10, 6, 12, _ideias),
+    );
+    ideiasPor.putIfAbsent(turmaId, () => []).insert(0, ideia);
+    return ideia;
+  }
+
   /// A turma cuja aberta tem este id; 404 se nenhuma, 409 se ela já está no Diário.
   String _turmaDaAberta(String atividadeId) {
     for (final entrada in abertaPor.entries) {
@@ -645,4 +837,59 @@ Registro registroDeTeste({
 FotoParaEnviar fotoDeTeste({String nome = 'foto.jpg'}) => FotoParaEnviar(
   bytes: Uint8List.fromList(const [0xFF, 0xD8, 0xFF, 0xE0]),
   nome: nome,
+);
+
+/// Sem `autor`, a ideia é minha (a do eu de teste).
+Ideia ideiaDeTeste({
+  String id = 'ideia-1',
+  String titulo = 'Noite de pizza',
+  String descricao = '',
+  List<String> regras = const [],
+  FormatoDeAtividade? formato,
+  String? origemAtividadeId,
+  Pessoa? autor,
+  DateTime? criadoEm,
+}) => Ideia(
+  id: id,
+  titulo: titulo,
+  descricao: descricao,
+  regras: regras,
+  formato: formato,
+  origemAtividadeId: origemAtividadeId,
+  autor: autor ?? pessoaDoEu(euDeTeste()),
+  criadoEm: criadoEm ?? DateTime.utc(2026, 10, 6, 12),
+);
+
+FotoDaComunidade fotoDaComunidadeDeTeste({
+  String id = 'f1',
+  String legenda = 'Vitória da Bia',
+}) => FotoDaComunidade(
+  fotoUrl: 'http://midia.local/midia/registros/$id.jpg',
+  miniaturaUrl: 'http://midia.local/midia/registros/$id.min.jpg',
+  legenda: legenda,
+);
+
+/// Sem `fotos`, uma foto; sem pessoa nenhuma, como a API.
+AtividadeDaComunidade atividadeDaComunidadeDeTeste({
+  String id = 'com-1',
+  String titulo = 'Noite de jogos',
+  String descricao = 'Cada um leva um jogo.',
+  List<String> regras = const ['Um jogo por pessoa'],
+  FormatoDeAtividade formato = FormatoDeAtividade.grupo,
+  DateTime? encerradaEm,
+  String turmaNome = 'Turma Prova',
+  String turmaEmoji = '🍕',
+  List<FotoDaComunidade>? fotos,
+  int inspiradas = 0,
+}) => AtividadeDaComunidade(
+  id: id,
+  titulo: titulo,
+  descricao: descricao,
+  regras: regras,
+  formato: formato,
+  encerradaEm: encerradaEm ?? DateTime.utc(2026, 10, 4, 21, 30),
+  turmaNome: turmaNome,
+  turmaEmoji: turmaEmoji,
+  fotos: fotos ?? [fotoDaComunidadeDeTeste()],
+  inspiradas: inspiradas,
 );

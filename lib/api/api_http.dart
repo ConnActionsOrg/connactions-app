@@ -9,6 +9,8 @@ import 'modelos/alteracoes_do_eu.dart';
 import 'modelos/atividade.dart';
 import 'modelos/eu.dart';
 import 'modelos/foto_para_enviar.dart';
+import 'modelos/ideia.dart';
+import 'modelos/pagina_da_comunidade.dart';
 import 'modelos/pagina_do_diario.dart';
 import 'modelos/proposta.dart';
 import 'modelos/registro.dart';
@@ -136,6 +138,57 @@ class ApiHttp implements ApiConnactions {
   @override
   Future<TurmaDetalhe> embaralharOrdem(String turmaId) async =>
       TurmaDetalhe.deJson(await _enviar('POST', '/turmas/$turmaId/embaralhar'));
+
+  @override
+  Future<List<Ideia>> listarIdeias(String turmaId) async {
+    final json = await _enviar('GET', '/turmas/$turmaId/ideias');
+    return (json['itens'] as List<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .map(Ideia.deJson)
+        .toList();
+  }
+
+  @override
+  Future<Ideia> criarIdeia(
+    String turmaId, {
+    required String titulo,
+    String descricao = '',
+  }) async => Ideia.deJson(
+    await _enviar(
+      'POST',
+      '/turmas/$turmaId/ideias',
+      corpo: {'titulo': titulo, 'descricao': descricao},
+    ),
+  );
+
+  @override
+  Future<void> apagarIdeia(String ideiaId) async {
+    await _enviar('DELETE', '/ideias/$ideiaId');
+  }
+
+  @override
+  Future<Ideia> salvarDaComunidade(
+    String atividadeId, {
+    required String turmaId,
+  }) async => Ideia.deJson(
+    await _enviar(
+      'POST',
+      '/comunidade/$atividadeId/salvar',
+      corpo: {'turma_id': turmaId},
+    ),
+  );
+
+  @override
+  Future<PaginaDaComunidade> listarComunidade({
+    String? apos,
+    int limite = 20,
+  }) async => PaginaDaComunidade.deJson(
+    await _enviar(
+      'GET',
+      '/comunidade',
+      consulta: {'apos': ?apos, 'limite': '$limite'},
+    ),
+  );
 
   @override
   Future<Eu> trocarFoto(FotoParaEnviar foto) async =>

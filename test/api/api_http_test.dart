@@ -63,6 +63,35 @@ const atividadeJson = {
   'registros': <Object>[],
 };
 
+const ideiaJson = {
+  'id': 'i1',
+  'titulo': 'Noite de pizza',
+  'descricao': '',
+  'regras': <String>[],
+  'formato': null,
+  'origem_atividade_id': null,
+  'autor': pessoaJson,
+  'criado_em': '2026-10-06T12:00:00Z',
+};
+
+const itemDaComunidadeJson = {
+  'id': 'com-1',
+  'titulo': 'Noite de jogos',
+  'descricao': 'Cada um leva um jogo.',
+  'regras': <String>['Um jogo por pessoa'],
+  'formato': 'grupo',
+  'encerrada_em': '2026-10-04T21:30:00Z',
+  'turma': {'nome': 'Turma Prova', 'emoji': '🍕'},
+  'fotos': [
+    {
+      'foto_url': 'http://midia.local/midia/registros/x.jpg',
+      'miniatura_url': 'http://midia.local/midia/registros/x.min.jpg',
+      'legenda': 'Vitória da Bia',
+    },
+  ],
+  'inspiradas': 2,
+};
+
 const registroJson = {
   'id': 'reg-1',
   'autor': pessoaJson,
@@ -514,6 +543,148 @@ void main() {
       }),
     ).listarDiario('turma-1');
     expect(visto.url.queryParameters, {'limite': '20'});
+  });
+
+  test('GET ideias devolve as livres da turma', () async {
+    late http.Request visto;
+    final lista = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({
+            'itens': [ideiaJson],
+          }),
+          200,
+        );
+      }),
+    ).listarIdeias('turma-1');
+    expect(visto.method, 'GET');
+    expect(visto.url.path, '/v1/turmas/turma-1/ideias');
+    expect(lista.single.titulo, 'Noite de pizza');
+    expect(lista.single.autor.handle, 'bia');
+  });
+
+  test('POST ideias manda título e descrição', () async {
+    late http.Request visto;
+    final ideia = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(jsonEncode(ideiaJson), 201);
+      }),
+    ).criarIdeia('turma-1', titulo: 'Noite de pizza', descricao: 'Com forno');
+    expect(visto.method, 'POST');
+    expect(visto.url.path, '/v1/turmas/turma-1/ideias');
+    expect(jsonDecode(visto.body), {
+      'titulo': 'Noite de pizza',
+      'descricao': 'Com forno',
+    });
+    expect(ideia.id, 'i1');
+  });
+
+  test('DELETE ideias/{id} e o 409 de ideia indisponível', () async {
+    late http.Request visto;
+    await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response('', 204);
+      }),
+    ).apagarIdeia('i1');
+    expect(visto.method, 'DELETE');
+    expect(visto.url.path, '/v1/ideias/i1');
+
+    await expectLater(
+      api(
+        MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'erro': {
+                'codigo': 'ideia_indisponivel',
+                'mensagem': 'Essa ideia já foi usada ou apagada.',
+              },
+            }),
+            409,
+            headers: const {'content-type': 'application/json; charset=utf-8'},
+          ),
+        ),
+      ).apagarIdeia('i1'),
+      throwsA(
+        isA<ErroDaApi>()
+            .having((e) => e.ideiaIndisponivel, 'ideiaIndisponivel', isTrue)
+            .having((e) => e.conflito, 'conflito', isTrue),
+      ),
+    );
+  });
+
+  test('POST comunidade/{id}/salvar manda a turma de destino', () async {
+    late http.Request visto;
+    final ideia = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({...ideiaJson, 'origem_atividade_id': 'com-1'}),
+          201,
+        );
+      }),
+    ).salvarDaComunidade('com-1', turmaId: 'turma-1');
+    expect(visto.method, 'POST');
+    expect(visto.url.path, '/v1/comunidade/com-1/salvar');
+    expect(jsonDecode(visto.body), {'turma_id': 'turma-1'});
+    expect(ideia.origemAtividadeId, 'com-1');
+  });
+
+  test('GET comunidade manda o cursor e o limite', () async {
+    late http.Request visto;
+    final p = await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({
+            'itens': [itemDaComunidadeJson],
+            'proximo': 'c2',
+          }),
+          200,
+          headers: const {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    ).listarComunidade(apos: 'c1', limite: 5);
+    expect(visto.method, 'GET');
+    expect(visto.url.path, '/v1/comunidade');
+    expect(visto.url.queryParameters, {'apos': 'c1', 'limite': '5'});
+    expect(p.itens.single.turmaNome, 'Turma Prova');
+    expect(p.itens.single.inspiradas, 2);
+    expect(p.proximo, 'c2');
+
+    await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(
+          jsonEncode({'itens': <Object>[], 'proximo': null}),
+          200,
+        );
+      }),
+    ).listarComunidade();
+    expect(visto.url.queryParameters, {'limite': '20'});
+  });
+
+  test('POST atividades manda a origem escolhida no Propor', () async {
+    late http.Request visto;
+    await api(
+      MockClient((req) async {
+        visto = req;
+        return http.Response(jsonEncode(atividadeJson), 201);
+      }),
+    ).lancarAtividade(
+      'turma-1',
+      const Proposta(
+        titulo: 'Pizza',
+        formato: FormatoDeAtividade.grupo,
+        publica: true,
+        origemIdeiaId: 'i1',
+      ),
+    );
+    final corpo = jsonDecode(visto.body) as Map<String, dynamic>;
+    expect(corpo['origem_ideia_id'], 'i1');
+    expect(corpo.containsKey('origem_atividade_id'), isFalse);
   });
 
   test('POST embaralhar devolve o detalhe', () async {

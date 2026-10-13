@@ -2,6 +2,8 @@ import 'modelos/alteracoes_do_eu.dart';
 import 'modelos/atividade.dart';
 import 'modelos/eu.dart';
 import 'modelos/foto_para_enviar.dart';
+import 'modelos/ideia.dart';
+import 'modelos/pagina_da_comunidade.dart';
 import 'modelos/pagina_do_diario.dart';
 import 'modelos/proposta.dart';
 import 'modelos/registro.dart';
@@ -66,6 +68,29 @@ abstract class ApiConnactions {
 
   /// POST /turmas/{id}/embaralhar. 409 `ordem_travada` com atividade aberta.
   Future<TurmaDetalhe> embaralharOrdem(String turmaId);
+
+  /// GET /turmas/{id}/ideias: o backlog, só as livres, da mais nova para a mais antiga.
+  Future<List<Ideia>> listarIdeias(String turmaId);
+
+  /// POST /turmas/{id}/ideias. 409 `backlog_cheio` com 5 livres do mesmo autor na turma.
+  Future<Ideia> criarIdeia(
+    String turmaId, {
+    required String titulo,
+    String descricao = '',
+  });
+
+  /// DELETE /ideias/{id}. 409 `ideia_indisponivel` quando um lançamento a usou antes.
+  Future<void> apagarIdeia(String ideiaId);
+
+  /// POST /comunidade/{id}/salvar. 409 `ja_no_backlog` / `backlog_cheio`; 404 quando a atividade
+  /// saiu da Comunidade de quem pede.
+  Future<Ideia> salvarDaComunidade(
+    String atividadeId, {
+    required String turmaId,
+  });
+
+  /// GET /comunidade: atividades de outras turmas, da mais recente para a mais antiga.
+  Future<PaginaDaComunidade> listarComunidade({String? apos, int limite = 20});
 
   /// PUT /eu/foto (multipart).
   Future<Eu> trocarFoto(FotoParaEnviar foto);
