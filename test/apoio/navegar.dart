@@ -14,3 +14,18 @@ Future<void> irPara(WidgetTester tester, String rota) async {
   );
   await tester.pumpAndSettle();
 }
+
+/// Como o `irPara`, com o `extra` que o botão de origem (o backlog, a Comunidade) passa.
+Future<void> irParaComExtra(
+  WidgetTester tester,
+  String rota,
+  Object extra,
+) async {
+  final contexto = tester.element(find.byType(AppConnactions));
+  unawaited(
+    ProviderScope.containerOf(
+      contexto,
+    ).read(roteadorProvider).push<void>(rota, extra: extra),
+  );
+  await tester.pumpAndSettle();
+}

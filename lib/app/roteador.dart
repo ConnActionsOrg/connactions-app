@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
+import '../api/modelos/atividade_da_comunidade.dart';
+import '../api/modelos/ideia.dart';
 import '../design/widgets/barra_de_abas.dart';
 import '../features/atividades/tela_de_propor.dart';
 import '../features/comunidade/tela_da_comunidade.dart';
@@ -60,8 +62,18 @@ final roteadorProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/turmas/:id/propor',
         parentNavigatorKey: raiz,
-        builder: (_, state) =>
-            TelaDePropor(turmaId: state.pathParameters['id']!),
+        // o backlog e a Comunidade passam a origem no extra; sem ele, o formulário nasce vazio
+        builder: (_, state) => TelaDePropor(
+          turmaId: state.pathParameters['id']!,
+          ideia: switch (state.extra) {
+            final Ideia ideia => ideia,
+            _ => null,
+          },
+          daComunidade: switch (state.extra) {
+            final AtividadeDaComunidade atividade => atividade,
+            _ => null,
+          },
+        ),
       ),
       GoRoute(
         path: '/turmas/:id/ideias/nova',
