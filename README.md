@@ -33,6 +33,18 @@ Android) já em 1600px, e a API normaliza e serve em `/midia`. No celular físic
 `127.0.0.1:8090`, que o `adb reverse` resolve; no emulador a API precisa de
 `MIDIA_BASE_URL=http://10.0.2.2:8090/midia` no `.env`.
 
+## Backlog e Comunidade
+
+O Feed tem o cartão "Backlog de ideias" (as minhas ideias livres, "N/5"). A tela do backlog guarda as
+ideias da turma, até 5 livres por pessoa, e quem está na vez as propõe. O Propor tem três abinhas:
+"Do zero", "Backlog" e "Comunidade"; escolher uma origem preenche o formulário, a origem vai na
+proposta (`origem_ideia_id` ou `origem_atividade_id`) e aparece como chip acima do título ("Sua
+ideia", "Ideia de Carol" ou "Da Comunidade · 🍕 Turma Prova"), que o ✕ desfaz sem perder o texto.
+
+A aba Comunidade lista as atividades públicas e encerradas de outras turmas, sem nenhuma pessoa:
+só o nome e o emoji da turma, as fotos com legenda e "N turmas se inspiraram". A pílula do topo
+escolhe a turma que recebe o que se salva e de onde se propõe; sem turma, dá para ler e não agir.
+
 ## Gate
 
 `dart format --set-exit-if-changed .` · `dart analyze` · `flutter test`
