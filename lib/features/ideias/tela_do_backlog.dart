@@ -50,8 +50,9 @@ class TelaDoBacklog extends ConsumerWidget {
     } on ErroDaApi catch (e) {
       if (!context.mounted) return;
       mostrarAviso(context, e.mensagem);
-      // um lançamento usou a ideia no meio: a lista relida diz o que sobrou
-      if (e.conflito) ref.invalidate(ideiasProvider(turmaId));
+      // um lançamento usou a ideia no meio, ou outro aparelho a apagou: a lista relida diz o que sobrou
+      if (e.conflito || e.naoEncontrado)
+        ref.invalidate(ideiasProvider(turmaId));
     } catch (e) {
       if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
     }

@@ -152,6 +152,29 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('apagar uma ideia que já sumiu (404) avisa e relê a lista', (
+    tester,
+  ) async {
+    final api = apiCom(
+      ideias: [ideiaDeTeste(id: 'i1', titulo: 'Pizza')],
+    );
+    await abrirBacklog(tester, api);
+    expect(leituras(api), 1);
+    // outro aparelho apagou: a lista da tela ainda a mostra
+    api.ideiasPor['turma-1']!.clear();
+
+    await tester.tap(find.text('Apagar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apagar').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Não encontramos o que você procura.'), findsOneWidget);
+    expect(leituras(api), 2);
+    expect(find.text('Pizza'), findsNothing);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('"Propor esta" só na minha vez e sem atividade aberta', (
     tester,
   ) async {
