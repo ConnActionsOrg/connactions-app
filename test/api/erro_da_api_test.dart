@@ -17,6 +17,13 @@ void main() {
     expect(erro(422, 'foto_invalida').conflito, isFalse);
   });
 
+  test('getters dos códigos do backlog', () {
+    expect(erro(409, 'backlog_cheio').backlogCheio, isTrue);
+    expect(erro(409, 'ja_no_backlog').jaNoBacklog, isTrue);
+    expect(erro(409, 'ideia_indisponivel').ideiaIndisponivel, isTrue);
+    expect(erro(409, 'ja_no_backlog').backlogCheio, isFalse);
+  });
+
   test('conflito é qualquer 409: o estado mudou embaixo de mim', () {
     expect(erro(409, 'qualquer').conflito, isTrue);
     expect(erro(403, 'sem_acesso').conflito, isFalse);

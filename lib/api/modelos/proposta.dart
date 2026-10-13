@@ -9,6 +9,8 @@ class Proposta {
     required this.formato,
     required this.publica,
     this.prazo,
+    this.origemIdeiaId,
+    this.origemAtividadeId,
   });
 
   final String titulo;
@@ -18,6 +20,10 @@ class Proposta {
   final bool publica;
   final DateTime? prazo;
 
+  /// No máximo uma das duas: a ideia do backlog ou a atividade da Comunidade que originou a proposta.
+  final String? origemIdeiaId;
+  final String? origemAtividadeId;
+
   Map<String, Object?> toJson() => {
     'titulo': titulo,
     'descricao': descricao,
@@ -25,5 +31,7 @@ class Proposta {
     'formato': formato.name,
     'publica': publica,
     if (prazo != null) 'prazo': prazo!.toUtc().toIso8601String(),
+    'origem_ideia_id': ?origemIdeiaId,
+    'origem_atividade_id': ?origemAtividadeId,
   };
 }

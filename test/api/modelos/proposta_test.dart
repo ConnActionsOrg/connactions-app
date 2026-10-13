@@ -32,4 +32,32 @@ void main() {
       DateTime(2026, 10, 2, 23, 59, 59).toUtc().toIso8601String(),
     );
   });
+
+  test('toJson manda a origem só quando existe, uma chave por origem', () {
+    const daIdeia = Proposta(
+      titulo: 'Pizza',
+      formato: FormatoDeAtividade.grupo,
+      publica: true,
+      origemIdeiaId: 'i1',
+    );
+    expect(daIdeia.toJson()['origem_ideia_id'], 'i1');
+    expect(daIdeia.toJson().containsKey('origem_atividade_id'), isFalse);
+
+    const daComunidade = Proposta(
+      titulo: 'Pizza',
+      formato: FormatoDeAtividade.grupo,
+      publica: true,
+      origemAtividadeId: 'a1',
+    );
+    expect(daComunidade.toJson()['origem_atividade_id'], 'a1');
+    expect(daComunidade.toJson().containsKey('origem_ideia_id'), isFalse);
+
+    const doZero = Proposta(
+      titulo: 'Pizza',
+      formato: FormatoDeAtividade.grupo,
+      publica: true,
+    );
+    expect(doZero.toJson().keys, isNot(contains('origem_ideia_id')));
+    expect(doZero.toJson().keys, isNot(contains('origem_atividade_id')));
+  });
 }
