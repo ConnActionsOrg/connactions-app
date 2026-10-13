@@ -333,6 +333,20 @@ void main() {
     expect(naTela(find.text('Noite de jogos')), findsOneWidget);
   });
 
+  testWidgets('erro nas turmas: tentar de novo relê a cadeia, não só a lista', (
+    tester,
+  ) async {
+    final api = apiCom()..falhaAoListarTurmas = const ErroDeRede('caiu');
+    await abrirComunidade(tester, api);
+    expect(naTela(find.text('Algo não deu certo')), findsOneWidget);
+
+    api.falhaAoListarTurmas = null;
+    await tester.tap(naTela(find.text('Tentar de novo')));
+    await tester.pumpAndSettle();
+
+    expect(naTela(find.text('Noite de jogos')), findsOneWidget);
+  });
+
   testWidgets('"Carregar mais" traz a página seguinte', (tester) async {
     final api = apiCom(
       comunidade: [
