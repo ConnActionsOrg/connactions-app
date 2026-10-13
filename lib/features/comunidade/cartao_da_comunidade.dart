@@ -26,7 +26,7 @@ import 'texto_de_inspiradas.dart';
 
 /// Uma atividade de outra turma: a turma (sem pessoas), o que foi feito, as fotos e quantas turmas
 /// se inspiraram. Com turma ativa, dá para guardá-la no backlog dela e propô-la de volta.
-class CartaoDaComunidade extends ConsumerWidget {
+class CartaoDaComunidade extends ConsumerStatefulWidget {
   const CartaoDaComunidade({
     super.key,
     required this.atividade,
@@ -38,19 +38,28 @@ class CartaoDaComunidade extends ConsumerWidget {
   final DateTime agora;
   final Turma? turmaAtiva;
 
-  Future<void> _salvar(BuildContext context, WidgetRef ref, Turma ativa) async {
+  @override
+  ConsumerState<CartaoDaComunidade> createState() => _EstadoDoCartao();
+}
+
+class _EstadoDoCartao extends ConsumerState<CartaoDaComunidade> {
+  // o 2º toque em rede lenta voltaria 409 ja_no_backlog para quem acabou de salvar
+  bool _salvando = false;
+
+  Future<void> _salvar(Turma ativa) async {
+    setState(() => _salvando = true);
     try {
       await ref
           .read(ideiasProvider(ativa.id).notifier)
-          .salvarDaComunidade(atividade.id);
-      if (context.mounted) {
+          .salvarDaComunidade(widget.atividade.id);
+      if (mounted) {
         mostrarAviso(
           context,
           'Ideia salva no backlog de ${ativa.emoji} ${ativa.nome}',
         );
       }
     } on ErroDaApi catch (e) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       mostrarAviso(context, e.mensagem);
       if (e.conflito) {
         // já estava no backlog, ou ele encheu: a lista relida diz o que há
@@ -63,15 +72,19 @@ class CartaoDaComunidade extends ConsumerWidget {
         ref.invalidate(turmasProvider);
       }
     } catch (e) {
-      if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
+      if (mounted) mostrarAviso(context, mensagemDoErro(e));
+    } finally {
+      if (mounted) setState(() => _salvando = false);
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final atividade = widget.atividade;
+    final agora = widget.agora;
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
-    final ativa = turmaAtiva;
+    final ativa = widget.turmaAtiva;
     final euId = ref.watch(perfilAtualProvider).value?.id;
     final ideias = ativa == null
         ? null
@@ -156,8 +169,14 @@ class CartaoDaComunidade extends ConsumerWidget {
             const SizedBox(height: Espacos.md),
             // em coluna: o tema dá largura mínima infinita aos botões cheios, e numa Row ou Wrap eles estourariam
             OutlinedButton.icon(
-              onPressed: salva ? null : () => _salvar(context, ref, ativa),
-              icon: Icon(salva ? Symbols.check : Symbols.bookmark_add),
+              onPressed: salva || _salvando ? null : () => _salvar(ativa),
+              icon: _salvando
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(salva ? Symbols.check : Symbols.bookmark_add),
               label: Text(rotuloDoSalvar),
             ),
             if (podePropor) ...[

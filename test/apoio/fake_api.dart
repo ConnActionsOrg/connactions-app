@@ -122,6 +122,7 @@ class FakeApi implements ApiConnactions {
   Completer<void>? segurarListarTurmas;
   Completer<void>? segurarObterAberta;
   Completer<void>? segurarListarComunidade;
+  Completer<void>? segurarSalvarDaComunidade;
 
   var _criadas = 0;
   var _regenerados = 0;
@@ -597,6 +598,8 @@ class FakeApi implements ApiConnactions {
     required String turmaId,
   }) async {
     chamadas.add('salvarDaComunidade:$atividadeId:$turmaId');
+    final segurar = segurarSalvarDaComunidade;
+    if (segurar != null) await segurar.future;
     final falha = falhaAoSalvarDaComunidade;
     if (falha != null) throw falha;
     _minha(turmaId);

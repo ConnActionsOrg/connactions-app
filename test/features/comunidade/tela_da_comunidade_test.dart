@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/atividade.dart';
 import 'package:connactions_app/api/modelos/atividade_da_comunidade.dart';
@@ -126,6 +128,56 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
   });
+
+  testWidgets(
+    'salvar em voo: o segundo toque não chama a API e o botão avisa',
+    (tester) async {
+      final segurar = Completer<void>();
+      final api = apiCom()..segurarSalvarDaComunidade = segurar;
+      await abrirComunidade(tester, api);
+
+      await tester.tap(naTela(find.text('Salvar no backlog 0/5')));
+      await tester.pump();
+      await tester.tap(
+        naTela(find.text('Salvar no backlog 0/5')),
+        warnIfMissed: false,
+      );
+      await tester.pump();
+
+      expect(leituras(api, 'salvarDaComunidade'), 1);
+      expect(
+        tester
+            .widget<OutlinedButton>(
+              find.descendant(
+                of: find.byType(TelaDaComunidade),
+                matching: find.byWidgetPredicate((w) => w is OutlinedButton),
+              ),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        naTela(find.byType(CircularProgressIndicator)),
+        findsOneWidget,
+        reason: 'o ícone vira o indicador de progresso enquanto salva',
+      );
+
+      segurar.complete();
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Ideia salva no backlog de 🌿 Turma do Domingo'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Essa ideia já está no backlog da turma.'),
+        findsNothing,
+      );
+      expect(naTela(find.text('Salva ✓ 1/5')), findsOneWidget);
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    },
+  );
 
   testWidgets('já guardada na ativa: nasce "Salva ✓" e desligada', (
     tester,
