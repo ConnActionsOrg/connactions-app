@@ -23,6 +23,7 @@ import '../../design/widgets/pilha_de_avatares.dart';
 import '../atividades/atividade_aberta.dart';
 import '../atividades/cartao_da_atividade.dart';
 import '../atividades/cartao_de_registro.dart';
+import '../atividades/foto_para_ver.dart';
 import '../atividades/tela_de_novo_registro.dart';
 import '../atividades/tempo.dart';
 import '../atividades/visualizador_de_fotos.dart';
@@ -386,11 +387,11 @@ class _Registros extends ConsumerWidget {
                 meu: registros[i].autor.id == euId,
                 aoTocar: () => mostrarVisualizadorDeFotos(
                   context,
-                  registros: registros,
+                  fotos: [for (final r in registros) FotoParaVer.doRegistro(r)],
                   indiceInicial: i,
                   agora: agora,
-                  podeApagar: (r) => r.autor.id == euId && atividade.aberta,
-                  aoApagar: (r) => _apagar(ref, r.id),
+                  podeApagar: (f) => f.autor?.id == euId && atividade.aberta,
+                  aoApagar: (f) => _apagar(ref, f.id!),
                 ),
               ),
             ),

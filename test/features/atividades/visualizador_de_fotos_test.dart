@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:connactions_app/api/modelos/registro.dart';
+import 'package:connactions_app/design/widgets/avatar.dart';
+import 'package:connactions_app/features/atividades/foto_para_ver.dart';
 import 'package:connactions_app/features/atividades/visualizador_de_fotos.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,17 +23,21 @@ Future<void> abrir(
   bool Function(Registro)? podeApagar,
   Future<void> Function(Registro)? aoApagar,
 }) async {
+  // os testes seguem falando de registros: a conversão e a volta pelo id ficam só aqui
+  final porId = {for (final r in registros) r.id: r};
   await tester.pumpWidget(
     montar(
       Builder(
         builder: (context) => FilledButton(
           onPressed: () => mostrarVisualizadorDeFotos(
             context,
-            registros: registros,
+            fotos: [for (final r in registros) FotoParaVer.doRegistro(r)],
             indiceInicial: indice,
             agora: agora,
-            podeApagar: podeApagar,
-            aoApagar: aoApagar,
+            podeApagar: podeApagar == null
+                ? null
+                : (f) => podeApagar(porId[f.id]!),
+            aoApagar: aoApagar == null ? null : (f) => aoApagar(porId[f.id]!),
           ),
           child: const Text('abrir'),
         ),
@@ -123,6 +129,94 @@ Future<TestGesture> arrastaSemSoltar(WidgetTester tester) async {
 }
 
 void main() {
+  Future<void> abrirFotos(WidgetTester tester, List<FotoParaVer> fotos) async {
+    await tester.pumpWidget(
+      montar(
+        Builder(
+          builder: (context) => FilledButton(
+            onPressed: () => mostrarVisualizadorDeFotos(
+              context,
+              fotos: fotos,
+              indiceInicial: 0,
+              agora: agora,
+            ),
+            child: const Text('abrir'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+    expect(find.byType(VisualizadorDeFotos), findsOneWidget);
+  }
+
+  testWidgets('com autor, o rodapé tem o avatar, o nome e a hora', (
+    tester,
+  ) async {
+    await abrirFotos(tester, [
+      FotoParaVer.doRegistro(
+        registroDeTeste(id: 'r1', autor: bia, legenda: 'Bolo'),
+      ),
+    ]);
+
+    expect(find.byType(Avatar), findsOneWidget);
+    expect(find.text('Bia Souza'), findsOneWidget);
+    expect(find.text('Bolo · há 2 h'), findsOneWidget);
+  });
+
+  testWidgets('foto da Comunidade: só a legenda, sem autor e sem apagar', (
+    tester,
+  ) async {
+    await abrirFotos(tester, [
+      FotoParaVer.daComunidade(
+        fotoDaComunidadeDeTeste(legenda: 'Vitória da Bia'),
+      ),
+    ]);
+
+    expect(find.text('Vitória da Bia'), findsOneWidget);
+    expect(find.text('1 / 1'), findsOneWidget);
+    expect(find.byType(Avatar), findsNothing);
+    expect(find.textContaining('há '), findsNothing);
+    expect(find.byTooltip('Apagar'), findsNothing);
+  });
+
+  testWidgets('foto sem autor e sem legenda não desenha rodapé', (
+    tester,
+  ) async {
+    await abrirFotos(tester, [
+      FotoParaVer.daComunidade(fotoDaComunidadeDeTeste(legenda: '')),
+    ]);
+
+    expect(find.byType(Avatar), findsNothing);
+    // só a contagem do cabeçalho tem texto
+    expect(
+      find.descendant(
+        of: find.byType(VisualizadorDeFotos),
+        matching: find.byType(Text),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('fotos sem id deslizam: a chave é o objeto, não o id', (
+    tester,
+  ) async {
+    await abrirFotos(tester, [
+      FotoParaVer.daComunidade(fotoDaComunidadeDeTeste(id: 'a', legenda: 'Um')),
+      FotoParaVer.daComunidade(
+        fotoDaComunidadeDeTeste(id: 'b', legenda: 'Dois'),
+      ),
+    ]);
+    expect(find.text('Um'), findsOneWidget);
+
+    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('2 / 2'), findsOneWidget);
+    expect(find.text('Dois'), findsOneWidget);
+  });
+
   testWidgets('mostra a foto pedida, o autor, a legenda e a posição', (
     tester,
   ) async {

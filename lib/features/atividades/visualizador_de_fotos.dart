@@ -3,27 +3,27 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../api/erro_da_api.dart';
 import '../../api/mensagens.dart';
-import '../../api/modelos/registro.dart';
 import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/avatar.dart';
 import '../../design/widgets/aviso.dart';
+import 'foto_para_ver.dart';
 import 'tempo.dart';
 
 /// Abre o visualizador por cima de tudo (navigator da raiz): ele carrega a lista, não cabe numa rota.
 Future<void> mostrarVisualizadorDeFotos(
   BuildContext context, {
-  required List<Registro> registros,
+  required List<FotoParaVer> fotos,
   required int indiceInicial,
   required DateTime agora,
-  bool Function(Registro)? podeApagar,
-  Future<void> Function(Registro)? aoApagar,
+  bool Function(FotoParaVer)? podeApagar,
+  Future<void> Function(FotoParaVer)? aoApagar,
 }) => Navigator.of(context, rootNavigator: true).push<void>(
   MaterialPageRoute(
     fullscreenDialog: true,
     builder: (_) => VisualizadorDeFotos(
-      registros: registros,
+      fotos: fotos,
       indiceInicial: indiceInicial,
       agora: agora,
       podeApagar: podeApagar,
@@ -32,32 +32,32 @@ Future<void> mostrarVisualizadorDeFotos(
   ),
 );
 
-/// Fotos em tela cheia com autor e legenda. "Apagar" só quando `podeApagar` diz sim; apagada a
-/// última, fecha.
+/// Fotos em tela cheia. Com autor, o rodapé mostra quem postou e há quanto tempo; sem autor (a
+/// Comunidade), só a legenda. "Apagar" só quando `podeApagar` diz sim; apagada a última, fecha.
 class VisualizadorDeFotos extends StatefulWidget {
   const VisualizadorDeFotos({
     super.key,
-    required this.registros,
+    required this.fotos,
     required this.indiceInicial,
     required this.agora,
     this.podeApagar,
     this.aoApagar,
   });
 
-  final List<Registro> registros;
+  final List<FotoParaVer> fotos;
   final int indiceInicial;
   final DateTime agora;
-  final bool Function(Registro)? podeApagar;
-  final Future<void> Function(Registro)? aoApagar;
+  final bool Function(FotoParaVer)? podeApagar;
+  final Future<void> Function(FotoParaVer)? aoApagar;
 
   @override
   State<VisualizadorDeFotos> createState() => _VisualizadorDeFotosState();
 }
 
 class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
-  late final List<Registro> _registros = List.of(widget.registros);
+  late final List<FotoParaVer> _fotos = List.of(widget.fotos);
   late int _indice = widget.indiceInicial
-      .clamp(0, widget.registros.length - 1)
+      .clamp(0, widget.fotos.length - 1)
       .toInt();
   late final _paginas = PageController(initialPage: _indice);
   bool _apagando = false;
@@ -70,7 +70,7 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
   }
 
   Future<void> _apagar() async {
-    final registro = _registros[_indice];
+    final foto = _fotos[_indice];
     final confirmou = await showDialog<bool>(
       context: context,
       builder: (contexto) => AlertDialog(
@@ -95,21 +95,21 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
     final mensageiro = ScaffoldMessenger.of(context);
     setState(() => _apagando = true);
     try {
-      await widget.aoApagar!(registro);
+      await widget.aoApagar!(foto);
       if (!mounted) return;
-      if (_registros.length == 1) {
+      if (_fotos.length == 1) {
         Navigator.of(context).pop();
         return;
       }
-      // a pessoa pode ter deslizado enquanto a requisição estava no ar: sai o registro apagado,
-      // não o que está na tela
-      final removido = _registros.indexWhere((r) => r.id == registro.id);
+      // a pessoa pode ter deslizado enquanto a requisição estava no ar: sai a foto apagada, não a
+      // que está na tela
+      final removido = _fotos.indexOf(foto);
       setState(() {
-        _registros.removeAt(removido);
-        // da removida em diante as páginas trocam de dono (a chave é o id) e nascem sem zoom
+        _fotos.removeAt(removido);
+        // da removida em diante as páginas trocam de dono (a chave é a foto) e nascem sem zoom
         if (_indice >= removido) _ampliada = false;
         if (_indice > removido) _indice--;
-        _indice = _indice.clamp(0, _registros.length - 1).toInt();
+        _indice = _indice.clamp(0, _fotos.length - 1).toInt();
         _paginas.jumpToPage(_indice);
       });
     } on ErroDaApi catch (e) {
@@ -134,7 +134,7 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
   Widget build(BuildContext context) {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
-    final atual = _registros[_indice];
+    final atual = _fotos[_indice];
     final podeApagar =
         widget.aoApagar != null && (widget.podeApagar?.call(atual) ?? false);
     return Scaffold(
@@ -148,7 +148,7 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          '${_indice + 1} / ${_registros.length}',
+          '${_indice + 1} / ${_fotos.length}',
           style: tipografia.rotuloTitulo.copyWith(
             color: cores.sobreSuperficieInversa,
           ),
@@ -169,14 +169,15 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
               controller: _paginas,
               // ampliada, o arrasto é da foto e não da página
               physics: _ampliada ? const NeverScrollableScrollPhysics() : null,
-              itemCount: _registros.length,
+              itemCount: _fotos.length,
               // ao apagar, o PageView pode avisar de uma página que a lista encolhida já não tem
               onPageChanged: (i) => setState(
-                () => _indice = i.clamp(0, _registros.length - 1).toInt(),
+                () => _indice = i.clamp(0, _fotos.length - 1).toInt(),
               ),
               itemBuilder: (_, i) => _FotoAmpliavel(
-                key: ValueKey(_registros[i].id),
-                url: _registros[i].fotoUrl,
+                // a chave é a foto: sem id (Comunidade), o objeto identifica
+                key: ObjectKey(_fotos[i]),
+                url: _fotos[i].url,
                 aoMudarAmpliacao: (ampliada) =>
                     setState(() => _ampliada = ampliada),
               ),
@@ -189,40 +190,61 @@ class _VisualizadorDeFotosState extends State<VisualizadorDeFotos> {
               Espacos.margemDaTela,
               Espacos.lg,
             ),
-            child: Row(
-              children: [
-                Avatar(
-                  nome: atual.autor.nome,
-                  fotoUrl: atual.autor.fotoUrl,
-                  tamanho: 32,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        atual.autor.nome,
-                        style: tipografia.rotuloTitulo.copyWith(
-                          color: cores.sobreSuperficieInversa,
-                        ),
-                      ),
-                      Text(
-                        atual.legenda.isEmpty
-                            ? haQuantoTempo(atual.criadoEm, widget.agora)
-                            : '${atual.legenda} · ${haQuantoTempo(atual.criadoEm, widget.agora)}',
-                        style: tipografia.corpoPequeno.copyWith(
-                          color: cores.sobreSuperficieInversa,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            child: _Rodape(foto: atual, agora: widget.agora),
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Com autor: avatar, nome e a legenda com há quanto tempo. Sem autor (a Comunidade): só a legenda.
+class _Rodape extends StatelessWidget {
+  const _Rodape({required this.foto, required this.agora});
+
+  final FotoParaVer foto;
+  final DateTime agora;
+
+  @override
+  Widget build(BuildContext context) {
+    final cores = Cores.de(context);
+    final tipografia = Tipografia.de(context);
+    final autor = foto.autor;
+    final postadaEm = foto.postadaEm;
+    final legenda = [
+      if (foto.legenda.isNotEmpty) foto.legenda,
+      if (postadaEm != null) haQuantoTempo(postadaEm, agora),
+    ].join(' · ');
+    final texto = Text(
+      legenda,
+      style: tipografia.corpoPequeno.copyWith(
+        color: cores.sobreSuperficieInversa,
+      ),
+    );
+    if (autor == null) {
+      return legenda.isEmpty
+          ? const SizedBox.shrink()
+          : Align(alignment: Alignment.centerLeft, child: texto);
+    }
+    return Row(
+      children: [
+        Avatar(nome: autor.nome, fotoUrl: autor.fotoUrl, tamanho: 32),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                autor.nome,
+                style: tipografia.rotuloTitulo.copyWith(
+                  color: cores.sobreSuperficieInversa,
+                ),
+              ),
+              texto,
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

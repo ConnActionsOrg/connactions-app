@@ -7,6 +7,7 @@ import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/etiqueta.dart';
+import '../atividades/foto_para_ver.dart';
 import '../atividades/visualizador_de_fotos.dart';
 
 /// Uma encerrada no Diário: título, formato em sálvia (concluído), quem propôs e quando, a
@@ -87,7 +88,7 @@ class CartaoDoDiario extends StatelessWidget {
                 itemBuilder: (_, i) => GestureDetector(
                   onTap: () => mostrarVisualizadorDeFotos(
                     context,
-                    registros: fotos,
+                    fotos: [for (final r in fotos) FotoParaVer.doRegistro(r)],
                     indiceInicial: i,
                     agora: agora,
                   ),
