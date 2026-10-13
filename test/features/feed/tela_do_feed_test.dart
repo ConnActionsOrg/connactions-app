@@ -168,6 +168,10 @@ void main() {
       compartilhador: compartilhador,
     );
 
+    // o botão está na faixa que a barra de abas cobre: `ensureVisible` rola até ele de verdade
+    // (`scrollUntilVisible` pararia logo, porque o botão já está construído na folga da lista)
+    await tester.ensureVisible(find.text('Convidar amigos'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Convidar amigos'));
     await tester.pumpAndSettle();
 

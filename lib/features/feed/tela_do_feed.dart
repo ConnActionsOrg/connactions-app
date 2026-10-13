@@ -27,6 +27,8 @@ import '../atividades/foto_para_ver.dart';
 import '../atividades/tela_de_novo_registro.dart';
 import '../atividades/tempo.dart';
 import '../atividades/visualizador_de_fotos.dart';
+import '../ideias/cartao_do_backlog.dart';
+import '../ideias/ideias.dart';
 import '../notificacoes/cartao_de_permissao.dart';
 import '../turmas/convite.dart';
 import '../turmas/detalhe_da_turma.dart';
@@ -109,6 +111,7 @@ class _ComTurma extends ConsumerWidget {
           await Future.wait<Object?>([
             ref.refresh(turmasProvider.future),
             ref.refresh(atividadeAbertaProvider(turma.id).future),
+            ref.refresh(ideiasProvider(turma.id).future),
           ]);
         } catch (e) {
           if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
@@ -127,6 +130,8 @@ class _ComTurma extends ConsumerWidget {
           // só aqui, com turma: antes da primeira não há vez de ninguém para avisar
           const CartaoDePermissao(),
           ..._miolo(ref, aberta, euId, agora),
+          const SizedBox(height: Espacos.md),
+          CartaoDoBacklog(turmaId: turma.id),
           const SizedBox(height: Espacos.md),
           _CartaoDosMembros(turma: turma),
         ],
