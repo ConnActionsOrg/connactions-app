@@ -10,6 +10,8 @@ import '../features/diario/tela_do_diario.dart';
 import '../features/entrada/tela_de_abertura.dart';
 import '../features/entrada/tela_de_entrada.dart';
 import '../features/feed/tela_do_feed.dart';
+import '../features/ideias/tela_de_nova_ideia.dart';
+import '../features/ideias/tela_do_backlog.dart';
 import '../features/perfil/tela_de_editar_perfil.dart';
 import '../features/perfil/tela_do_perfil.dart';
 import '../features/turmas/tela_da_turma.dart';
@@ -60,6 +62,18 @@ final roteadorProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: raiz,
         builder: (_, state) =>
             TelaDePropor(turmaId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/turmas/:id/ideias/nova',
+        parentNavigatorKey: raiz,
+        builder: (_, state) =>
+            TelaDeNovaIdeia(turmaId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/turmas/:id/ideias',
+        parentNavigatorKey: raiz,
+        builder: (_, state) =>
+            TelaDoBacklog(turmaId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/turmas/:id',
