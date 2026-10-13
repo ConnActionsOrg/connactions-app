@@ -7,6 +7,7 @@ import '../../api/modelos/turma.dart';
 import '../../app/relogio.dart';
 import '../../design/medidas.dart';
 import '../../design/widgets/aviso.dart';
+import '../../design/widgets/botao_carregar_mais.dart';
 import '../../design/widgets/cabecalho.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
@@ -72,7 +73,10 @@ class _ComTurma extends ConsumerWidget {
           const SizedBox(height: Espacos.md),
         ],
         if (pagina.value?.proximo != null)
-          _BotaoCarregarMais(turmaId: turma.id),
+          BotaoCarregarMais(
+            aoCarregar: () =>
+                ref.read(diarioProvider(turma.id).notifier).carregarMais(),
+          ),
       ];
     }
     return RefreshIndicator(
@@ -99,42 +103,4 @@ class _ComTurma extends ConsumerWidget {
       ),
     );
   }
-}
-
-/// `carregarMais` não se protege de chamadas concorrentes: o botão fica desabilitado, com progresso
-/// no lugar do texto, até a resposta voltar.
-class _BotaoCarregarMais extends ConsumerStatefulWidget {
-  const _BotaoCarregarMais({required this.turmaId});
-
-  final String turmaId;
-
-  @override
-  ConsumerState<_BotaoCarregarMais> createState() => _BotaoCarregarMaisState();
-}
-
-class _BotaoCarregarMaisState extends ConsumerState<_BotaoCarregarMais> {
-  bool _carregando = false;
-
-  Future<void> _carregar() async {
-    setState(() => _carregando = true);
-    try {
-      await ref.read(diarioProvider(widget.turmaId).notifier).carregarMais();
-    } catch (e) {
-      if (mounted) mostrarAviso(context, mensagemDoErro(e));
-    } finally {
-      if (mounted) setState(() => _carregando = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => TextButton(
-    onPressed: _carregando ? null : _carregar,
-    child: _carregando
-        ? const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          )
-        : const Text('Carregar mais'),
-  );
 }

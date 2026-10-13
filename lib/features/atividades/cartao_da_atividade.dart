@@ -62,7 +62,7 @@ class CartaoDaAtividade extends StatelessWidget {
           ],
           if (atividade.regras.isNotEmpty) ...[
             const SizedBox(height: Espacos.md),
-            _Regras(regras: atividade.regras),
+            CaixaDeRegras(regras: atividade.regras),
           ],
           if (rodape != null) ...[const SizedBox(height: Espacos.md), rodape!],
         ],
@@ -71,8 +71,9 @@ class CartaoDaAtividade extends StatelessWidget {
   }
 }
 
-class _Regras extends StatelessWidget {
-  const _Regras({required this.regras});
+/// A caixa das regras em tópicos: o cartão da atividade e o da Comunidade a usam.
+class CaixaDeRegras extends StatelessWidget {
+  const CaixaDeRegras({super.key, required this.regras});
 
   final List<String> regras;
 
