@@ -8,6 +8,7 @@ import 'package:connactions_app/api/modelos/registro.dart';
 import 'package:connactions_app/app/dependencias.dart';
 import 'package:connactions_app/features/atividades/atividade_aberta.dart';
 import 'package:connactions_app/features/diario/diario.dart';
+import 'package:connactions_app/features/ideias/ideias.dart';
 import 'package:connactions_app/features/turmas/turmas.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -101,6 +102,61 @@ void main() {
       lessThan(api.chamadas.indexOf('lancarAtividade:turma-1:Piquenique')),
     );
     expect(c.read(atividadeAbertaProvider('turma-1')).value?.id, a.id);
+  });
+
+  test('lancar com a ideia do backlog manda o backlog reler', () async {
+    final api = FakeApi(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste(totalDeMembros: 2)],
+      membrosPor: {
+        'turma-1': [membroDeTeste(eu, 1), membroDeTeste(bia, 2)],
+      },
+      ideiasPor: {
+        'turma-1': [ideiaDeTeste(id: 'i1', autor: bia)],
+      },
+    );
+    final c = montar(api);
+    c.listen(ideiasProvider('turma-1'), (_, _) {});
+    await c.read(turmasProvider.future);
+    await c.read(atividadeAbertaProvider('turma-1').future);
+    expect((await c.read(ideiasProvider('turma-1').future)).single.id, 'i1');
+    final leituras = api.chamadas.where((c) => c == 'listarIdeias:turma-1');
+
+    await c
+        .read(atividadeAbertaProvider('turma-1').notifier)
+        .lancar(
+          const Proposta(
+            titulo: 'Piquenique',
+            formato: FormatoDeAtividade.individual,
+            publica: true,
+            origemIdeiaId: 'i1',
+          ),
+        );
+
+    expect(await c.read(ideiasProvider('turma-1').future), isEmpty);
+    expect(leituras.length, 2);
+  });
+
+  test('lancar do zero não relê as ideias', () async {
+    final api = apiComTurma();
+    final c = montar(api);
+    c.listen(ideiasProvider('turma-1'), (_, _) {});
+    await c.read(turmasProvider.future);
+    await c.read(atividadeAbertaProvider('turma-1').future);
+    await c.read(ideiasProvider('turma-1').future);
+
+    await c
+        .read(atividadeAbertaProvider('turma-1').notifier)
+        .lancar(
+          const Proposta(
+            titulo: 'Piquenique',
+            formato: FormatoDeAtividade.individual,
+            publica: true,
+          ),
+        );
+    await Future<void>.delayed(Duration.zero);
+
+    expect(api.chamadas.where((c) => c == 'listarIdeias:turma-1').length, 1);
   });
 
   test('encerrar zera a aberta, troca a turma e invalida o diário', () async {

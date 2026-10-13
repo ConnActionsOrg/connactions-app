@@ -8,6 +8,7 @@ import '../../api/modelos/registro.dart';
 import '../../app/assentado.dart';
 import '../../app/dependencias.dart';
 import '../diario/diario.dart';
+import '../ideias/ideias.dart';
 import '../turmas/turmas.dart';
 
 /// A atividade aberta de uma turma, por id; nula quando não há. Só é observada com turma ativa,
@@ -28,7 +29,13 @@ class AtividadeAberta extends AsyncNotifier<Atividade?>
     final api = ref.read(apiProvider);
     await assentado;
     final atividade = await api.lancarAtividade(turmaId, proposta);
-    if (ref.mounted) state = AsyncData(atividade);
+    if (ref.mounted) {
+      state = AsyncData(atividade);
+      // a ideia foi consumida: o backlog relê. Lançar do zero ou da Comunidade não mexe nele.
+      if (proposta.origemIdeiaId != null) {
+        ref.invalidate(ideiasProvider(turmaId));
+      }
+    }
     return atividade;
   }
 
