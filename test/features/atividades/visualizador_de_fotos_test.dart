@@ -198,9 +198,7 @@ void main() {
     );
   });
 
-  testWidgets('fotos sem id deslizam: a chave é o objeto, não o id', (
-    tester,
-  ) async {
+  testWidgets('fotos sem id deslizam', (tester) async {
     await abrirFotos(tester, [
       FotoParaVer.daComunidade(fotoDaComunidadeDeTeste(id: 'a', legenda: 'Um')),
       FotoParaVer.daComunidade(
