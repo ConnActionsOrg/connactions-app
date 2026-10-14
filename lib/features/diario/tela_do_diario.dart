@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../api/mensagens.dart';
+import '../../api/modelos/capa_do_diario.dart';
+import '../../api/modelos/reacao.dart';
 import '../../api/modelos/turma.dart';
 import '../../app/relogio.dart';
 import '../../design/medidas.dart';
@@ -16,6 +18,7 @@ import '../turmas/turmas.dart';
 import 'cartao_da_capa.dart';
 import 'cartao_do_diario.dart';
 import 'diario.dart';
+import 'folha_de_comentarios.dart';
 import 'folha_de_personalizar.dart';
 
 /// O Diário é por turma: a mesma pílula do Feed escolhe qual. Lista as encerradas, página a página.
@@ -42,6 +45,23 @@ class _ComTurma extends ConsumerWidget {
   const _ComTurma({required this.turma});
 
   final Turma turma;
+
+  /// O chip já mudou no cartão; se a API recusar, ele volta e o aviso explica. O aviso é da tela: a
+  /// folha dos seis tipos já fechou quando a escolha chega aqui.
+  Future<void> _reagir(
+    BuildContext context,
+    WidgetRef ref,
+    String atividadeId,
+    TipoDeReacao tipo,
+  ) async {
+    try {
+      await ref
+          .read(diarioProvider(turma.id).notifier)
+          .alternarReacao(atividadeId, tipo);
+    } catch (e) {
+      if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,7 +92,17 @@ class _ComTurma extends ConsumerWidget {
     } else {
       corpo = [
         for (final item in itens) ...[
-          CartaoDoDiario(atividade: item.atividade, agora: agora),
+          CartaoDoDiario(
+            item: item,
+            agora: agora,
+            paleta: capa?.paleta ?? PaletaDoDiario.padrao,
+            aoReagir: (tipo) => _reagir(context, ref, item.atividade.id, tipo),
+            aoAbrirComentarios: () => mostrarFolhaDeComentarios(
+              context,
+              turmaId: turma.id,
+              atividadeId: item.atividade.id,
+            ),
+          ),
           const SizedBox(height: Espacos.md),
         ],
         if (pagina.value?.proximo != null)

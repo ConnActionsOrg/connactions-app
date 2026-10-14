@@ -2,25 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
-import '../../api/modelos/atividade.dart';
+import '../../api/modelos/capa_do_diario.dart';
+import '../../api/modelos/pagina_do_diario.dart';
+import '../../api/modelos/reacao.dart';
 import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/etiqueta.dart';
 import '../atividades/foto_para_ver.dart';
 import '../atividades/visualizador_de_fotos.dart';
+import 'faixa_de_reacoes.dart';
 
 /// Uma encerrada no Diário: título, formato em sálvia (concluído), quem propôs e quando, a
-/// descrição como citação e a faixa de miniaturas.
+/// descrição como citação, a faixa de miniaturas e, embaixo, as reações e os comentários.
 class CartaoDoDiario extends StatelessWidget {
   const CartaoDoDiario({
     super.key,
-    required this.atividade,
+    required this.item,
     required this.agora,
+    required this.paleta,
+    required this.aoReagir,
+    required this.aoAbrirComentarios,
   });
 
-  final Atividade atividade;
+  final ItemDoDiario item;
   final DateTime agora;
+
+  /// A paleta da capa: o chip da reação que a pessoa marcou herda as cores dela.
+  final PaletaDoDiario paleta;
+  final ValueChanged<TipoDeReacao> aoReagir;
+  final VoidCallback aoAbrirComentarios;
 
   static final _formatoDaData = DateFormat("d 'de' MMMM", 'pt_BR');
 
@@ -28,6 +39,7 @@ class CartaoDoDiario extends StatelessWidget {
   Widget build(BuildContext context) {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
+    final atividade = item.atividade;
     final encerradaEm = atividade.encerradaEm ?? atividade.lancadaEm;
     final fotos = atividade.registros;
     return Container(
@@ -124,6 +136,14 @@ class CartaoDoDiario extends StatelessWidget {
             style: tipografia.corpoPequeno.copyWith(
               color: cores.sobreSuperficieVariante,
             ),
+          ),
+          const SizedBox(height: Espacos.sm),
+          FaixaDeReacoes(
+            reacoes: item.reacoes,
+            totalDeComentarios: item.totalDeComentarios,
+            paleta: paleta,
+            aoReagir: aoReagir,
+            aoAbrirComentarios: aoAbrirComentarios,
           ),
         ],
       ),
