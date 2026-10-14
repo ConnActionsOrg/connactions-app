@@ -68,8 +68,8 @@ class _ComTurma extends ConsumerWidget {
       ];
     } else {
       corpo = [
-        for (final atividade in itens) ...[
-          CartaoDoDiario(atividade: atividade, agora: agora),
+        for (final item in itens) ...[
+          CartaoDoDiario(atividade: item.atividade, agora: agora),
           const SizedBox(height: Espacos.md),
         ],
         if (pagina.value?.proximo != null)

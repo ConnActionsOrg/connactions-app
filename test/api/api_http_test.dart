@@ -5,8 +5,10 @@ import 'package:connactions_app/api/api_http.dart';
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/alteracoes_do_eu.dart';
 import 'package:connactions_app/api/modelos/atividade.dart';
+import 'package:connactions_app/api/modelos/capa_do_diario.dart';
 import 'package:connactions_app/api/modelos/foto_para_enviar.dart';
 import 'package:connactions_app/api/modelos/proposta.dart';
+import 'package:connactions_app/api/modelos/reacao.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -521,8 +523,25 @@ void main() {
         visto = req;
         return http.Response(
           jsonEncode({
-            'itens': [atividadeJson],
+            'itens': [
+              {
+                ...atividadeJson,
+                'reacoes': [
+                  {'tipo': 'coracao', 'total': 2, 'minha': true},
+                  {'tipo': 'unicornio', 'total': 9, 'minha': false},
+                ],
+                'total_de_comentarios': 3,
+              },
+            ],
             'proximo': 'c2',
+            'capa': {
+              'titulo': 'Noites de quinta',
+              'frase': null,
+              'paleta': 'salvia',
+              'sticker': 'pizza',
+              'atividades': 12,
+              'fotos': 47,
+            },
           }),
           200,
         );
@@ -530,14 +549,23 @@ void main() {
     ).listarDiario('turma-1', apos: 'c1', limite: 5);
     expect(visto.url.path, '/v1/turmas/turma-1/diario');
     expect(visto.url.queryParameters, {'apos': 'c1', 'limite': '5'});
-    expect(p.itens.single.id, 'ativ-1');
+    expect(p.itens.single.atividade.id, 'ativ-1');
+    // a reação de um tipo que o app não conhece não derruba a página
+    expect(p.itens.single.reacoes, const [
+      Reacao(tipo: TipoDeReacao.coracao, total: 2, minha: true),
+    ]);
+    expect(p.itens.single.totalDeComentarios, 3);
     expect(p.proximo, 'c2');
+    expect(p.capa!.titulo, 'Noites de quinta');
+    expect(p.capa!.paleta, PaletaDoDiario.salvia);
+    expect(p.capa!.sticker, StickerDoDiario.pizza);
+    expect(p.capa!.atividades, 12);
 
     await api(
       MockClient((req) async {
         visto = req;
         return http.Response(
-          jsonEncode({'itens': <Object>[], 'proximo': null}),
+          jsonEncode({'itens': <Object>[], 'proximo': null, 'capa': null}),
           200,
         );
       }),

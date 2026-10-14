@@ -52,8 +52,8 @@ void main() {
     await c.read(diarioProvider('turma-1').notifier).carregarMais();
     final tudo = c.read(diarioProvider('turma-1')).value!;
     expect(tudo.itens.length, 25);
-    expect(tudo.itens.first.id, 'ativ-1');
-    expect(tudo.itens.last.id, 'ativ-25');
+    expect(tudo.itens.first.atividade.id, 'ativ-1');
+    expect(tudo.itens.last.atividade.id, 'ativ-25');
     expect(tudo.proximo, isNull);
     expect(api.chamadas.last, 'listarDiario:turma-1:20');
 
@@ -127,7 +127,8 @@ void main() {
       await Future.wait([recarga, mais]);
 
       final ids = [
-        for (final a in c.read(diarioProvider('turma-1')).value!.itens) a.id,
+        for (final i in c.read(diarioProvider('turma-1')).value!.itens)
+          i.atividade.id,
       ];
       expect(ids.first, 'ativ-nova');
       expect(ids.toSet(), hasLength(ids.length));

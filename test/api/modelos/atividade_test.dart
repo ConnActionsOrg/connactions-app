@@ -107,12 +107,24 @@ void main() {
 
   test('PaginaDoDiario.deJson com e sem próximo', () {
     final p = PaginaDoDiario.deJson({
-      'itens': [atividadeJson(encerradaEm: '2026-09-30T10:00:00Z')],
+      'itens': [
+        {
+          ...atividadeJson(encerradaEm: '2026-09-30T10:00:00Z'),
+          'reacoes': <Object>[],
+          'total_de_comentarios': 0,
+        },
+      ],
       'proximo': 'abc',
+      'capa': null,
     });
-    expect(p.itens.single.id, 'a1');
+    expect(p.itens.single.atividade.id, 'a1');
     expect(p.proximo, 'abc');
-    final fim = PaginaDoDiario.deJson({'itens': <Object>[], 'proximo': null});
+    expect(p.capa, isNull);
+    final fim = PaginaDoDiario.deJson({
+      'itens': <Object>[],
+      'proximo': null,
+      'capa': null,
+    });
     expect(fim.itens, isEmpty);
     expect(fim.proximo, isNull);
   });

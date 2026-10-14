@@ -182,7 +182,10 @@ void main() {
       api.chamadas.where((c) => c.startsWith('listarDiario')).length,
       leiturasDoDiario + 1,
     );
-    expect(c.read(diarioProvider('turma-1')).value!.itens.single.id, 'ativ-1');
+    expect(
+      c.read(diarioProvider('turma-1')).value!.itens.single.atividade.id,
+      'ativ-1',
+    );
   });
 
   test('registrar acrescenta e apagar remove', () async {

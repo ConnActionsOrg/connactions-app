@@ -28,6 +28,7 @@ class Diario extends AsyncNotifier<PaginaDoDiario>
       PaginaDoDiario(
         itens: [...atual.itens, ...pagina.itens],
         proximo: pagina.proximo,
+        capa: atual.capa, // só a 1ª página traz a capa
       ),
     );
   }

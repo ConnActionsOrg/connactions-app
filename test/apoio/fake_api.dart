@@ -483,7 +483,10 @@ class FakeApi implements ApiConnactions {
     final itens = todas.skip(inicio).take(limite).toList();
     final fim = inicio + itens.length;
     return PaginaDoDiario(
-      itens: itens,
+      itens: [
+        for (final a in itens)
+          ItemDoDiario(atividade: a, reacoes: const [], totalDeComentarios: 0),
+      ],
       proximo: fim < todas.length ? '$fim' : null,
     );
   }
