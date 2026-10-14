@@ -45,6 +45,10 @@ A aba Comunidade lista as atividades públicas e encerradas de outras turmas, se
 só o nome e o emoji da turma, as fotos com legenda e "N turmas se inspiraram". A pílula do topo
 escolhe a turma que recebe o que se salva e de onde se propõe; sem turma, dá para ler e não agir.
 
+## Diário: reações, comentários e capa
+
+O Diário da turma abre com a capa: o título, a frase, o sticker e a paleta (qualquer membro troca pelo lápis) e os contadores de atividades e de fotos. Cada atividade encerrada tem, embaixo, as reações (seis tipos, vários por pessoa; tocar de novo desmarca) e o balão dos comentários, que abre uma folha com o campo para escrever. Reação e comentário só valem em atividade encerrada e só para membros; o app mostra quantos reagiram, não quem. A reação muda na hora e volta sozinha se a API recusar.
+
 ## Gate
 
 `dart format --set-exit-if-changed .` · `dart analyze` · `flutter test`
