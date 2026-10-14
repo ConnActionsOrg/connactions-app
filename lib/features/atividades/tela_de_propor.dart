@@ -65,6 +65,10 @@ class _TelaDeProporState extends ConsumerState<TelaDePropor> {
   bool _lancando = false;
   _Aba _aba = _Aba.doZero;
 
+  /// O teclado sobe sozinho só na primeira exibição do formulário e sem origem: o formulário é
+  /// remontado a cada volta para "Do zero", e o teclado taparia o chip da origem.
+  late bool _focarTitulo;
+
   /// O vínculo: no máximo um dos dois. Só a origem é guardada; o texto é da pessoa e pode mudar.
   Ideia? _ideia;
   AtividadeDaComunidade? _daComunidade;
@@ -76,6 +80,7 @@ class _TelaDeProporState extends ConsumerState<TelaDePropor> {
     super.initState();
     final ideia = widget.ideia;
     final daComunidade = widget.daComunidade;
+    _focarTitulo = ideia == null && daComunidade == null;
     if (ideia != null) _usarIdeia(ideia);
     if (daComunidade != null) _usarDaComunidade(daComunidade);
   }
@@ -267,7 +272,13 @@ class _TelaDeProporState extends ConsumerState<TelaDePropor> {
         children: [
           const _Heroi(),
           const SizedBox(height: Espacos.md),
-          _Abas(aba: _aba, aoTrocar: (aba) => setState(() => _aba = aba)),
+          _Abas(
+            aba: _aba,
+            aoTrocar: (aba) => setState(() {
+              _aba = aba;
+              _focarTitulo = false;
+            }),
+          ),
           const SizedBox(height: Espacos.lg),
           if (_aba == _Aba.backlog)
             _AbaDoBacklog(
@@ -297,7 +308,7 @@ class _TelaDeProporState extends ConsumerState<TelaDePropor> {
                 ],
                 TextField(
                   controller: _titulo,
-                  autofocus: true,
+                  autofocus: _focarTitulo,
                   maxLength: 80,
                   textCapitalization: TextCapitalization.sentences,
                   decoration: const InputDecoration(

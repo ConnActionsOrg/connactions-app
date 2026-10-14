@@ -7,6 +7,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import '../../apoio/app_de_teste.dart';
 import '../../apoio/fake_api.dart';
+import '../../apoio/navegar.dart';
 
 final eu = pessoaDoEu(euDeTeste());
 final bia = pessoaDeTeste();
@@ -55,8 +56,89 @@ Future<void> abrirPeloFeed(WidgetTester tester) async {
   expect(find.byType(TelaDePropor), findsOneWidget);
 }
 
+/// O `EditableText` do título, que é quem guarda o foco.
+bool tituloComFoco(WidgetTester tester) => tester
+    .widget<EditableText>(
+      find.descendant(
+        of: find.widgetWithText(TextField, 'Nome da atividade'),
+        matching: find.byType(EditableText),
+      ),
+    )
+    .focusNode
+    .hasFocus;
+
+Future<void> irParaAba(WidgetTester tester, String aba) async {
+  await tester.ensureVisible(naTela(aba));
+  await tester.pumpAndSettle();
+  await tester.tap(naTela(aba));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUpAll(() => initializeDateFormatting('pt_BR'));
+
+  group('foco do título', () {
+    testWidgets('(a) sem origem, o título ganha o foco e o teclado', (
+      tester,
+    ) async {
+      await abrirPeloFeed(tester);
+
+      expect(tituloComFoco(tester), isTrue);
+      expect(tester.testTextInput.isVisible, isTrue);
+    });
+
+    testWidgets('(b) com origem no extra, o título não ganha o foco', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        appDeTeste(
+          api: apiCom(ideias: [trilha]),
+          agora: agora,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await irParaComExtra(tester, '/turmas/turma-1/propor', trilha);
+
+      expect(find.byType(TelaDePropor), findsOneWidget);
+      expect(tituloComFoco(tester), isFalse);
+      expect(tester.testTextInput.isVisible, isFalse);
+    });
+
+    testWidgets('(c) escolher uma origem nas abinhas e voltar não dá o foco', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        appDeTeste(
+          api: apiCom(ideias: [trilha]),
+          agora: agora,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Propor atividade'));
+      await tester.pumpAndSettle();
+      await irParaAba(tester, 'Backlog');
+
+      await tester.tap(find.text('Propor esta'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ideia de Bia'), findsOneWidget);
+      expect(tituloComFoco(tester), isFalse);
+      expect(tester.testTextInput.isVisible, isFalse);
+    });
+
+    testWidgets('(d) sair da abinha "Do zero" e voltar não dá o foco', (
+      tester,
+    ) async {
+      await abrirPeloFeed(tester);
+      await irParaAba(tester, 'Backlog');
+
+      await irParaAba(tester, 'Do zero');
+
+      expect(tituloComFoco(tester), isFalse);
+      expect(tester.testTextInput.isVisible, isFalse);
+    });
+  });
 
   group('rótulo das abinhas em uma linha', () {
     for (final largura in [411.0, 360.0]) {
