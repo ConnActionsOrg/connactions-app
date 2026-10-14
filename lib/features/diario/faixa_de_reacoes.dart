@@ -63,10 +63,13 @@ class FaixaDeReacoes extends StatelessWidget {
 /// O alvo de toque tem 48 dp mesmo com o chip menor por dentro.
 const _alvo = BoxConstraints(minHeight: 48, minWidth: 48);
 
-/// "Coração, 2 reações, marcada": o que o leitor de tela diz e o que a dica do chip mostra.
+/// "Coração, 2 reações": o que o leitor de tela diz. Quem a marcou vai em `selected`, não no texto.
 String rotuloDaReacao(Reacao r) =>
-    '${r.tipo.rotulo}, ${r.total} ${r.total == 1 ? 'reação' : 'reações'}'
-    '${r.minha ? ', marcada' : ''}';
+    '${r.tipo.rotulo}, ${r.total} ${r.total == 1 ? 'reação' : 'reações'}';
+
+/// A dica do chip: o rótulo e, para quem enxerga, se a reação é minha.
+String dicaDaReacao(Reacao r) =>
+    '${rotuloDaReacao(r)}${r.minha ? ', marcada' : ''}';
 
 class _ChipDeReacao extends StatelessWidget {
   const _ChipDeReacao({
@@ -85,13 +88,14 @@ class _ChipDeReacao extends StatelessWidget {
     final tipografia = Tipografia.de(context);
     final pintura = coresDaPaleta(paleta, cores);
     final minha = reacao.minha;
-    final rotulo = rotuloDaReacao(reacao);
     return Tooltip(
-      message: rotulo,
+      message: dicaDaReacao(reacao),
+      // o Semantics abaixo já fala; a dica sozinha o repetiria no leitor de tela
+      excludeFromSemantics: true,
       child: Semantics(
         button: true,
         selected: minha,
-        label: rotulo,
+        label: rotuloDaReacao(reacao),
         excludeSemantics: true,
         child: InkWell(
           onTap: aoTocar,
@@ -100,7 +104,8 @@ class _ChipDeReacao extends StatelessWidget {
             constraints: _alvo,
             child: Center(
               widthFactor: 1,
-              child: Container(
+              // Ink, e não Container: o fundo opaco de um Container taparia o toque do InkWell
+              child: Ink(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,

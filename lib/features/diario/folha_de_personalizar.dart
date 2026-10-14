@@ -76,11 +76,14 @@ class _FolhaDePersonalizarState extends ConsumerState<FolhaDePersonalizar> {
       _salvando = true;
       _erro = null;
     });
+    // a folha pode ser dispensada com o PATCH em voo: o que o servidor aceitou tem de chegar ao
+    // Diário mesmo assim, e depois do await esta folha já não tem `ref` para ler
+    final diario = ref.read(diarioProvider(widget.turma.id).notifier);
     try {
       final nova = await ref
           .read(apiProvider)
           .personalizarDiario(widget.turma.id, _alteracoes());
-      ref.read(diarioProvider(widget.turma.id).notifier).trocarCapa(nova);
+      diario.trocarCapa(nova);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       // dentro da folha: o SnackBar nasce no Scaffold de baixo e ficaria atrás dela

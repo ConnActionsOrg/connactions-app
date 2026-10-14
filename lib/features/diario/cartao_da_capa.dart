@@ -28,6 +28,7 @@ class CartaoDaCapa extends StatelessWidget {
   // o disco do sticker (82) e a folga até o texto: o título e a frase nunca chegam debaixo dele
   static const _larguraDoSticker = 82.0;
   static const _folgaDoSticker = 12.0;
+  static const _alturaDoLapis = 48.0;
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +50,11 @@ class CartaoDaCapa extends StatelessWidget {
         boxShadow: Sombras.nivel1,
       ),
       child: ConstrainedBox(
-        // o disco do sticker é maior que um título curto: sem o piso, a capa o cortaria
-        constraints: const BoxConstraints(minHeight: _larguraDoSticker + 16),
+        // o piso cobre o disco do sticker, a folga e o lápis embaixo dele: com título de uma linha e sem
+        // frase, o lápis (canto inferior) cairia sobre o sticker (canto superior)
+        constraints: const BoxConstraints(
+          minHeight: _larguraDoSticker + _folgaDoSticker + _alturaDoLapis,
+        ),
         child: Stack(
           children: [
             Positioned(

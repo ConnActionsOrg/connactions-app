@@ -175,13 +175,11 @@ void main() {
       ),
     );
 
-    final pilula = tester.widget<Container>(
-      find
-          .descendant(
-            of: find.byTooltip('Coração, 1 reação, marcada'),
-            matching: find.byType(Container),
-          )
-          .first,
+    final pilula = tester.widget<Ink>(
+      find.descendant(
+        of: find.byTooltip('Coração, 1 reação, marcada'),
+        matching: find.byType(Ink),
+      ),
     );
     expect(
       (pilula.decoration as BoxDecoration).color,

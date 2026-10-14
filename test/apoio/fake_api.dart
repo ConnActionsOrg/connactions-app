@@ -161,6 +161,7 @@ class FakeApi implements ApiConnactions {
   Completer<void>? segurarSalvarDaComunidade;
   Completer<void>? segurarReagir;
   Completer<void>? segurarComentar;
+  Completer<void>? segurarApagarComentario;
 
   var _criadas = 0;
   var _regenerados = 0;
@@ -658,6 +659,7 @@ class FakeApi implements ApiConnactions {
   @override
   Future<void> apagarComentario(String comentarioId) async {
     chamadas.add('apagarComentario:$comentarioId');
+    await segurarApagarComentario?.future;
     final falha = falhaAoApagarComentario;
     if (falha != null) throw falha;
     for (final lista in comentariosPor.values) {

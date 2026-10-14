@@ -1,3 +1,5 @@
+import 'dart:ui' show Tristate;
+
 import 'package:connactions_app/api/modelos/capa_do_diario.dart';
 import 'package:connactions_app/api/modelos/reacao.dart';
 import 'package:connactions_app/design/cores.dart';
@@ -32,13 +34,8 @@ Widget faixa({
 );
 
 Color? fundoDoChip(WidgetTester tester, String rotulo) {
-  final pilula = tester.widget<Container>(
-    find
-        .descendant(
-          of: find.byTooltip(rotulo),
-          matching: find.byType(Container),
-        )
-        .first,
+  final pilula = tester.widget<Ink>(
+    find.descendant(of: find.byTooltip(rotulo), matching: find.byType(Ink)),
   );
   return (pilula.decoration as BoxDecoration).color;
 }
@@ -85,6 +82,25 @@ void main() {
       expect(find.byTooltip('Fogo, 1 reação'), findsOneWidget);
       expect(find.byTooltip('Festa, 5 reações'), findsOneWidget);
       expect(find.byTooltip('1 comentário'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'o leitor de tela anuncia o chip uma vez, com o estado em selected',
+    (tester) async {
+      final semantica = tester.ensureSemantics();
+      try {
+        await tester.pumpWidget(faixa(reacoes: [coracao2Meu]));
+
+        final achados = find.bySemanticsLabel(RegExp('Coração'));
+        expect(achados, findsOneWidget);
+        final no = tester.getSemantics(achados);
+        expect(no.label, 'Coração, 2 reações');
+        expect(no.flagsCollection.isSelected, Tristate.isTrue);
+      } finally {
+        semantica
+            .dispose(); // síncrono: o teste verifica os handles ao terminar
+      }
     },
   );
 

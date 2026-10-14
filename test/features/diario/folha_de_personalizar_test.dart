@@ -222,6 +222,39 @@ void main() {
     expect(find.text('O título pode ter até 40 caracteres.'), findsOneWidget);
   });
 
+  testWidgets(
+    'fechar a folha com o PATCH em voo ainda troca a capa do cartão',
+    (tester) async {
+      final api = _ApiComPatchSegurado(
+        eu: euDeTeste(),
+        turmas: [turmaDeTeste()],
+      );
+      await abrirFolha(tester, api);
+
+      await tester.tap(find.byTooltip('Sticker Pizza'));
+      await tester.pump();
+      await tester.tap(salvar());
+      await tester.pump();
+
+      // dispensa a folha tocando na área escura, fora dela
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+      expect(find.byType(FolhaDePersonalizar), findsNothing);
+
+      api.liberar.complete();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.descendant(
+          of: find.byType(CartaoDaCapa),
+          matching: find.text('🍕'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
   testWidgets('enquanto envia, o botão mostra progresso e ignora novo toque', (
     tester,
   ) async {

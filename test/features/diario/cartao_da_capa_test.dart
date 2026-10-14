@@ -145,4 +145,15 @@ void main() {
       );
     },
   );
+
+  testWidgets('título curto e sem frase: o lápis fica abaixo do sticker', (
+    tester,
+  ) async {
+    await tester.pumpWidget(capaEm(capaDeTeste(titulo: 'Quinta')));
+
+    expect(
+      tester.getRect(find.byTooltip('Personalizar o diário')).top,
+      greaterThanOrEqualTo(tester.getRect(find.byType(DiscoDeEmoji)).bottom),
+    );
+  });
 }

@@ -41,7 +41,10 @@ class Comentarios extends AsyncNotifier<PaginaDeComentarios>
   /// o novo é o último de todos e aparece quando a lista chegar até ele.
   Future<void> comentar(String texto) async {
     final atual = await assentado;
+    // a folha pode fechar com a chamada em voo; o total do cartão vale mesmo assim
+    final diario = ref.read(diarioProvider(alvo.turmaId).notifier);
     final novo = await ref.read(apiProvider).comentar(alvo.atividadeId, texto);
+    diario.ajustarComentarios(alvo.atividadeId, 1);
     if (!ref.mounted) return;
     final base = state.value ?? atual;
     if (base.proximo == null) {
@@ -49,14 +52,13 @@ class Comentarios extends AsyncNotifier<PaginaDeComentarios>
         PaginaDeComentarios(itens: [...base.itens, novo], proximo: null),
       );
     }
-    ref
-        .read(diarioProvider(alvo.turmaId).notifier)
-        .ajustarComentarios(alvo.atividadeId, 1);
   }
 
   Future<void> apagar(String comentarioId) async {
     final atual = await assentado;
+    final diario = ref.read(diarioProvider(alvo.turmaId).notifier);
     await ref.read(apiProvider).apagarComentario(comentarioId);
+    diario.ajustarComentarios(alvo.atividadeId, -1);
     if (!ref.mounted) return;
     final base = state.value ?? atual;
     state = AsyncData(
@@ -68,9 +70,6 @@ class Comentarios extends AsyncNotifier<PaginaDeComentarios>
         proximo: base.proximo,
       ),
     );
-    ref
-        .read(diarioProvider(alvo.turmaId).notifier)
-        .ajustarComentarios(alvo.atividadeId, -1);
   }
 }
 

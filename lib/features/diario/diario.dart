@@ -72,6 +72,7 @@ class Diario extends AsyncNotifier<PaginaDoDiario>
 
   /// A folha de comentários soma 1 ao postar e subtrai 1 ao apagar; o total do cartão é o dela.
   void ajustarComentarios(String atividadeId, int delta) {
+    if (!ref.mounted) return; // ler `state` de um notifier descartado lança
     final item = _item(atividadeId);
     if (item == null) return;
     final total = (item.totalDeComentarios + delta).clamp(0, 1 << 30);

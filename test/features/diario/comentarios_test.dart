@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/features/diario/comentarios.dart';
 import 'package:connactions_app/features/diario/diario.dart';
@@ -167,4 +169,70 @@ void main() {
       expect(totalDoCartao(c), 0);
     },
   );
+
+  group('com a folha fechada antes da resposta', () {
+    // o Diário continua ouvido (a tela); os comentários só enquanto a folha está aberta
+    Future<({ProviderContainer c, Comentarios folha, void Function() fechar})>
+    comFolhaAberta(FakeApi api) async {
+      final c = containerDeTeste(api);
+      c.listen(diarioProvider('turma-1'), (_, _) {});
+      final assinatura = c.listen(comentariosProvider(alvo), (_, _) {});
+      await c.read(comentariosProvider(alvo).future);
+      await c.read(diarioProvider('turma-1').future);
+      return (c: c, folha: notifier(c), fechar: () => assinatura.close());
+    }
+
+    test('comentar ainda soma ao total do cartão', () async {
+      final api = apiCom(comentarios: 2)..segurarComentar = Completer<void>();
+      final (:c, :folha, :fechar) = await comFolhaAberta(api);
+
+      final envio = folha.comentar('Foi demais!');
+      await pumpEventQueue();
+      fechar();
+      await c.pump();
+      api.segurarComentar!.complete();
+      await envio;
+
+      expect(totalDoCartao(c), 3);
+    });
+
+    test('apagar ainda subtrai do total do cartão', () async {
+      final api = FakeApi(
+        eu: euDeTeste(),
+        turmas: [turmaDeTeste()],
+        diarioPor: {
+          'turma-1': [
+            atividadeDeTeste(id: 'a1', encerradaEm: DateTime.utc(2026, 9, 30)),
+          ],
+        },
+        comentariosPor: {
+          'a1': [
+            comentarioDeTeste(id: 'alheio'),
+            comentarioDeTeste(id: 'meu', meu: true),
+          ],
+        },
+      )..segurarApagarComentario = Completer<void>();
+      final (:c, :folha, :fechar) = await comFolhaAberta(api);
+
+      final remocao = folha.apagar('meu');
+      await pumpEventQueue();
+      fechar();
+      await c.pump();
+      api.segurarApagarComentario!.complete();
+      await remocao;
+
+      expect(totalDoCartao(c), 1);
+    });
+  });
+
+  test('ajustar o total num Diário já descartado não lança', () async {
+    final c = containerDeTeste(apiCom(comentarios: 1));
+    final assinatura = c.listen(diarioProvider('turma-1'), (_, _) {});
+    await c.read(diarioProvider('turma-1').future);
+    final diario = c.read(diarioProvider('turma-1').notifier);
+    assinatura.close();
+    await c.pump();
+
+    expect(() => diario.ajustarComentarios('a1', 1), returnsNormally);
+  });
 }

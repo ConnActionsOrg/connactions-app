@@ -63,6 +63,8 @@ class _FolhaDeComentariosState extends ConsumerState<FolhaDeComentarios> {
     });
     try {
       await _notifier.comentar(_texto.text);
+      // folha fechada com o envio em voo: o controller já foi descartado
+      if (!mounted) return;
       _texto.clear();
       // o comentário novo entra no fim: leva a lista até ele
       WidgetsBinding.instance.addPostFrameCallback((_) {
