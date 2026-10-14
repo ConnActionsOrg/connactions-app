@@ -601,14 +601,28 @@ class _Abas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SegmentedButton<_Aba>(
-    segments: const [
-      ButtonSegment(value: _Aba.doZero, label: Text('Do zero')),
-      ButtonSegment(value: _Aba.backlog, label: Text('Backlog')),
-      ButtonSegment(value: _Aba.comunidade, label: Text('Comunidade')),
+    segments: [
+      ButtonSegment(value: _Aba.doZero, label: _Rotulo('Do zero')),
+      ButtonSegment(value: _Aba.backlog, label: _Rotulo('Backlog')),
+      ButtonSegment(value: _Aba.comunidade, label: _Rotulo('Comunidade')),
     ],
     selected: {aba},
     showSelectedIcon: false,
     onSelectionChanged: (escolhida) => aoTrocar(escolhida.first),
+  );
+}
+
+/// Três segmentos de largura igual não comportam "Comunidade" num celular: a fonte encolhe em vez
+/// de a palavra quebrar.
+class _Rotulo extends StatelessWidget {
+  const _Rotulo(this.texto);
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+    fit: BoxFit.scaleDown,
+    child: Text(texto, maxLines: 1, softWrap: false),
   );
 }
 
