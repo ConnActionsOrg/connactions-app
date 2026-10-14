@@ -5,6 +5,7 @@ import 'package:connactions_app/api/modelos/atividade.dart';
 import 'package:connactions_app/api/modelos/pagina_do_diario.dart';
 import 'package:connactions_app/design/widgets/etiqueta.dart';
 import 'package:connactions_app/features/atividades/visualizador_de_fotos.dart';
+import 'package:connactions_app/features/diario/cartao_da_capa.dart';
 import 'package:connactions_app/features/diario/cartao_do_diario.dart';
 import 'package:connactions_app/features/diario/tela_do_diario.dart';
 import 'package:connactions_app/features/turmas/seletor_de_turma.dart';
@@ -152,7 +153,21 @@ void main() {
         find.text('Ninguém acertou um strike de primeira.'),
         findsOneWidget,
       );
-      expect(find.text('2 fotos'), findsOneWidget);
+      // a contagem do cartão; a da capa (total da turma) é outra, e também diz '2 fotos'
+      expect(
+        find.descendant(
+          of: find.byType(CartaoDoDiario),
+          matching: find.text('2 fotos'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(CartaoDaCapa),
+          matching: find.text('2 fotos'),
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Desenhe um Amigo'), findsOneWidget);
       expect(find.textContaining('Proposta por Marina'), findsOneWidget);
       expect(find.text('Sem fotos'), findsOneWidget);
@@ -164,6 +179,7 @@ void main() {
   testWidgets('tocar numa miniatura abre o visualizador sem apagar', (
     tester,
   ) async {
+    telaAlta(tester); // a capa empurra o cartão para baixo da tela de teste
     await abrirDiario(
       tester,
       FakeApi(
@@ -515,6 +531,7 @@ void main() {
 
   testWidgets('tocar na segunda miniatura abre o visualizador nela, com a hora '
       'do relógio do app', (tester) async {
+    telaAlta(tester); // a capa empurra o cartão para baixo da tela de teste
     await abrirDiario(
       tester,
       FakeApi(

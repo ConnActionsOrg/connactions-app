@@ -4,10 +4,18 @@ import '../cores.dart';
 
 /// Emoji centrado num disco tonal: a "foto" de uma turma.
 class DiscoDeEmoji extends StatelessWidget {
-  const DiscoDeEmoji({super.key, required this.emoji, this.tamanho = 48});
+  const DiscoDeEmoji({
+    super.key,
+    required this.emoji,
+    this.tamanho = 48,
+    this.cor,
+  });
 
   final String emoji;
   final double tamanho;
+
+  /// O disco de uma turma é tonal; o sticker da capa do Diário traz o da sua paleta.
+  final Color? cor;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +25,7 @@ class DiscoDeEmoji extends StatelessWidget {
       height: tamanho,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: cores.superficieContainer,
+        color: cor ?? cores.superficieContainer,
       ),
       alignment: Alignment.center,
       child: Text(

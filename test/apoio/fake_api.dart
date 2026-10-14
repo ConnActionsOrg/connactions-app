@@ -116,6 +116,9 @@ class FakeApi implements ApiConnactions {
   /// A última proposta que chegou a `lancarAtividade`, para afirmar a origem que o app mandou.
   Proposta? ultimaProposta;
 
+  /// A última alteração que chegou a `personalizarDiario`, para afirmar que o app mandou só o que mudou.
+  AlteracoesDaCapa? ultimaAlteracaoDaCapa;
+
   Object? falhaAoObter;
   Object? falhaAoAtualizar;
   Object? falhaAoListarTurmas;
@@ -683,6 +686,7 @@ class FakeApi implements ApiConnactions {
     AlteracoesDaCapa alteracoes,
   ) async {
     chamadas.add('personalizarDiario:$turmaId');
+    ultimaAlteracaoDaCapa = alteracoes;
     final falha = falhaAoPersonalizar;
     if (falha != null) throw falha;
     _minha(turmaId);

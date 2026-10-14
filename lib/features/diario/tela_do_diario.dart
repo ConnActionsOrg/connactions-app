@@ -13,8 +13,10 @@ import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
 import '../turmas/seletor_de_turma.dart';
 import '../turmas/turmas.dart';
+import 'cartao_da_capa.dart';
 import 'cartao_do_diario.dart';
 import 'diario.dart';
+import 'folha_de_personalizar.dart';
 
 /// O Diário é por turma: a mesma pílula do Feed escolhe qual. Lista as encerradas, página a página.
 class TelaDoDiario extends ConsumerWidget {
@@ -46,6 +48,7 @@ class _ComTurma extends ConsumerWidget {
     final pagina = ref.watch(diarioProvider(turma.id));
     final agora = ref.watch(relogioProvider)();
     final itens = pagina.value?.itens;
+    final capa = pagina.value?.capa;
     final erro = pagina.error;
     final List<Widget> corpo;
     if (itens == null && erro != null) {
@@ -98,6 +101,15 @@ class _ComTurma extends ConsumerWidget {
         children: [
           const SeletorDeTurma(),
           const SizedBox(height: Espacos.xl),
+          if (capa != null) ...[
+            CartaoDaCapa(
+              capa: capa,
+              turma: turma,
+              aoPersonalizar: () =>
+                  mostrarFolhaDePersonalizar(context, turma: turma, capa: capa),
+            ),
+            const SizedBox(height: Espacos.xl),
+          ],
           ...corpo,
         ],
       ),
