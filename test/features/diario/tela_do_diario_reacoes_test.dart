@@ -175,14 +175,14 @@ void main() {
       ),
     );
 
-    final pilula = tester.widget<Ink>(
+    final pilula = tester.widget<Material>(
       find.descendant(
         of: find.byTooltip('Coração, 1 reação, marcada'),
-        matching: find.byType(Ink),
+        matching: find.byType(Material),
       ),
     );
     expect(
-      (pilula.decoration as BoxDecoration).color,
+      pilula.color,
       coresDaPaleta(PaletaDoDiario.terracota, Cores.claras).chipFundo,
     );
   });

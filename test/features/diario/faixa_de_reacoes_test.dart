@@ -33,12 +33,16 @@ Widget faixa({
   ),
 );
 
-Color? fundoDoChip(WidgetTester tester, String rotulo) {
-  final pilula = tester.widget<Ink>(
-    find.descendant(of: find.byTooltip(rotulo), matching: find.byType(Ink)),
-  );
-  return (pilula.decoration as BoxDecoration).color;
-}
+Material materialDoChip(WidgetTester tester, String rotulo) =>
+    tester.widget<Material>(
+      find.descendant(
+        of: find.byTooltip(rotulo),
+        matching: find.byType(Material),
+      ),
+    );
+
+Color? fundoDoChip(WidgetTester tester, String rotulo) =>
+    materialDoChip(tester, rotulo).color;
 
 void main() {
   testWidgets(
@@ -126,6 +130,57 @@ void main() {
       }
     },
   );
+
+  testWidgets(
+    'dentro de um cartão opaco, o Material mais próximo do chip é o dele: fundo e borda aparecem',
+    (tester) async {
+      final pintura = coresDaPaleta(PaletaDoDiario.terracota, Cores.claras);
+      await tester.pumpWidget(
+        montar(
+          Container(
+            color: Cores.claras.superficieBaixa,
+            padding: const EdgeInsets.all(16),
+            child: FaixaDeReacoes(
+              reacoes: [coracao2Meu, fogo1],
+              totalDeComentarios: 0,
+              paleta: PaletaDoDiario.terracota,
+              aoReagir: (_) {},
+              aoAbrirComentarios: () {},
+            ),
+          ),
+        ),
+      );
+
+      Material maisProximo(String texto) => tester.widget<Material>(
+        find
+            .ancestor(of: find.text(texto), matching: find.byType(Material))
+            .first,
+      );
+      final meu = maisProximo('❤️ 2');
+      expect(meu.color, pintura.chipFundo);
+      expect((meu.shape as StadiumBorder).side.color, pintura.chipBorda);
+      final alheio = maisProximo('🔥 1');
+      expect(alheio.color, Cores.claras.superficieMaisBaixa);
+      expect(
+        (alheio.shape as StadiumBorder).side.color,
+        Cores.claras.contornoVariante,
+      );
+    },
+  );
+
+  testWidgets('tocar na margem de 48 dp acima do chip também reage', (
+    tester,
+  ) async {
+    final tipos = <TipoDeReacao>[];
+    await tester.pumpWidget(faixa(reacoes: [fogo1], aoReagir: tipos.add));
+
+    final alvo = tester.getRect(find.byTooltip('Fogo, 1 reação'));
+    final chip = tester.getRect(find.text('🔥 1'));
+    expect(alvo.top, lessThan(chip.top - 6)); // há margem acima do texto
+    await tester.tapAt(Offset(chip.center.dx, alvo.top + 1));
+
+    expect(tipos, [TipoDeReacao.fogo]);
+  });
 
   testWidgets('tocar num chip chama aoReagir com o tipo dele', (tester) async {
     final tipos = <TipoDeReacao>[];

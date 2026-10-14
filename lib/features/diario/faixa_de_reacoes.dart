@@ -97,31 +97,40 @@ class _ChipDeReacao extends StatelessWidget {
         selected: minha,
         label: rotuloDaReacao(reacao),
         excludeSemantics: true,
-        child: InkWell(
+        // a área de 48 dp é do GestureDetector; o InkWell dentro do chip só dá o toque visível
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: aoTocar,
-          borderRadius: BorderRadius.circular(999),
           child: ConstrainedBox(
             constraints: _alvo,
             child: Center(
               widthFactor: 1,
-              // Ink, e não Container: o fundo opaco de um Container taparia o toque do InkWell
-              child: Ink(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: minha ? pintura.chipFundo : cores.superficieMaisBaixa,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
+              // Material próprio: o cartão pai é opaco e cobriria o fundo e o toque de um Ink
+              // pintado no Material mais acima
+              child: Material(
+                color: minha ? pintura.chipFundo : cores.superficieMaisBaixa,
+                shape: StadiumBorder(
+                  side: BorderSide(
                     color: minha ? pintura.chipBorda : cores.contornoVariante,
                   ),
                 ),
-                child: Text(
-                  '${reacao.tipo.glifo} ${reacao.total}',
-                  style: tipografia.etiquetaMedia.copyWith(
-                    color: minha ? pintura.chipTexto : cores.sobreSuperficie,
-                    fontWeight: minha ? FontWeight.w700 : null,
+                child: InkWell(
+                  onTap: aoTocar,
+                  customBorder: const StadiumBorder(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Text(
+                      '${reacao.tipo.glifo} ${reacao.total}',
+                      style: tipografia.etiquetaMedia.copyWith(
+                        color: minha
+                            ? pintura.chipTexto
+                            : cores.sobreSuperficie,
+                        fontWeight: minha ? FontWeight.w700 : null,
+                      ),
+                    ),
                   ),
                 ),
               ),
