@@ -27,6 +27,7 @@ class ErroDaApi implements Exception {
   bool get backlogCheio => codigo == 'backlog_cheio';
   bool get jaNoBacklog => codigo == 'ja_no_backlog';
   bool get ideiaIndisponivel => codigo == 'ideia_indisponivel';
+  bool get atividadeAberta => codigo == 'atividade_aberta';
 
   /// Qualquer 409: o estado mudou embaixo de mim (a vez passou, alguém encerrou, já postei em outro
   /// aparelho). As telas avisam, recarregam e voltam.

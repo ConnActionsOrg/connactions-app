@@ -1,11 +1,14 @@
 import 'modelos/alteracoes_do_eu.dart';
 import 'modelos/atividade.dart';
+import 'modelos/capa_do_diario.dart';
+import 'modelos/comentario.dart';
 import 'modelos/eu.dart';
 import 'modelos/foto_para_enviar.dart';
 import 'modelos/ideia.dart';
 import 'modelos/pagina_da_comunidade.dart';
 import 'modelos/pagina_do_diario.dart';
 import 'modelos/proposta.dart';
+import 'modelos/reacao.dart';
 import 'modelos/registro.dart';
 import 'modelos/turma.dart';
 
@@ -59,12 +62,39 @@ abstract class ApiConnactions {
   /// DELETE /registros/{id}.
   Future<void> apagarRegistro(String registroId);
 
-  /// GET /turmas/{id}/diario: encerradas, da mais recente para a mais antiga.
+  /// GET /turmas/{id}/diario: encerradas, da mais recente para a mais antiga, cada uma com o resumo
+  /// das reações e o total de comentários. A capa só vem na primeira página (sem `apos`).
   Future<PaginaDoDiario> listarDiario(
     String turmaId, {
     String? apos,
     int limite = 20,
   });
+
+  /// PUT /atividades/{id}/reacoes/{tipo}: marca a reação (de novo não é erro) e devolve o resumo da
+  /// atividade. 409 `atividade_aberta` se ela ainda não foi encerrada.
+  Future<List<Reacao>> reagir(String atividadeId, TipoDeReacao tipo);
+
+  /// DELETE /atividades/{id}/reacoes/{tipo}: tira a reação (tirar a que não está marcada não é erro).
+  Future<List<Reacao>> desreagir(String atividadeId, TipoDeReacao tipo);
+
+  /// GET /atividades/{id}/comentarios: do mais antigo para o mais novo.
+  Future<PaginaDeComentarios> listarComentarios(
+    String atividadeId, {
+    String? apos,
+    int limite = 50,
+  });
+
+  /// POST /atividades/{id}/comentarios. 422 com texto vazio ou acima de 500 caracteres.
+  Future<Comentario> comentar(String atividadeId, String texto);
+
+  /// DELETE /comentarios/{id}: só o autor (403 `sem_acesso` para outro membro).
+  Future<void> apagarComentario(String comentarioId);
+
+  /// PATCH /turmas/{id}/diario: só o que mudou; devolve a capa inteira.
+  Future<CapaDoDiario> personalizarDiario(
+    String turmaId,
+    AlteracoesDaCapa alteracoes,
+  );
 
   /// POST /turmas/{id}/embaralhar. 409 `ordem_travada` com atividade aberta.
   Future<TurmaDetalhe> embaralharOrdem(String turmaId);

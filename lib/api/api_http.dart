@@ -7,12 +7,15 @@ import 'api_connactions.dart';
 import 'erro_da_api.dart';
 import 'modelos/alteracoes_do_eu.dart';
 import 'modelos/atividade.dart';
+import 'modelos/capa_do_diario.dart';
+import 'modelos/comentario.dart';
 import 'modelos/eu.dart';
 import 'modelos/foto_para_enviar.dart';
 import 'modelos/ideia.dart';
 import 'modelos/pagina_da_comunidade.dart';
 import 'modelos/pagina_do_diario.dart';
 import 'modelos/proposta.dart';
+import 'modelos/reacao.dart';
 import 'modelos/registro.dart';
 import 'modelos/turma.dart';
 
@@ -132,6 +135,65 @@ class ApiHttp implements ApiConnactions {
       'GET',
       '/turmas/$turmaId/diario',
       consulta: {'apos': ?apos, 'limite': '$limite'},
+    ),
+  );
+
+  @override
+  Future<List<Reacao>> reagir(String atividadeId, TipoDeReacao tipo) async =>
+      _reacoes(
+        await _enviar('PUT', '/atividades/$atividadeId/reacoes/${tipo.slug}'),
+      );
+
+  @override
+  Future<List<Reacao>> desreagir(String atividadeId, TipoDeReacao tipo) async =>
+      _reacoes(
+        await _enviar(
+          'DELETE',
+          '/atividades/$atividadeId/reacoes/${tipo.slug}',
+        ),
+      );
+
+  List<Reacao> _reacoes(Map<String, dynamic> json) =>
+      Reacao.listaDeJson(json['reacoes'] as List<dynamic>);
+
+  @override
+  Future<PaginaDeComentarios> listarComentarios(
+    String atividadeId, {
+    String? apos,
+    int limite = 50,
+  }) async => PaginaDeComentarios.deJson(
+    await _enviar(
+      'GET',
+      '/atividades/$atividadeId/comentarios',
+      consulta: {'apos': ?apos, 'limite': '$limite'},
+    ),
+  );
+
+  @override
+  Future<Comentario> comentar(String atividadeId, String texto) async =>
+      Comentario.deJson(
+        await _enviar(
+          'POST',
+          '/atividades/$atividadeId/comentarios',
+          corpo: {'texto': texto},
+        ),
+      );
+
+  @override
+  Future<void> apagarComentario(String comentarioId) async {
+    // 204 sem corpo: o _enviar devolve {} e não há nada a ler
+    await _enviar('DELETE', '/comentarios/$comentarioId');
+  }
+
+  @override
+  Future<CapaDoDiario> personalizarDiario(
+    String turmaId,
+    AlteracoesDaCapa alteracoes,
+  ) async => CapaDoDiario.deJson(
+    await _enviar(
+      'PATCH',
+      '/turmas/$turmaId/diario',
+      corpo: alteracoes.toJson(),
     ),
   );
 

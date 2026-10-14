@@ -7,6 +7,8 @@ import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/alteracoes_do_eu.dart';
 import 'package:connactions_app/api/modelos/atividade.dart';
 import 'package:connactions_app/api/modelos/atividade_da_comunidade.dart';
+import 'package:connactions_app/api/modelos/capa_do_diario.dart';
+import 'package:connactions_app/api/modelos/comentario.dart';
 import 'package:connactions_app/api/modelos/eu.dart';
 import 'package:connactions_app/api/modelos/foto_para_enviar.dart';
 import 'package:connactions_app/api/modelos/ideia.dart';
@@ -14,6 +16,7 @@ import 'package:connactions_app/api/modelos/pagina_da_comunidade.dart';
 import 'package:connactions_app/api/modelos/pagina_do_diario.dart';
 import 'package:connactions_app/api/modelos/pessoa.dart';
 import 'package:connactions_app/api/modelos/proposta.dart';
+import 'package:connactions_app/api/modelos/reacao.dart';
 import 'package:connactions_app/api/modelos/registro.dart';
 import 'package:connactions_app/api/modelos/turma.dart';
 
@@ -26,6 +29,9 @@ class FakeApi implements ApiConnactions {
     Map<String, Turma> convites = const {},
     Map<String, Atividade?> abertaPor = const {},
     Map<String, List<Atividade>> diarioPor = const {},
+    Map<String, List<Reacao>> reacoesPor = const {},
+    Map<String, List<Comentario>> comentariosPor = const {},
+    Map<String, CapaDoDiario> capaPor = const {},
     Map<String, List<Ideia>> ideiasPor = const {},
     List<AtividadeDaComunidade> comunidade = const [],
     this.falhaAoObter,
@@ -42,6 +48,11 @@ class FakeApi implements ApiConnactions {
     this.falhaAoRegistrar,
     this.falhaAoApagarRegistro,
     this.falhaAoListarDiario,
+    this.falhaAoReagir,
+    this.falhaAoListarComentarios,
+    this.falhaAoComentar,
+    this.falhaAoApagarComentario,
+    this.falhaAoPersonalizar,
     this.falhaAoEmbaralhar,
     this.falhaAoTrocarFoto,
     this.falhaAoRegistrarDispositivo,
@@ -59,6 +70,13 @@ class FakeApi implements ApiConnactions {
        convites = Map.of(convites),
        abertaPor = Map.of(abertaPor),
        diarioPor = {for (final e in diarioPor.entries) e.key: List.of(e.value)},
+       reacoesPor = {
+         for (final e in reacoesPor.entries) e.key: List.of(e.value),
+       },
+       comentariosPor = {
+         for (final e in comentariosPor.entries) e.key: List.of(e.value),
+       },
+       capaPor = Map.of(capaPor),
        ideiasPor = {for (final e in ideiasPor.entries) e.key: List.of(e.value)},
        comunidade = List.of(comunidade);
 
@@ -78,6 +96,16 @@ class FakeApi implements ApiConnactions {
 
   /// Encerradas por id de turma, da mais recente para a mais antiga.
   final Map<String, List<Atividade>> diarioPor;
+
+  /// O resumo das reações de cada atividade encerrada, por id da atividade, como eu o vejo (`minha`
+  /// é minha). Reagir e desreagir mexem aqui, na ordem fixa dos tipos.
+  final Map<String, List<Reacao>> reacoesPor;
+
+  /// Os comentários por id da atividade, do mais antigo para o mais novo.
+  final Map<String, List<Comentario>> comentariosPor;
+
+  /// A personalização por id de turma; sem entrada, a capa padrão. Os contadores são recalculados.
+  final Map<String, CapaDoDiario> capaPor;
 
   /// As ideias livres por id de turma, da mais nova para a mais antiga.
   final Map<String, List<Ideia>> ideiasPor;
@@ -102,6 +130,11 @@ class FakeApi implements ApiConnactions {
   Object? falhaAoRegistrar;
   Object? falhaAoApagarRegistro;
   Object? falhaAoListarDiario;
+  Object? falhaAoReagir;
+  Object? falhaAoListarComentarios;
+  Object? falhaAoComentar;
+  Object? falhaAoApagarComentario;
+  Object? falhaAoPersonalizar;
   Object? falhaAoEmbaralhar;
   Object? falhaAoTrocarFoto;
   Object? falhaAoRegistrarDispositivo;
@@ -123,12 +156,15 @@ class FakeApi implements ApiConnactions {
   Completer<void>? segurarObterAberta;
   Completer<void>? segurarListarComunidade;
   Completer<void>? segurarSalvarDaComunidade;
+  Completer<void>? segurarReagir;
+  Completer<void>? segurarComentar;
 
   var _criadas = 0;
   var _regenerados = 0;
   var _lancadas = 0;
   var _registrados = 0;
   var _ideias = 0;
+  var _comentarios = 0;
 
   @override
   Future<Eu> criarEu() async {
@@ -485,9 +521,207 @@ class FakeApi implements ApiConnactions {
     return PaginaDoDiario(
       itens: [
         for (final a in itens)
-          ItemDoDiario(atividade: a, reacoes: const [], totalDeComentarios: 0),
+          ItemDoDiario(
+            atividade: a,
+            reacoes: List.of(reacoesPor[a.id] ?? const <Reacao>[]),
+            totalDeComentarios: comentariosPor[a.id]?.length ?? 0,
+          ),
       ],
       proximo: fim < todas.length ? '$fim' : null,
+      capa: apos == null ? _capa(turmaId) : null, // só a 1ª página traz a capa
+    );
+  }
+
+  /// A atividade encerrada de qualquer turma; a aberta é 409 `atividade_aberta`, o resto 404.
+  Atividade _encerrada(String atividadeId) {
+    for (final encerradas in diarioPor.values) {
+      for (final a in encerradas) {
+        if (a.id == atividadeId) return a;
+      }
+    }
+    if (abertaPor.values.any((a) => a?.id == atividadeId)) {
+      throw const ErroDaApi(
+        status: 409,
+        codigo: 'atividade_aberta',
+        mensagem:
+            'Reações e comentários começam quando a atividade é encerrada.',
+      );
+    }
+    throw const ErroDaApi(
+      status: 404,
+      codigo: 'nao_encontrado',
+      mensagem: 'Não encontramos o que você procura.',
+    );
+  }
+
+  @override
+  Future<List<Reacao>> reagir(String atividadeId, TipoDeReacao tipo) async {
+    chamadas.add('reagir:$atividadeId:${tipo.slug}');
+    await segurarReagir?.future;
+    final falha = falhaAoReagir;
+    if (falha != null) throw falha;
+    _encerrada(atividadeId);
+    final resumo = [...?reacoesPor[atividadeId]];
+    final i = resumo.indexWhere((r) => r.tipo == tipo);
+    if (i < 0) {
+      resumo.add(Reacao(tipo: tipo, total: 1, minha: true));
+    } else if (!resumo[i].minha) {
+      resumo[i] = Reacao(tipo: tipo, total: resumo[i].total + 1, minha: true);
+    }
+    resumo.sort((a, b) => a.tipo.index.compareTo(b.tipo.index));
+    reacoesPor[atividadeId] = resumo;
+    return List.of(resumo);
+  }
+
+  @override
+  Future<List<Reacao>> desreagir(String atividadeId, TipoDeReacao tipo) async {
+    chamadas.add('desreagir:$atividadeId:${tipo.slug}');
+    await segurarReagir?.future;
+    final falha = falhaAoReagir;
+    if (falha != null) throw falha;
+    _encerrada(atividadeId);
+    final resumo = [...?reacoesPor[atividadeId]];
+    final i = resumo.indexWhere((r) => r.tipo == tipo);
+    if (i >= 0 && resumo[i].minha) {
+      if (resumo[i].total == 1) {
+        resumo.removeAt(i);
+      } else {
+        resumo[i] = Reacao(
+          tipo: tipo,
+          total: resumo[i].total - 1,
+          minha: false,
+        );
+      }
+    }
+    reacoesPor[atividadeId] = resumo;
+    return List.of(resumo);
+  }
+
+  @override
+  Future<PaginaDeComentarios> listarComentarios(
+    String atividadeId, {
+    String? apos,
+    int limite = 50,
+  }) async {
+    chamadas.add('listarComentarios:$atividadeId:${apos ?? ''}');
+    final falha = falhaAoListarComentarios;
+    if (falha != null) throw falha;
+    _encerrada(atividadeId);
+    final todos = comentariosPor[atividadeId] ?? const <Comentario>[];
+    // o cursor do dublê é o índice de onde a página começa
+    final inicio = apos == null ? 0 : int.parse(apos);
+    final itens = todos.skip(inicio).take(limite).toList();
+    final fim = inicio + itens.length;
+    return PaginaDeComentarios(
+      itens: itens,
+      proximo: fim < todos.length ? '$fim' : null,
+    );
+  }
+
+  @override
+  Future<Comentario> comentar(String atividadeId, String texto) async {
+    chamadas.add('comentar:$atividadeId:$texto');
+    await segurarComentar?.future;
+    final falha = falhaAoComentar;
+    if (falha != null) throw falha;
+    _encerrada(atividadeId);
+    final aparado = texto.trim();
+    if (aparado.isEmpty) {
+      throw const ErroDaApi(
+        status: 422,
+        codigo: 'dados_invalidos',
+        mensagem: 'Escreva alguma coisa para comentar.',
+      );
+    }
+    if (aparado.runes.length > 500) {
+      throw const ErroDaApi(
+        status: 422,
+        codigo: 'dados_invalidos',
+        mensagem: 'O comentário pode ter até 500 caracteres.',
+      );
+    }
+    _comentarios++;
+    final comentario = Comentario(
+      id: 'com-$_comentarios',
+      autor: pessoaDoEu(_eu!),
+      texto: aparado,
+      criadoEm: DateTime.utc(2026, 10, 14, 12, 0, _comentarios),
+      meu: true,
+    );
+    comentariosPor.putIfAbsent(atividadeId, () => []).add(comentario);
+    return comentario;
+  }
+
+  @override
+  Future<void> apagarComentario(String comentarioId) async {
+    chamadas.add('apagarComentario:$comentarioId');
+    final falha = falhaAoApagarComentario;
+    if (falha != null) throw falha;
+    for (final lista in comentariosPor.values) {
+      final i = lista.indexWhere((c) => c.id == comentarioId);
+      if (i < 0) continue;
+      if (!lista[i].meu) {
+        throw const ErroDaApi(
+          status: 403,
+          codigo: 'sem_acesso',
+          mensagem: 'Só quem escreveu pode apagar o comentário.',
+        );
+      }
+      lista.removeAt(i);
+      return;
+    }
+    throw const ErroDaApi(
+      status: 404,
+      codigo: 'nao_encontrado',
+      mensagem: 'Não encontramos o que você procura.',
+    );
+  }
+
+  @override
+  Future<CapaDoDiario> personalizarDiario(
+    String turmaId,
+    AlteracoesDaCapa alteracoes,
+  ) async {
+    chamadas.add('personalizarDiario:$turmaId');
+    final falha = falhaAoPersonalizar;
+    if (falha != null) throw falha;
+    _minha(turmaId);
+    final atual = _capa(turmaId);
+    String? texto(String? novo, String? antigo, int teto, String nome) {
+      if (novo == null) return antigo;
+      final aparado = novo.trim();
+      if (aparado.runes.length > teto) {
+        throw ErroDaApi(
+          status: 422,
+          codigo: 'dados_invalidos',
+          mensagem: '$nome pode ter até $teto caracteres.',
+        );
+      }
+      return aparado.isEmpty ? null : aparado;
+    }
+
+    capaPor[turmaId] = CapaDoDiario(
+      titulo: texto(alteracoes.titulo, atual.titulo, 40, 'O título'),
+      frase: texto(alteracoes.frase, atual.frase, 80, 'A frase'),
+      paleta: alteracoes.paleta ?? atual.paleta,
+      sticker: alteracoes.sticker ?? atual.sticker,
+      atividades: atual.atividades,
+      fotos: atual.fotos,
+    );
+    return _capa(turmaId);
+  }
+
+  /// A personalização guardada com os contadores de agora: só as encerradas e as fotos delas.
+  CapaDoDiario _capa(String turmaId) {
+    final guardada = capaPor[turmaId];
+    final encerradas = diarioPor[turmaId] ?? const <Atividade>[];
+    return CapaDoDiario(
+      titulo: guardada?.titulo,
+      frase: guardada?.frase,
+      paleta: guardada?.paleta ?? PaletaDoDiario.padrao,
+      sticker: guardada?.sticker ?? StickerDoDiario.padrao,
+      atividades: encerradas.length,
+      fotos: encerradas.fold(0, (soma, a) => soma + a.registros.length),
     );
   }
 
@@ -898,4 +1132,35 @@ AtividadeDaComunidade atividadeDaComunidadeDeTeste({
   turmaEmoji: turmaEmoji,
   fotos: fotos ?? [fotoDaComunidadeDeTeste()],
   inspiradas: inspiradas,
+);
+
+/// Sem `autor`, o comentário é de outra pessoa (a Bia); com `meu: true`, é meu.
+Comentario comentarioDeTeste({
+  String id = 'com-x',
+  Pessoa? autor,
+  String texto = 'Foi demais!',
+  DateTime? criadoEm,
+  bool meu = false,
+}) => Comentario(
+  id: id,
+  autor: autor ?? (meu ? pessoaDoEu(euDeTeste()) : pessoaDeTeste()),
+  texto: texto,
+  criadoEm: criadoEm ?? DateTime.utc(2026, 10, 14, 11),
+  meu: meu,
+);
+
+CapaDoDiario capaDeTeste({
+  String? titulo,
+  String? frase,
+  PaletaDoDiario paleta = PaletaDoDiario.areia,
+  StickerDoDiario sticker = StickerDoDiario.livro,
+  int atividades = 0,
+  int fotos = 0,
+}) => CapaDoDiario(
+  titulo: titulo,
+  frase: frase,
+  paleta: paleta,
+  sticker: sticker,
+  atividades: atividades,
+  fotos: fotos,
 );
