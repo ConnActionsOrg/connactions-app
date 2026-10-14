@@ -38,6 +38,23 @@ class _ApiComReacoesSeguradas extends FakeApi {
   }
 }
 
+/// Segura `listarDiario` quando o teste pede, para manter um build em voo.
+class _ApiComDiarioSegurado extends FakeApi {
+  _ApiComDiarioSegurado({super.eu, super.turmas, super.diarioPor});
+
+  Completer<void>? segurarDiario;
+
+  @override
+  Future<PaginaDoDiario> listarDiario(
+    String turmaId, {
+    String? apos,
+    int limite = 20,
+  }) async {
+    await segurarDiario?.future;
+    return super.listarDiario(turmaId, apos: apos, limite: limite);
+  }
+}
+
 FakeApi apiCom({List<Reacao> reacoes = const [], int comentarios = 0}) =>
     FakeApi(
       eu: euDeTeste(),
@@ -205,6 +222,77 @@ void main() {
       expect(item(c).reacoes, isEmpty);
     },
   );
+
+  group('provider descartado com a chamada em voo', () {
+    // Tira o único ouvinte (a tela saiu) e espera o autoDispose agir.
+    Future<({Future<void> toque})> soltarComChamadaSegura(FakeApi api) async {
+      final c = containerDeTeste(api);
+      final ouvinte = c.listen(diarioProvider('turma-1'), (_, _) {});
+      await c.read(diarioProvider('turma-1').future);
+      final n = c.read(diarioProvider('turma-1').notifier);
+      final toque = n.alternarReacao('a1', TipoDeReacao.coracao);
+      await pumpEventQueue();
+      ouvinte.close();
+      await pumpEventQueue();
+      expect(
+        c.exists(diarioProvider('turma-1')),
+        isFalse,
+        reason: 'o provider tem de ter morrido',
+      );
+      return (toque: toque); // num record: await direto achataria o Future
+    }
+
+    test('a resposta de sucesso depois do descarte não lança', () async {
+      final api = apiCom();
+      api.segurarReagir = Completer<void>();
+      final emVoo = await soltarComChamadaSegura(api);
+
+      api.segurarReagir!.complete();
+      await expectLater(emVoo.toque, completes);
+    });
+
+    test(
+      'a falha depois do descarte sobe o erro da API, não o do ref',
+      () async {
+        final api = apiCom();
+        api.segurarReagir = Completer<void>();
+        api.falhaAoReagir = const ErroDeRede('caiu');
+        final emVoo = await soltarComChamadaSegura(api);
+
+        api.segurarReagir!.complete();
+        await expectLater(emVoo.toque, throwsA(isA<ErroDeRede>()));
+      },
+    );
+  });
+
+  test('provider descartado enquanto espera o build não chama a API', () async {
+    final api = _ApiComDiarioSegurado(
+      eu: euDeTeste(),
+      turmas: [turmaDeTeste()],
+      diarioPor: {
+        'turma-1': [
+          atividadeDeTeste(id: 'a1', encerradaEm: DateTime.utc(2026, 9, 30)),
+        ],
+      },
+    );
+    final c = containerDeTeste(api);
+    final ouvinte = c.listen(diarioProvider('turma-1'), (_, _) {});
+    await c.read(diarioProvider('turma-1').future);
+    final n = c.read(diarioProvider('turma-1').notifier);
+
+    api.segurarDiario = Completer<void>();
+    c.invalidate(diarioProvider('turma-1')); // recarga em voo
+    await pumpEventQueue();
+    final toque = n.alternarReacao('a1', TipoDeReacao.coracao);
+    await pumpEventQueue();
+    ouvinte.close();
+    await pumpEventQueue();
+
+    api.segurarDiario!.complete();
+    await pumpEventQueue();
+    await expectLater(toque, completes);
+    expect(api.chamadas.where((x) => x.startsWith('reagir')), isEmpty);
+  });
 
   test('atividade que não está na página não chama a API', () async {
     final api = apiCom();

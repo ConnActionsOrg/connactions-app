@@ -46,6 +46,7 @@ class Diario extends AsyncNotifier<PaginaDoDiario>
     if (!_reagindo.add(chave)) return;
     try {
       await assentado; // um build em voo sobrescreveria o que gravarmos abaixo
+      if (!ref.mounted) return;
       // o item de agora, não o de antes da espera: outro toque pode ter mexido nele nesse meio-tempo
       final item = _item(atividadeId);
       if (item == null) return;
@@ -57,10 +58,11 @@ class Diario extends AsyncNotifier<PaginaDoDiario>
         final resumo = (antes?.minha ?? false)
             ? await api.desreagir(atividadeId, tipo)
             : await api.reagir(atividadeId, tipo);
+        if (!ref.mounted) return;
         _trocarReacoes(atividadeId, resumo);
       } catch (_) {
         // só o tipo que falhou volta: outro chip da mesma atividade pode estar em voo
-        _desfazer(atividadeId, tipo, antes);
+        if (ref.mounted) _desfazer(atividadeId, tipo, antes);
         rethrow;
       }
     } finally {
