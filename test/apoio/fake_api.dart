@@ -7,6 +7,7 @@ import 'package:connactions_app/api/erro_da_api.dart';
 import 'package:connactions_app/api/modelos/alteracoes_do_eu.dart';
 import 'package:connactions_app/api/modelos/atividade.dart';
 import 'package:connactions_app/api/modelos/atividade_da_comunidade.dart';
+import 'package:connactions_app/api/modelos/atividade_feita.dart';
 import 'package:connactions_app/api/modelos/capa_do_diario.dart';
 import 'package:connactions_app/api/modelos/comentario.dart';
 import 'package:connactions_app/api/modelos/eu.dart';
@@ -15,6 +16,7 @@ import 'package:connactions_app/api/modelos/foto_sem_autor.dart';
 import 'package:connactions_app/api/modelos/ideia.dart';
 import 'package:connactions_app/api/modelos/pagina_da_comunidade.dart';
 import 'package:connactions_app/api/modelos/pagina_do_diario.dart';
+import 'package:connactions_app/api/modelos/perfil_de_pessoa.dart';
 import 'package:connactions_app/api/modelos/pessoa.dart';
 import 'package:connactions_app/api/modelos/proposta.dart';
 import 'package:connactions_app/api/modelos/reacao.dart';
@@ -35,6 +37,9 @@ class FakeApi implements ApiConnactions {
     Map<String, CapaDoDiario> capaPor = const {},
     Map<String, List<Ideia>> ideiasPor = const {},
     List<AtividadeDaComunidade> comunidade = const [],
+    List<UsuarioDeTeste> usuarios = const [],
+    List<(String, String)> conexoes = const [],
+    Map<String, List<Feita>> feitasPor = const {},
     this.falhaAoObter,
     this.falhaAoAtualizar,
     this.falhaAoListarTurmas,
@@ -63,6 +68,12 @@ class FakeApi implements ApiConnactions {
     this.falhaAoApagarIdeia,
     this.falhaAoSalvarDaComunidade,
     this.falhaAoListarComunidade,
+    this.falhaAoListarConexoes,
+    this.falhaAoConectar,
+    this.falhaAoDesconectar,
+    this.falhaAoRegenerarCodigoDeAmigo,
+    this.falhaAoObterPerfil,
+    this.falhaAoListarAtividadesFeitas,
   }) : _eu = eu, // ignore: prefer_initializing_formals
        turmas = List.of(turmas),
        membrosPor = {
@@ -79,7 +90,10 @@ class FakeApi implements ApiConnactions {
        },
        capaPor = Map.of(capaPor),
        ideiasPor = {for (final e in ideiasPor.entries) e.key: List.of(e.value)},
-       comunidade = List.of(comunidade);
+       comunidade = List.of(comunidade),
+       usuarios = {for (final u in usuarios) u.pessoa.id: u},
+       conexoes = List.of(conexoes),
+       feitasPor = {for (final e in feitasPor.entries) e.key: List.of(e.value)};
 
   Eu? _eu;
 
@@ -113,6 +127,15 @@ class FakeApi implements ApiConnactions {
 
   /// O que a Comunidade mostra para mim (a API já tira as turmas de que sou membro).
   final List<AtividadeDaComunidade> comunidade;
+
+  /// As outras contas, por id: quem se conecta a mim pelo código e cujo perfil abro sendo conexão.
+  final Map<String, UsuarioDeTeste> usuarios;
+
+  /// Os pares conectados, o mais recente primeiro; cada par vale para os dois lados.
+  final List<(String, String)> conexoes;
+
+  /// As atividades feitas por id de pessoa (a minha também), da mais recente para a mais antiga.
+  final Map<String, List<Feita>> feitasPor;
 
   /// A última proposta que chegou a `lancarAtividade`, para afirmar a origem que o app mandou.
   Proposta? ultimaProposta;
@@ -148,6 +171,12 @@ class FakeApi implements ApiConnactions {
   Object? falhaAoApagarIdeia;
   Object? falhaAoSalvarDaComunidade;
   Object? falhaAoListarComunidade;
+  Object? falhaAoListarConexoes;
+  Object? falhaAoConectar;
+  Object? falhaAoDesconectar;
+  Object? falhaAoRegenerarCodigoDeAmigo;
+  Object? falhaAoObterPerfil;
+  Object? falhaAoListarAtividadesFeitas;
 
   final chamadas = <String>[];
 
@@ -163,6 +192,12 @@ class FakeApi implements ApiConnactions {
   Completer<void>? segurarReagir;
   Completer<void>? segurarComentar;
   Completer<void>? segurarApagarComentario;
+  Completer<void>? segurarListarConexoes;
+  Completer<void>? segurarConectar;
+  Completer<void>? segurarDesconectar;
+  Completer<void>? segurarRegenerarCodigoDeAmigo;
+  Completer<void>? segurarObterPerfil;
+  Completer<void>? segurarListarAtividadesFeitas;
 
   var _criadas = 0;
   var _regenerados = 0;
@@ -170,6 +205,7 @@ class FakeApi implements ApiConnactions {
   var _registrados = 0;
   var _ideias = 0;
   var _comentarios = 0;
+  var _codigosDeAmigo = 0;
 
   @override
   Future<Eu> criarEu() async {
@@ -895,6 +931,228 @@ class FakeApi implements ApiConnactions {
     );
   }
 
+  @override
+  Future<List<Pessoa>> listarConexoes() async {
+    chamadas.add('listarConexoes');
+    await segurarListarConexoes?.future;
+    final falha = falhaAoListarConexoes;
+    if (falha != null) throw falha;
+    final eu = _eu!.id;
+    return [
+      for (final (a, b) in conexoes)
+        if (a == eu) usuarios[b]!.pessoa else if (b == eu) usuarios[a]!.pessoa,
+    ];
+  }
+
+  @override
+  Future<({Pessoa pessoa, bool nova})> conectar(String codigo) async {
+    chamadas.add('conectar:$codigo');
+    await segurarConectar?.future;
+    final falha = falhaAoConectar;
+    if (falha != null) throw falha;
+    final eu = _eu!;
+    final normalizado = codigo.toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    if (normalizado == eu.codigoDeAmigo) {
+      throw const ErroDaApi(
+        status: 422,
+        codigo: 'codigo_invalido',
+        mensagem: 'Esse é o seu código. Peça o do seu amigo.',
+      );
+    }
+    // o convite de turma tem o mesmo alfabeto e o mesmo tamanho, mas só o código de amigo conecta
+    final dono = usuarios.values
+        .where((u) => u.codigoDeAmigo == normalizado)
+        .firstOrNull;
+    if (dono == null) {
+      throw const ErroDaApi(
+        status: 422,
+        codigo: 'codigo_invalido',
+        mensagem: 'Não achei ninguém com esse código de amigo.',
+      );
+    }
+    final pessoa = dono.pessoa;
+    if (_conectados(eu.id, pessoa.id)) return (pessoa: pessoa, nova: false);
+    conexoes.insert(0, (eu.id, pessoa.id));
+    return (pessoa: pessoa, nova: true);
+  }
+
+  @override
+  Future<void> desconectar(String usuarioId) async {
+    chamadas.add('desconectar:$usuarioId');
+    await segurarDesconectar?.future;
+    final falha = falhaAoDesconectar;
+    if (falha != null) throw falha;
+    final eu = _eu!.id;
+    conexoes.removeWhere(
+      (par) => par == (eu, usuarioId) || par == (usuarioId, eu),
+    );
+  }
+
+  @override
+  Future<Eu> regenerarCodigoDeAmigo() async {
+    chamadas.add('regenerarCodigoDeAmigo');
+    await segurarRegenerarCodigoDeAmigo?.future;
+    final falha = falhaAoRegenerarCodigoDeAmigo;
+    if (falha != null) throw falha;
+    _codigosDeAmigo++;
+    final eu = _eu!;
+    return _eu = Eu(
+      id: eu.id,
+      handle: eu.handle,
+      nome: eu.nome,
+      fotoUrl: eu.fotoUrl,
+      bio: eu.bio,
+      // só caracteres do alfabeto do código: o novo tem de valer no conectar de quem o recebe
+      codigoDeAmigo: 'MUDADA${21 + _codigosDeAmigo}',
+      atividadesVisiveis: eu.atividadesVisiveis,
+      criadoEm: eu.criadoEm,
+    );
+  }
+
+  @override
+  Future<PerfilDePessoa> obterPerfil(String usuarioId) async {
+    chamadas.add('obterPerfil:$usuarioId');
+    await segurarObterPerfil?.future;
+    final falha = falhaAoObterPerfil;
+    if (falha != null) throw falha;
+    final eu = _eu!;
+    if (usuarioId == eu.id) {
+      return PerfilDePessoa(
+        id: eu.id,
+        handle: eu.handle,
+        nome: eu.nome,
+        fotoUrl: eu.fotoUrl,
+        bio: eu.bio,
+        turmas: turmas.length,
+        atividades: feitasPor[eu.id]?.length ?? 0,
+        conexoes: _conexoesDe(eu.id),
+      );
+    }
+    final outro = _conexao(usuarioId);
+    return PerfilDePessoa(
+      id: outro.pessoa.id,
+      handle: outro.pessoa.handle,
+      nome: outro.pessoa.nome,
+      fotoUrl: outro.pessoa.fotoUrl,
+      bio: outro.bio,
+      turmas: outro.turmas,
+      // o contador conta todas as feitas; é a lista que filtra pelo que eu posso ver
+      atividades: outro.atividadesVisiveis
+          ? feitasPor[usuarioId]?.length ?? 0
+          : null,
+      conexoes: _conexoesDe(usuarioId),
+    );
+  }
+
+  @override
+  Future<PaginaDeAtividadesFeitas> listarAtividadesFeitas(
+    String usuarioId, {
+    String? apos,
+    int limite = 20,
+  }) async {
+    chamadas.add('listarAtividadesFeitas:$usuarioId:${apos ?? ''}');
+    await segurarListarAtividadesFeitas?.future;
+    final falha = falhaAoListarAtividadesFeitas;
+    if (falha != null) throw falha;
+    if (limite < 1) {
+      throw const ErroDaApi(
+        status: 422,
+        codigo: 'dados_invalidos',
+        mensagem: 'O limite precisa ser um número a partir de 1.',
+      );
+    }
+    // o cursor do dublê é o índice de onde a página começa; o ruim é 422 antes de olhar a pessoa
+    final inicio = apos == null ? 0 : int.tryParse(apos);
+    if (inicio == null) {
+      throw const ErroDaApi(
+        status: 422,
+        codigo: 'dados_invalidos',
+        mensagem: 'Cursor inválido.',
+      );
+    }
+    final todas = feitasPor[usuarioId] ?? const <Feita>[];
+    final List<Feita> visiveis;
+    if (usuarioId == _eu!.id) {
+      visiveis = todas;
+    } else {
+      if (!_conexao(usuarioId).atividadesVisiveis) {
+        throw const ErroDaApi(
+          status: 403,
+          codigo: 'sem_acesso',
+          mensagem: 'Essas atividades não estão visíveis.',
+        );
+      }
+      final minhas = {for (final t in turmas) t.id};
+      visiveis = [
+        for (final f in todas)
+          if (f.publica || minhas.contains(f.turmaId)) f,
+      ];
+    }
+    // 50 é o teto da API
+    final itens = visiveis.skip(inicio).take(limite > 50 ? 50 : limite);
+    final fim = inicio + itens.length;
+    return PaginaDeAtividadesFeitas(
+      itens: [for (final f in itens) f.atividade],
+      proximo: fim < visiveis.length ? '$fim' : null,
+    );
+  }
+
+  /// Passa a responder como a conta [id], uma das [usuarios], como a API depois de outro login no
+  /// mesmo aparelho; quem era eu vira uma conta como as outras. As turmas são da conta: a nova
+  /// começa com as que o teste der.
+  void entrarComo(String id, {List<Turma> turmas = const []}) {
+    final nova = usuarios.remove(id)!;
+    final antes = _eu;
+    if (antes != null) {
+      usuarios[antes.id] = UsuarioDeTeste(
+        pessoa: pessoaDoEu(antes),
+        codigoDeAmigo: antes.codigoDeAmigo,
+        bio: antes.bio,
+        atividadesVisiveis: antes.atividadesVisiveis,
+        turmas: this.turmas.length,
+      );
+    }
+    _eu = Eu(
+      id: nova.pessoa.id,
+      handle: nova.pessoa.handle,
+      nome: nova.pessoa.nome,
+      fotoUrl: nova.pessoa.fotoUrl,
+      bio: nova.bio,
+      codigoDeAmigo: nova.codigoDeAmigo,
+      atividadesVisiveis: nova.atividadesVisiveis,
+      criadoEm: DateTime.utc(2026, 9, 11, 15),
+    );
+    this.turmas
+      ..clear()
+      ..addAll(turmas);
+  }
+
+  bool _conectados(String a, String b) =>
+      conexoes.contains((a, b)) || conexoes.contains((b, a));
+
+  int _conexoesDe(String id) =>
+      conexoes.where((par) => par.$1 == id || par.$2 == id).length;
+
+  /// A conta [id] se for minha conexão: quem não existe é 404, e quem não é conexão, 403.
+  UsuarioDeTeste _conexao(String id) {
+    final outro = usuarios[id];
+    if (outro == null) {
+      throw const ErroDaApi(
+        status: 404,
+        codigo: 'nao_encontrado',
+        mensagem: 'Não encontramos o que você procura.',
+      );
+    }
+    if (!_conectados(_eu!.id, id)) {
+      throw const ErroDaApi(
+        status: 403,
+        codigo: 'sem_acesso',
+        mensagem: 'Vocês não estão conectados.',
+      );
+    }
+    return outro;
+  }
+
   void _exigirVagaNoBacklog(String turmaId) {
     final minhas = (ideiasPor[turmaId] ?? const <Ideia>[])
         .where((i) => i.autor.id == _eu!.id)
@@ -1139,6 +1397,92 @@ AtividadeDaComunidade atividadeDaComunidadeDeTeste({
   turmaEmoji: turmaEmoji,
   fotos: fotos ?? [fotoSemAutorDeTeste()],
   inspiradas: inspiradas,
+);
+
+/// Outra conta da API no dublê: a cara pública, a bio, o código de amigo e a visibilidade das
+/// atividades. As turmas dela não existem aqui, só quantas são.
+class UsuarioDeTeste {
+  UsuarioDeTeste({
+    required this.pessoa,
+    required this.codigoDeAmigo,
+    this.bio = '',
+    this.atividadesVisiveis = true,
+    this.turmas = 0,
+  });
+
+  final Pessoa pessoa;
+  final String bio;
+  final int turmas;
+
+  // mutáveis: o teste muda no meio, como a pessoa faria no aparelho dela
+  String codigoDeAmigo;
+  bool atividadesVisiveis;
+}
+
+/// Sem argumentos, a Bia de `pessoaDeTeste`, com as atividades visíveis.
+UsuarioDeTeste usuarioDeTeste({
+  String id = 'pessoa-bia',
+  String handle = 'bia',
+  String nome = 'Bia Souza',
+  String? fotoUrl,
+  String bio = '',
+  String codigoDeAmigo = 'BEAZ2345',
+  bool atividadesVisiveis = true,
+  int turmas = 0,
+}) => UsuarioDeTeste(
+  pessoa: Pessoa(id: id, handle: handle, nome: nome, fotoUrl: fotoUrl),
+  codigoDeAmigo: codigoDeAmigo,
+  bio: bio,
+  atividadesVisiveis: atividadesVisiveis,
+  turmas: turmas,
+);
+
+/// Uma atividade feita como o dublê a guarda: ao lado dela, a turma e se é pública, que o filtro de
+/// quem olha usa e a API não manda.
+typedef Feita = ({AtividadeFeita atividade, String turmaId, bool publica});
+
+/// Sem `fotos`, uma foto; sem pessoa nenhuma, como a API.
+AtividadeFeita atividadeFeitaDeTeste({
+  String id = 'feita-1',
+  String titulo = 'Noite de jogos',
+  FormatoDeAtividade formato = FormatoDeAtividade.grupo,
+  DateTime? encerradaEm,
+  String turmaNome = 'Turma do Domingo',
+  String turmaEmoji = '🌿',
+  List<FotoSemAutor>? fotos,
+}) => AtividadeFeita(
+  id: id,
+  titulo: titulo,
+  formato: formato,
+  encerradaEm: encerradaEm ?? DateTime.utc(2026, 10, 15, 22),
+  turmaNome: turmaNome,
+  turmaEmoji: turmaEmoji,
+  fotos: fotos ?? [fotoSemAutorDeTeste()],
+);
+
+/// Sem argumentos, pública e da turma-1, a Turma do Domingo de `turmaDeTeste`.
+Feita feitaDeTeste({
+  String id = 'feita-1',
+  String titulo = 'Noite de jogos',
+  FormatoDeAtividade formato = FormatoDeAtividade.grupo,
+  DateTime? encerradaEm,
+  String turmaId = 'turma-1',
+  String turmaNome = 'Turma do Domingo',
+  String turmaEmoji = '🌿',
+  bool publica = true,
+  List<FotoSemAutor>? fotos,
+}) => (
+  atividade: atividadeFeitaDeTeste(
+    id: id,
+    titulo: titulo,
+    formato: formato,
+    encerradaEm: encerradaEm,
+    turmaNome: turmaNome,
+    turmaEmoji: turmaEmoji,
+    fotos: fotos,
+  ),
+  turmaId: turmaId,
+  publica: publica,
 );
 
 /// Sem `autor`, o comentário é de outra pessoa (a Bia); com `meu: true`, é meu.

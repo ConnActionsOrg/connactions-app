@@ -7,6 +7,7 @@ import 'api_connactions.dart';
 import 'erro_da_api.dart';
 import 'modelos/alteracoes_do_eu.dart';
 import 'modelos/atividade.dart';
+import 'modelos/atividade_feita.dart';
 import 'modelos/capa_do_diario.dart';
 import 'modelos/comentario.dart';
 import 'modelos/eu.dart';
@@ -14,6 +15,8 @@ import 'modelos/foto_para_enviar.dart';
 import 'modelos/ideia.dart';
 import 'modelos/pagina_da_comunidade.dart';
 import 'modelos/pagina_do_diario.dart';
+import 'modelos/perfil_de_pessoa.dart';
+import 'modelos/pessoa.dart';
 import 'modelos/proposta.dart';
 import 'modelos/reacao.dart';
 import 'modelos/registro.dart';
@@ -253,6 +256,52 @@ class ApiHttp implements ApiConnactions {
   );
 
   @override
+  Future<List<Pessoa>> listarConexoes() async {
+    final json = await _enviar('GET', '/conexoes');
+    return (json['itens'] as List<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .map(Pessoa.deJson)
+        .toList();
+  }
+
+  @override
+  Future<({Pessoa pessoa, bool nova})> conectar(String codigo) async {
+    final (:status, :json) = await _enviarComStatus(
+      'POST',
+      '/conexoes',
+      corpo: {'codigo': codigo},
+    );
+    return (pessoa: Pessoa.deJson(json), nova: status == 201);
+  }
+
+  @override
+  Future<void> desconectar(String usuarioId) async {
+    // 204 sem corpo: o _enviar devolve {} e não há nada a ler
+    await _enviar('DELETE', '/conexoes/$usuarioId');
+  }
+
+  @override
+  Future<Eu> regenerarCodigoDeAmigo() async =>
+      Eu.deJson(await _enviar('POST', '/eu/codigo-de-amigo'));
+
+  @override
+  Future<PerfilDePessoa> obterPerfil(String usuarioId) async =>
+      PerfilDePessoa.deJson(await _enviar('GET', '/usuarios/$usuarioId'));
+
+  @override
+  Future<PaginaDeAtividadesFeitas> listarAtividadesFeitas(
+    String usuarioId, {
+    String? apos,
+    int limite = 20,
+  }) async => PaginaDeAtividadesFeitas.deJson(
+    await _enviar(
+      'GET',
+      '/usuarios/$usuarioId/atividades',
+      consulta: {'apos': ?apos, 'limite': '$limite'},
+    ),
+  );
+
+  @override
   Future<Eu> trocarFoto(FotoParaEnviar foto) async =>
       Eu.deJson(await _enviarMultipart('PUT', '/eu/foto', foto: foto));
 
@@ -283,6 +332,19 @@ class ApiHttp implements ApiConnactions {
     String caminho, {
     Map<String, Object?>? corpo,
     Map<String, String>? consulta,
+  }) async => (await _enviarComStatus(
+    metodo,
+    caminho,
+    corpo: corpo,
+    consulta: consulta,
+  )).json;
+
+  /// O `_enviar` com o status junto: no POST /conexoes, 201 × 200 é o que diz se a conexão é nova.
+  Future<({int status, Map<String, dynamic> json})> _enviarComStatus(
+    String metodo,
+    String caminho, {
+    Map<String, Object?>? corpo,
+    Map<String, String>? consulta,
   }) {
     final url = Uri.parse('$_base$caminho');
     final requisicao = http.Request(
@@ -301,7 +363,7 @@ class ApiHttp implements ApiConnactions {
     String caminho, {
     required FotoParaEnviar foto,
     Map<String, String> campos = const {},
-  }) {
+  }) async {
     final requisicao =
         http.MultipartRequest(metodo, Uri.parse('$_base$caminho'))
           ..fields.addAll(campos)
@@ -312,10 +374,13 @@ class ApiHttp implements ApiConnactions {
               filename: foto.nome,
             ),
           );
-    return _despachar(requisicao, tempoLimite: _tempoLimiteDoUpload);
+    return (await _despachar(
+      requisicao,
+      tempoLimite: _tempoLimiteDoUpload,
+    )).json;
   }
 
-  Future<Map<String, dynamic>> _despachar(
+  Future<({int status, Map<String, dynamic> json})> _despachar(
     http.BaseRequest requisicao, {
     Duration tempoLimite = _tempoLimite,
   }) async {
@@ -370,7 +435,7 @@ class ApiHttp implements ApiConnactions {
             'Algo deu errado. Tente de novo.',
       );
     }
-    return json;
+    return (status: resposta.statusCode, json: json);
   }
 
   /// `null` quando o corpo não é um objeto JSON válido: JSON inválido, ou JSON válido que não é

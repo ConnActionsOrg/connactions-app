@@ -1,5 +1,6 @@
 import 'modelos/alteracoes_do_eu.dart';
 import 'modelos/atividade.dart';
+import 'modelos/atividade_feita.dart';
 import 'modelos/capa_do_diario.dart';
 import 'modelos/comentario.dart';
 import 'modelos/eu.dart';
@@ -7,6 +8,8 @@ import 'modelos/foto_para_enviar.dart';
 import 'modelos/ideia.dart';
 import 'modelos/pagina_da_comunidade.dart';
 import 'modelos/pagina_do_diario.dart';
+import 'modelos/perfil_de_pessoa.dart';
+import 'modelos/pessoa.dart';
 import 'modelos/proposta.dart';
 import 'modelos/reacao.dart';
 import 'modelos/registro.dart';
@@ -121,6 +124,33 @@ abstract class ApiConnactions {
 
   /// GET /comunidade: atividades de outras turmas, da mais recente para a mais antiga.
   Future<PaginaDaComunidade> listarComunidade({String? apos, int limite = 20});
+
+  /// GET /conexoes: as minhas conexões, a mais recente primeiro.
+  Future<List<Pessoa>> listarConexoes();
+
+  /// POST /conexoes pelo código de amigo, sem aceite. `nova` sai do status: 201 quando a conexão
+  /// nasceu agora, 200 quando já éramos conexão. O código de ninguém e o meu próprio são 422
+  /// `codigo_invalido`, cada um com a sua mensagem.
+  Future<({Pessoa pessoa, bool nova})> conectar(String codigo);
+
+  /// DELETE /conexoes/{id}: desfaz para os dois lados; o que não existe não é erro.
+  Future<void> desconectar(String usuarioId);
+
+  /// POST /eu/codigo-de-amigo: o código antigo para de valer na hora, e as conexões ficam.
+  Future<Eu> regenerarCodigoDeAmigo();
+
+  /// GET /usuarios/{id}: o cabeçalho e os contadores, meus ou de uma conexão. 403 `sem_acesso` para
+  /// quem não é conexão.
+  Future<PerfilDePessoa> obterPerfil(String usuarioId);
+
+  /// GET /usuarios/{id}/atividades: as feitas, da mais recente para a mais antiga. No perfil de outra
+  /// pessoa, só as públicas e as das turmas de que sou membro; com a visibilidade dela desligada, 403
+  /// `sem_acesso`.
+  Future<PaginaDeAtividadesFeitas> listarAtividadesFeitas(
+    String usuarioId, {
+    String? apos,
+    int limite = 20,
+  });
 
   /// PUT /eu/foto (multipart).
   Future<Eu> trocarFoto(FotoParaEnviar foto);
