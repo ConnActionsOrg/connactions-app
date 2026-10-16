@@ -45,6 +45,14 @@ class PerfilAtual extends AsyncNotifier<Eu?> with EsperaOBuild<Eu?> {
     return salvo;
   }
 
+  /// O código antigo para de valer na hora, e as conexões ficam. Devolve o Eu com o código novo.
+  Future<Eu> regenerarCodigo() async {
+    await assentado; // um build em voo sobrescreveria o que gravarmos abaixo
+    final salvo = await ref.read(apiProvider).regenerarCodigoDeAmigo();
+    if (ref.mounted) state = AsyncData(salvo);
+    return salvo;
+  }
+
   /// Otimista: a tela muda na hora e volta se a API recusar; o erro sobe para quem chamou avisar.
   Future<void> definirVisibilidade(bool visiveis) async {
     final atual = state.value;

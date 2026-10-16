@@ -18,3 +18,8 @@ Future<List<Object>> errosSemDono(Future<void> Function() corpo) {
   }, (erro, _) => soltos.add(erro));
   return fim.future.then((_) => soltos);
 }
+
+/// O erro com que [futuro] terminou, ou nulo. Afirmado com `isNull`, a falha sai pela asserção e
+/// mostra o erro, em vez de o teste morrer com a exceção crua.
+Future<Object?> erroDe(Future<Object?> futuro) =>
+    futuro.then<Object?>((_) => null, onError: (Object erro) => erro);

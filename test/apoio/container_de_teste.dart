@@ -8,10 +8,14 @@ import 'preferencias_em_memoria.dart';
 import 'seletor_de_foto_falso.dart';
 
 /// Um container de Riverpod com os dublês de sempre e a [api] dada, para testar estado sem widget.
-ProviderContainer containerDeTeste(FakeApi api) => ProviderContainer.test(
+/// Com [autenticador], o teste sai e entra de novo, como na troca de conta.
+ProviderContainer containerDeTeste(
+  FakeApi api, {
+  AutenticadorFalso? autenticador,
+}) => ProviderContainer.test(
   overrides: [
     autenticadorProvider.overrideWithValue(
-      AutenticadorFalso(conta: contaDeTeste),
+      autenticador ?? AutenticadorFalso(conta: contaDeTeste),
     ),
     apiProvider.overrideWithValue(api),
     preferenciasProvider.overrideWithValue(PreferenciasEmMemoria()),

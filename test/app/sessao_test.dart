@@ -243,4 +243,43 @@ void main() {
     expect(api.chamadas.last, 'trocarFoto:foto.jpg');
     expect(c.read(perfilAtualProvider).value?.fotoUrl, eu.fotoUrl);
   });
+
+  test('regenerarCodigo troca o estado pelo Eu com o código novo', () async {
+    final api = FakeApi(eu: euDeTeste());
+    final c = montar(
+      autenticador: AutenticadorFalso(conta: contaDeTeste),
+      api: api,
+    );
+    await c.read(perfilAtualProvider.future);
+
+    final eu = await c.read(perfilAtualProvider.notifier).regenerarCodigo();
+
+    expect(eu.codigoDeAmigo, isNot('ABCDEFGH'));
+    expect(c.read(perfilAtualProvider).value?.codigoDeAmigo, eu.codigoDeAmigo);
+    expect(c.read(perfilAtualProvider).value?.handle, 'marina.d');
+    expect(api.chamadas.last, 'regenerarCodigoDeAmigo');
+  });
+
+  test('regenerarCodigo espera o perfil assentar antes de enviar', () async {
+    final api = FakeApi(eu: euDeTeste())..segurarObterEu = Completer<void>();
+    final c = montar(
+      autenticador: AutenticadorFalso(conta: contaDeTeste),
+      api: api,
+    );
+
+    final futuro = c.read(perfilAtualProvider.notifier).regenerarCodigo();
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+    expect(api.chamadas, isNot(contains('regenerarCodigoDeAmigo')));
+
+    api.segurarObterEu!.complete();
+    final eu = await futuro;
+
+    expect(
+      api.chamadas.indexOf('obterEu'),
+      lessThan(api.chamadas.indexOf('regenerarCodigoDeAmigo')),
+    );
+    expect(c.read(perfilAtualProvider).value?.codigoDeAmigo, eu.codigoDeAmigo);
+  });
 }
