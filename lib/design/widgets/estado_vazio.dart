@@ -4,25 +4,26 @@ import '../cores.dart';
 import '../medidas.dart';
 import '../tipografia.dart';
 
-/// Estado vazio de uma tela: ícone num disco, título, uma frase e, se houver, a ação que povoa.
+/// Estado vazio de uma tela: ícone num disco, título e, se houver, uma frase e a ação que povoa.
 class EstadoVazio extends StatelessWidget {
   const EstadoVazio({
     super.key,
     required this.icone,
     required this.titulo,
-    required this.texto,
+    this.texto,
     this.acao,
   });
 
   final IconData icone;
   final String titulo;
-  final String texto;
+  final String? texto;
   final Widget? acao;
 
   @override
   Widget build(BuildContext context) {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
+    final texto = this.texto;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(Espacos.xl),
@@ -45,14 +46,16 @@ class EstadoVazio extends StatelessWidget {
               style: tipografia.tituloPequeno,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: Espacos.sm),
-            Text(
-              texto,
-              style: tipografia.corpoMedio.copyWith(
-                color: cores.sobreSuperficieVariante,
+            if (texto != null) ...[
+              const SizedBox(height: Espacos.sm),
+              Text(
+                texto,
+                style: tipografia.corpoMedio.copyWith(
+                  color: cores.sobreSuperficieVariante,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
+            ],
             if (acao != null) ...[const SizedBox(height: Espacos.lg), acao!],
           ],
         ),

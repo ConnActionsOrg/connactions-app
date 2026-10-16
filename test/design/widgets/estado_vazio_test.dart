@@ -32,4 +32,24 @@ void main() {
     );
     expect(find.text('Criar turma'), findsOneWidget);
   });
+
+  testWidgets('sem texto, só o ícone, o título e a ação', (tester) async {
+    await tester.pumpWidget(
+      montar(
+        EstadoVazio(
+          icone: Symbols.group_add,
+          titulo: 'Você ainda não tem amigos no app',
+          acao: FilledButton(
+            onPressed: () {},
+            child: const Text('Conectar amigo'),
+          ),
+        ),
+      ),
+    );
+
+    // o título e o rótulo do botão, e nenhum texto vazio no lugar da frase
+    expect(find.byType(Text), findsNWidgets(2));
+    expect(find.text('Você ainda não tem amigos no app'), findsOneWidget);
+    expect(find.text('Conectar amigo'), findsOneWidget);
+  });
 }
