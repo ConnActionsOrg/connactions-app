@@ -15,6 +15,7 @@ import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
 import '../turmas/codigo_de_convite.dart';
 import 'codigo_de_amigo.dart';
+import 'codigo_em_destaque.dart';
 import 'conexoes.dart';
 
 /// O código de um amigo, digitado ou colado com a mensagem inteira, e o meu para mandar. O código
@@ -213,10 +214,7 @@ class _CartaoDoMeuCodigo extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Espacos.xs),
-          Text(
-            codigo,
-            style: tipografia.tituloGrande.copyWith(letterSpacing: 4),
-          ),
+          CodigoEmDestaque(codigo),
           const SizedBox(height: Espacos.md),
           OutlinedButton.icon(
             onPressed: aoCopiar,

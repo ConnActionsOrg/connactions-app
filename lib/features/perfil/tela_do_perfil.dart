@@ -21,6 +21,7 @@ import '../../design/widgets/estado_de_erro.dart';
 import '../notificacoes/cartao_de_notificacoes_desligadas.dart';
 import 'cartao_de_atividade_feita.dart';
 import 'codigo_de_amigo.dart';
+import 'codigo_em_destaque.dart';
 import 'conexoes.dart';
 import 'fileira_de_amigos.dart';
 import 'linha_de_contadores.dart';
@@ -485,13 +486,7 @@ class _ChamarMaisAmigos extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: Espacos.md),
-          Text(
-            codigo,
-            style: tipografia.tituloGrande.copyWith(
-              color: cores.sobrePrimariaFixa,
-              letterSpacing: 4,
-            ),
-          ),
+          CodigoEmDestaque(codigo, cor: cores.sobrePrimariaFixa),
           const SizedBox(height: Espacos.md),
           FilledButton.icon(
             onPressed: () => ref

@@ -12,6 +12,9 @@ class Conexoes extends AsyncNotifier<List<Pessoa>>
     with EsperaOBuild<List<Pessoa>> {
   @override
   Future<List<Pessoa>> build() async {
+    // sem ouvinte, o Riverpod pausa a cadeia conta → perfil e o read abaixo nunca resolve; o
+    // selectAsync resolveria, mas embrulha o erro do perfil num ProviderException
+    ref.listen(perfilAtualProvider, (_, _) {});
     final Eu? eu;
     try {
       eu = await ref.read(perfilAtualProvider.future);

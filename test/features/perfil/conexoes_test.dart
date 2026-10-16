@@ -68,6 +68,18 @@ void main() {
     expect(api.chamadas, ['obterEu', 'listarConexoes']);
   });
 
+  test('a lista carrega sem outra tela ouvindo o perfil', () async {
+    final api = apiCom(conexoes: [(eu.id, 'pessoa-bia')]);
+    final c = containerDeTeste(api);
+    c.listen(conexoesProvider, (_, _) {});
+
+    final amigos = await c
+        .read(conexoesProvider.future)
+        .timeout(const Duration(seconds: 2));
+
+    expect(amigos.map((p) => p.nome), ['Bia Souza']);
+  });
+
   test('sem conta, vazia e sem chamar a API', () async {
     final api = apiCom();
     final c = montar(api, autenticador: AutenticadorFalso());
