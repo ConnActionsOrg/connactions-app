@@ -14,6 +14,7 @@ import '../features/entrada/tela_de_entrada.dart';
 import '../features/feed/tela_do_feed.dart';
 import '../features/ideias/tela_de_nova_ideia.dart';
 import '../features/ideias/tela_do_backlog.dart';
+import '../features/perfil/tela_da_pessoa.dart';
 import '../features/perfil/tela_de_amigos.dart';
 import '../features/perfil/tela_de_conectar_amigo.dart';
 import '../features/perfil/tela_de_editar_perfil.dart';
@@ -108,6 +109,11 @@ final roteadorProvider = Provider<GoRouter>((ref) {
         path: '/amigos',
         parentNavigatorKey: raiz,
         builder: (_, _) => const TelaDeAmigos(),
+      ),
+      GoRoute(
+        path: '/pessoas/:id',
+        parentNavigatorKey: raiz,
+        builder: (_, state) => TelaDaPessoa(id: state.pathParameters['id']!),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => CascaDeAbas(shell: shell),
