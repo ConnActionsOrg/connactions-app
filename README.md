@@ -49,6 +49,10 @@ escolhe a turma que recebe o que se salva e de onde se propõe; sem turma, dá p
 
 O Diário da turma abre com a capa: o título, a frase, o sticker e a paleta (qualquer membro troca pelo lápis) e os contadores de atividades e de fotos. Cada atividade encerrada tem, embaixo, as reações (seis tipos, vários por pessoa; tocar de novo desmarca) e o balão dos comentários, que abre uma folha com o campo para escrever. Reação e comentário só valem em atividade encerrada e só para membros; o app mostra quantos reagiram, não quem. A reação muda na hora e volta sozinha se a API recusar.
 
+## Conexões e perfil
+
+Cada conta tem um código de amigo de 8 caracteres. O cartão "Chamar mais amigos?", no fim do Perfil, compartilha uma mensagem que termina no código, e o "Conectar amigo" aceita a mensagem colada inteira; a conexão vale para os dois lados. Na tela de conectar ficam também o meu código, para copiar ou compartilhar, e o "Gerar código novo", que aposenta o antigo sem desfazer as conexões. O Perfil mostra os contadores de turmas, atividades e conexões, a fileira de amigos e as minhas atividades concluídas. O perfil de outra pessoa (`/pessoas/:id`) só abre entre conexões e mostra as atividades dela que quem olha pode ver (as públicas e as das turmas de quem olha), ou nenhuma, se ela desligou a visibilidade; o menu ⋮ desconecta. Não há realtime: a conexão nova aparece do outro lado ao puxar para atualizar.
+
 ## Gate
 
 `dart format --set-exit-if-changed .` · `dart analyze` · `flutter test`
