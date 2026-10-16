@@ -1,24 +1,5 @@
 import 'atividade.dart';
-
-/// A foto de um registro como a Comunidade a mostra: sem autor.
-class FotoDaComunidade {
-  const FotoDaComunidade({
-    required this.fotoUrl,
-    required this.miniaturaUrl,
-    required this.legenda,
-  });
-
-  factory FotoDaComunidade.deJson(Map<String, dynamic> json) =>
-      FotoDaComunidade(
-        fotoUrl: json['foto_url'] as String,
-        miniaturaUrl: json['miniatura_url'] as String,
-        legenda: json['legenda'] as String,
-      );
-
-  final String fotoUrl;
-  final String miniaturaUrl;
-  final String legenda;
-}
+import 'foto_sem_autor.dart';
 
 /// Uma atividade pública e encerrada de outra turma. Não há campo de pessoa nem id de turma: o app
 /// não tem onde guardar o que a API não manda.
@@ -49,7 +30,7 @@ class AtividadeDaComunidade {
       turmaEmoji: turma['emoji'] as String,
       fotos: (json['fotos'] as List<dynamic>)
           .cast<Map<String, dynamic>>()
-          .map(FotoDaComunidade.deJson)
+          .map(FotoSemAutor.deJson)
           .toList(),
       inspiradas: json['inspiradas'] as int,
     );
@@ -63,7 +44,7 @@ class AtividadeDaComunidade {
   final DateTime encerradaEm;
   final String turmaNome;
   final String turmaEmoji;
-  final List<FotoDaComunidade> fotos;
+  final List<FotoSemAutor> fotos;
 
   /// Turmas distintas que se inspiraram nesta atividade; muda na próxima carga da lista.
   final int inspiradas;

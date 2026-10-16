@@ -80,8 +80,8 @@ void main() {
       tester,
       atividadeDaComunidadeDeTeste(
         fotos: [
-          fotoDaComunidadeDeTeste(id: 'a', legenda: 'Primeira'),
-          fotoDaComunidadeDeTeste(id: 'b', legenda: 'Segunda'),
+          fotoSemAutorDeTeste(id: 'a', legenda: 'Primeira'),
+          fotoSemAutorDeTeste(id: 'b', legenda: 'Segunda'),
         ],
       ),
     );

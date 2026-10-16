@@ -168,9 +168,7 @@ void main() {
     tester,
   ) async {
     await abrirFotos(tester, [
-      FotoParaVer.daComunidade(
-        fotoDaComunidadeDeTeste(legenda: 'Vitória da Bia'),
-      ),
+      FotoParaVer.semAutor(fotoSemAutorDeTeste(legenda: 'Vitória da Bia')),
     ]);
 
     expect(find.text('Vitória da Bia'), findsOneWidget);
@@ -184,7 +182,7 @@ void main() {
     tester,
   ) async {
     await abrirFotos(tester, [
-      FotoParaVer.daComunidade(fotoDaComunidadeDeTeste(legenda: '')),
+      FotoParaVer.semAutor(fotoSemAutorDeTeste(legenda: '')),
     ]);
 
     expect(find.byType(Avatar), findsNothing);
@@ -200,10 +198,8 @@ void main() {
 
   testWidgets('fotos sem id deslizam', (tester) async {
     await abrirFotos(tester, [
-      FotoParaVer.daComunidade(fotoDaComunidadeDeTeste(id: 'a', legenda: 'Um')),
-      FotoParaVer.daComunidade(
-        fotoDaComunidadeDeTeste(id: 'b', legenda: 'Dois'),
-      ),
+      FotoParaVer.semAutor(fotoSemAutorDeTeste(id: 'a', legenda: 'Um')),
+      FotoParaVer.semAutor(fotoSemAutorDeTeste(id: 'b', legenda: 'Dois')),
     ]);
     expect(find.text('Um'), findsOneWidget);
 

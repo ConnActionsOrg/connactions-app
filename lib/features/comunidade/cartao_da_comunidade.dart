@@ -6,6 +6,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../api/erro_da_api.dart';
 import '../../api/mensagens.dart';
 import '../../api/modelos/atividade_da_comunidade.dart';
+import '../../api/modelos/foto_sem_autor.dart';
 import '../../api/modelos/turma.dart';
 import '../../app/sessao.dart';
 import '../../design/cores.dart';
@@ -201,7 +202,7 @@ class _EstadoDoCartao extends ConsumerState<CartaoDaComunidade> {
 class _Miniaturas extends StatelessWidget {
   const _Miniaturas({required this.fotos, required this.agora});
 
-  final List<FotoDaComunidade> fotos;
+  final List<FotoSemAutor> fotos;
   final DateTime agora;
 
   @override
@@ -220,7 +221,7 @@ class _Miniaturas extends StatelessWidget {
           child: GestureDetector(
             onTap: () => mostrarVisualizadorDeFotos(
               context,
-              fotos: [for (final f in fotos) FotoParaVer.daComunidade(f)],
+              fotos: [for (final f in fotos) FotoParaVer.semAutor(f)],
               indiceInicial: i,
               agora: agora,
             ),

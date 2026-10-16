@@ -16,12 +16,12 @@ void main() {
     expect(foto.postadaEm, registro.criadoEm);
   });
 
-  test('daComunidade só tem url e legenda', () {
-    final comunidade = fotoDaComunidadeDeTeste(legenda: 'Vitória da Bia');
+  test('semAutor só tem url e legenda', () {
+    final semAutor = fotoSemAutorDeTeste(legenda: 'Vitória da Bia');
 
-    final foto = FotoParaVer.daComunidade(comunidade);
+    final foto = FotoParaVer.semAutor(semAutor);
 
-    expect(foto.url, comunidade.fotoUrl);
+    expect(foto.url, semAutor.fotoUrl);
     expect(foto.legenda, 'Vitória da Bia');
     expect(foto.id, isNull);
     expect(foto.autor, isNull);

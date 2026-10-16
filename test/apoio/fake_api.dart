@@ -11,6 +11,7 @@ import 'package:connactions_app/api/modelos/capa_do_diario.dart';
 import 'package:connactions_app/api/modelos/comentario.dart';
 import 'package:connactions_app/api/modelos/eu.dart';
 import 'package:connactions_app/api/modelos/foto_para_enviar.dart';
+import 'package:connactions_app/api/modelos/foto_sem_autor.dart';
 import 'package:connactions_app/api/modelos/ideia.dart';
 import 'package:connactions_app/api/modelos/pagina_da_comunidade.dart';
 import 'package:connactions_app/api/modelos/pagina_do_diario.dart';
@@ -1106,10 +1107,10 @@ Ideia ideiaDeTeste({
   criadoEm: criadoEm ?? DateTime.utc(2026, 10, 6, 12),
 );
 
-FotoDaComunidade fotoDaComunidadeDeTeste({
+FotoSemAutor fotoSemAutorDeTeste({
   String id = 'f1',
   String legenda = 'Vitória da Bia',
-}) => FotoDaComunidade(
+}) => FotoSemAutor(
   fotoUrl: 'http://midia.local/midia/registros/$id.jpg',
   miniaturaUrl: 'http://midia.local/midia/registros/$id.min.jpg',
   legenda: legenda,
@@ -1125,7 +1126,7 @@ AtividadeDaComunidade atividadeDaComunidadeDeTeste({
   DateTime? encerradaEm,
   String turmaNome = 'Turma Prova',
   String turmaEmoji = '🍕',
-  List<FotoDaComunidade>? fotos,
+  List<FotoSemAutor>? fotos,
   int inspiradas = 0,
 }) => AtividadeDaComunidade(
   id: id,
@@ -1136,7 +1137,7 @@ AtividadeDaComunidade atividadeDaComunidadeDeTeste({
   encerradaEm: encerradaEm ?? DateTime.utc(2026, 10, 4, 21, 30),
   turmaNome: turmaNome,
   turmaEmoji: turmaEmoji,
-  fotos: fotos ?? [fotoDaComunidadeDeTeste()],
+  fotos: fotos ?? [fotoSemAutorDeTeste()],
   inspiradas: inspiradas,
 );
 
