@@ -1,9 +1,18 @@
 import 'package:connactions_app/app/autenticador.dart';
+import 'package:connactions_app/features/perfil/tela_do_perfil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../apoio/app_de_teste.dart';
 import '../apoio/autenticador_falso.dart';
+
+/// A lista vertical do Perfil: a fileira de amigos também é um Scrollable, e vem depois dela.
+Finder listaDoPerfil() => find
+    .descendant(
+      of: find.byType(TelaDoPerfil),
+      matching: find.byType(Scrollable),
+    )
+    .first;
 
 void main() {
   testWidgets('deslogado cai na entrada', (tester) async {
@@ -73,7 +82,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Sair da conta'),
       200,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: listaDoPerfil(),
     );
     await tester.pumpAndSettle();
     expect(find.text('Sair da conta'), findsOneWidget);
@@ -90,7 +99,7 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Sair da conta'),
       200,
-      scrollable: find.byType(Scrollable).last,
+      scrollable: listaDoPerfil(),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sair da conta'));

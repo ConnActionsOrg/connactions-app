@@ -8,17 +8,26 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../../api/mensagens.dart';
 import '../../api/modelos/eu.dart';
 import '../../app/dependencias.dart';
+import '../../app/relogio.dart';
 import '../../app/sessao.dart';
 import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/avatar.dart';
 import '../../design/widgets/aviso.dart';
+import '../../design/widgets/botao_carregar_mais.dart';
 import '../../design/widgets/cabecalho.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../notificacoes/cartao_de_notificacoes_desligadas.dart';
+import 'cartao_de_atividade_feita.dart';
+import 'codigo_de_amigo.dart';
+import 'conexoes.dart';
+import 'fileira_de_amigos.dart';
+import 'linha_de_contadores.dart';
+import 'perfil_da_pessoa.dart';
 
-/// Perfil próprio. É a fatia vertical da fundação: tema, login, API e banco numa tela real.
+/// Perfil próprio: a identidade com os contadores, os amigos, as atividades concluídas e o convite
+/// para chamar mais amigos. Cada seção carrega e falha sozinha, sem derrubar as outras.
 class TelaDoPerfil extends ConsumerWidget {
   const TelaDoPerfil({super.key});
 
@@ -95,41 +104,69 @@ class _RodapeComSair extends StatelessWidget {
   );
 }
 
-class _Corpo extends StatelessWidget {
+class _Corpo extends ConsumerWidget {
   const _Corpo({required this.eu});
 
   final Eu eu;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(
-      Espacos.margemDaTela,
-      Espacos.md,
-      Espacos.margemDaTela,
-      Espacos.xl,
+  Widget build(BuildContext context, WidgetRef ref) => RefreshIndicator(
+    // o perfil fica de fora: a recarga dele trocaria a tela inteira pelo indicador
+    onRefresh: () async {
+      try {
+        await Future.wait<Object?>([
+          ref.refresh(conexoesProvider.future),
+          ref.refresh(perfilDaPessoaProvider(eu.id).future),
+          ref.refresh(atividadesFeitasProvider(eu.id).future),
+        ]);
+      } catch (e) {
+        if (context.mounted) mostrarAviso(context, mensagemDoErro(e));
+      }
+    },
+    child: ListView(
+      padding: const EdgeInsets.fromLTRB(
+        Espacos.margemDaTela,
+        Espacos.md,
+        Espacos.margemDaTela,
+        Espacos.xl,
+      ),
+      children: [
+        _CartaoDeIdentidade(eu: eu),
+        const SizedBox(height: Espacos.md),
+        const CartaoDeNotificacoesDesligadas(),
+        _CartaoDeVisibilidade(eu: eu),
+        const SizedBox(height: Espacos.xl),
+        const _Amigos(),
+        const SizedBox(height: Espacos.xl),
+        _MinhasAtividades(eu: eu),
+        const SizedBox(height: Espacos.xl),
+        _ChamarMaisAmigos(codigo: eu.codigoDeAmigo),
+        const SizedBox(height: Espacos.xl),
+        const _BotaoSair(),
+      ],
     ),
-    children: [
-      _CartaoDeIdentidade(eu: eu),
-      const SizedBox(height: Espacos.md),
-      const CartaoDeNotificacoesDesligadas(),
-      _CartaoDeVisibilidade(eu: eu),
-      const SizedBox(height: Espacos.md),
-      _CartaoDoCodigo(codigo: eu.codigoDeAmigo),
-      const SizedBox(height: Espacos.xl),
-      const _BotaoSair(),
-    ],
   );
 }
 
-class _CartaoDeIdentidade extends StatelessWidget {
+class _CartaoDeIdentidade extends ConsumerWidget {
   const _CartaoDeIdentidade({required this.eu});
 
   final Eu eu;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
+    final contadores = ref.watch(perfilDaPessoaProvider(eu.id));
+    final Widget? linha;
+    if (contadores.value case final perfil?) {
+      linha = LinhaDeContadores(perfil: perfil);
+    } else if (contadores.hasError) {
+      // com erro a linha some, e o resto do perfil segue usável
+      linha = null;
+    } else {
+      linha = const LinhaDeContadores.carregando();
+    }
     return Container(
       // o clipe mora aqui (não num ClipRRect por fora) para a sombra da decoration pintar sem
       // ser cortada; só o filho (o Stack) é cortado no raio do cartão.
@@ -202,6 +239,10 @@ class _CartaoDeIdentidade extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ),
+                ],
+                if (linha != null) ...[
+                  const SizedBox(height: Espacos.md),
+                  linha,
                 ],
                 const SizedBox(height: Espacos.sm),
                 TextButton.icon(
@@ -295,42 +336,169 @@ class _CartaoDeVisibilidade extends ConsumerWidget {
   }
 }
 
-class _CartaoDoCodigo extends StatelessWidget {
-  const _CartaoDoCodigo({required this.codigo});
+/// O título com o "Ver todos (N)" e a fileira. O cartão "Conectar amigo" fica até no erro: é o
+/// caminho que a mensagem do código manda seguir (Perfil › Conectar amigo).
+class _Amigos extends ConsumerWidget {
+  const _Amigos();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cores = Cores.de(context);
+    final tipografia = Tipografia.de(context);
+    final conexoes = ref.watch(conexoesProvider);
+    final amigos = amigosDaConta(conexoes);
+    final erro = amigos == null ? conexoes.error : null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text('Amigos', style: tipografia.tituloPequeno)),
+            if (amigos != null && amigos.isNotEmpty)
+              // Flexible: com a fonte grande o botão quebra a linha em vez de estourar a fileira
+              Flexible(
+                child: TextButton(
+                  onPressed: () => context.push('/amigos'),
+                  child: Text('Ver todos (${amigos.length})'),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: Espacos.sm),
+        FileiraDeAmigos(
+          amigos: amigos ?? const [],
+          carregando: amigos == null && erro == null,
+        ),
+        if (erro != null) ...[
+          const SizedBox(height: Espacos.sm),
+          Text(
+            'Não consegui carregar seus amigos.',
+            style: tipografia.corpoMedio.copyWith(
+              color: cores.sobreSuperficieVariante,
+            ),
+          ),
+          TextButton(
+            onPressed: () => ref.invalidate(conexoesProvider),
+            child: const Text('Tentar de novo'),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _MinhasAtividades extends ConsumerWidget {
+  const _MinhasAtividades({required this.eu});
+
+  final Eu eu;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cores = Cores.de(context);
+    final tipografia = Tipografia.de(context);
+    final atividades = ref.watch(atividadesFeitasProvider(eu.id));
+    final pagina = atividades.value;
+    final erro = pagina == null ? atividades.error : null;
+    final agora = ref.watch(relogioProvider)();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Minhas atividades concluídas', style: tipografia.tituloPequeno),
+        const SizedBox(height: Espacos.md),
+        if (erro != null) ...[
+          Text(
+            mensagemDoErro(erro),
+            style: tipografia.corpoMedio.copyWith(
+              color: cores.sobreSuperficieVariante,
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => ref.invalidate(atividadesFeitasProvider(eu.id)),
+              child: const Text('Tentar de novo'),
+            ),
+          ),
+        ] else if (pagina == null)
+          const Padding(
+            padding: EdgeInsets.all(Espacos.lg),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (pagina.itens.isEmpty)
+          Text(
+            'Suas atividades encerradas aparecem aqui.',
+            style: tipografia.corpoMedio.copyWith(
+              color: cores.sobreSuperficieVariante,
+            ),
+          )
+        else ...[
+          for (final atividade in pagina.itens) ...[
+            CartaoDeAtividadeFeita(atividade: atividade, agora: agora),
+            const SizedBox(height: Espacos.md),
+          ],
+          if (pagina.proximo != null)
+            BotaoCarregarMais(
+              aoCarregar: () => ref
+                  .read(atividadesFeitasProvider(eu.id).notifier)
+                  .carregarMais(),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+/// O meu código de amigo, com o botão que manda o convite pronto.
+class _ChamarMaisAmigos extends ConsumerWidget {
+  const _ChamarMaisAmigos({required this.codigo});
 
   final String codigo;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
     return Container(
       decoration: BoxDecoration(
-        color: cores.superficieBaixa,
+        gradient: LinearGradient(
+          colors: [cores.primariaFixa, cores.secundariaFixa],
+        ),
         borderRadius: BorderRadius.circular(Raios.medio),
         boxShadow: Sombras.nivel1,
       ),
-      padding: const EdgeInsets.all(Espacos.md),
+      padding: const EdgeInsets.all(Espacos.cartao),
+      // em coluna: o tema dá largura mínima infinita aos botões cheios, e numa Row eles estourariam
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Código de amigo',
-            style: tipografia.etiquetaMedia.copyWith(
-              color: cores.sobreSuperficieVariante,
+            'Chamar mais amigos?',
+            style: tipografia.tituloPequeno.copyWith(
+              color: cores.sobrePrimariaFixa,
             ),
           ),
           const SizedBox(height: Espacos.xs),
+          Text(
+            'Compartilhe seu código para criar novas conexões.',
+            style: tipografia.corpoPequeno.copyWith(
+              color: cores.sobrePrimariaFixaVariante,
+            ),
+          ),
+          const SizedBox(height: Espacos.md),
           Text(
             codigo,
-            style: tipografia.tituloPequeno.copyWith(letterSpacing: 3),
-          ),
-          const SizedBox(height: Espacos.xs),
-          Text(
-            'Quem digitar este código no app se conecta a você.',
-            style: tipografia.corpoPequeno.copyWith(
-              color: cores.sobreSuperficieVariante,
+            style: tipografia.tituloGrande.copyWith(
+              color: cores.sobrePrimariaFixa,
+              letterSpacing: 4,
             ),
+          ),
+          const SizedBox(height: Espacos.md),
+          FilledButton.icon(
+            onPressed: () => ref
+                .read(compartilhadorProvider)
+                .compartilhar(textoDoCodigoDeAmigo(codigo)),
+            icon: const Icon(Symbols.share),
+            label: const Text('Compartilhar'),
           ),
         ],
       ),
