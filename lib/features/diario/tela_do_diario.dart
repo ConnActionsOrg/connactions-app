@@ -11,6 +11,7 @@ import '../../design/medidas.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/botao_carregar_mais.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
 import '../turmas/seletor_de_turma.dart';
@@ -129,6 +130,10 @@ class _ComTurma extends ConsumerWidget {
           Espacos.xl,
         ),
         children: [
+          const AberturaDeSecao(
+            titulo: 'O que a gente\nviveu junto.',
+            descricao: 'Memórias que merecem ficar.',
+          ),
           const SeletorDeTurma(),
           const SizedBox(height: Espacos.xl),
           if (capa != null) ...[

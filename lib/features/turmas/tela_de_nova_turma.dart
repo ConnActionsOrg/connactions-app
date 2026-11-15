@@ -8,6 +8,7 @@ import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../../design/widgets/disco_de_emoji.dart';
 import 'emojis_de_turma.dart';
 import 'turmas.dart';
@@ -60,6 +61,10 @@ class _TelaDeNovaTurmaState extends ConsumerState<TelaDeNovaTurma> {
           Espacos.xl,
         ),
         children: [
+          const AberturaDeSecao(
+            titulo: 'Quem vai\nnessa com você?',
+            descricao: 'Crie um lugar para as suas histórias.',
+          ),
           TextField(
             controller: _nome,
             autofocus: true,

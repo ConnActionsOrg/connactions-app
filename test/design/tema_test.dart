@@ -8,17 +8,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   // Constantes congeladas de propósito: se alguém mexer no token, este teste precisa cair.
-  const superficie = Color(0xFFFDF9F2);
-  const primaria = Color(0xFFA53616);
+  const superficie = Color(0xFFFFFFFF);
+  const primaria = Color(0xFF301539);
 
-  test('o tema carrega as cores do Stitch', () {
+  test('o tema carrega as cores da identidade pastel', () {
     final tema = temaClaro();
     expect(tema.scaffoldBackgroundColor, superficie);
     expect(tema.colorScheme.primary, primaria);
-    expect(tema.extension<Cores>()!.superficieBaixa, const Color(0xFFF7F3EC));
+    expect(tema.extension<Cores>()!.superficieBaixa, const Color(0xFFFAF8FC));
     expect(
       tema.extension<Cores>()!.sobreSuperficieVariante,
-      const Color(0xFF58423C),
+      const Color(0xFF75647D),
     );
   });
 
@@ -37,7 +37,7 @@ void main() {
     },
   );
 
-  test('botão primário é pílula terracota de 52px', () {
+  test('botão primário é pílula ameixa de 52px', () {
     final estilo = temaClaro().filledButtonTheme.style!;
     expect(estilo.backgroundColor!.resolve({}), primaria);
     expect(estilo.minimumSize!.resolve({})!.height, 52);
@@ -54,7 +54,7 @@ void main() {
       (forma.borderRadius as BorderRadius).topLeft,
       const Radius.circular(32),
     );
-    expect(tema.dialogTheme.backgroundColor, const Color(0xFFF7F3EC));
+    expect(tema.dialogTheme.backgroundColor, const Color(0xFFFAF8FC));
     expect(tema.dialogTheme.titleTextStyle!.fontFamily, 'Epilogue');
   });
 

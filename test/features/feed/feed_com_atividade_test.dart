@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/visibilidade.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/seletor_de_foto_falso.dart';
 
@@ -235,16 +236,16 @@ void main() {
     await abrirFeed(tester, api);
     await rolarAte(tester, find.text('Encerrar atividade'));
 
-    await tester.tap(find.text('Encerrar atividade'));
+    await tocar(tester, find.text('Encerrar atividade'));
     await tester.pumpAndSettle();
     expect(find.text('Encerrar atividade?'), findsOneWidget);
-    await tester.tap(find.text('Cancelar'));
+    await tocar(tester, find.text('Cancelar'));
     await tester.pumpAndSettle();
     expect(api.chamadas, isNot(contains('encerrarAtividade:ativ-1')));
 
-    await tester.tap(find.text('Encerrar atividade'));
+    await tocar(tester, find.text('Encerrar atividade'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Encerrar'));
+    await tocar(tester, find.text('Encerrar'));
     await tester.pumpAndSettle();
 
     expect(api.chamadas, contains('encerrarAtividade:ativ-1'));
@@ -263,9 +264,9 @@ void main() {
   ) async {
     await abrirFeed(tester, apiCom(aberta: atividadeDeTeste(), soEu: true));
     await rolarAte(tester, find.text('Encerrar atividade'));
-    await tester.tap(find.text('Encerrar atividade'));
+    await tocar(tester, find.text('Encerrar atividade'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Encerrar'));
+    await tocar(tester, find.text('Encerrar'));
     await tester.pumpAndSettle();
 
     expect(find.text('É a sua vez de propor!'), findsOneWidget);
@@ -290,9 +291,9 @@ void main() {
     await abrirFeed(tester, api);
     final leituras = leiturasDaAberta(api);
     await rolarAte(tester, find.text('Encerrar atividade'));
-    await tester.tap(find.text('Encerrar atividade'));
+    await tocar(tester, find.text('Encerrar atividade'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Encerrar'));
+    await tocar(tester, find.text('Encerrar'));
     await tester.pumpAndSettle();
 
     expect(find.text('Esta atividade já foi encerrada.'), findsOneWidget);
@@ -319,9 +320,9 @@ void main() {
     api.abertaPor['turma-1'] = null;
     api.turmas[0] = api.turmas.single.copyWith(vezDe: bia);
     await rolarAte(tester, find.text('Encerrar atividade'));
-    await tester.tap(find.text('Encerrar atividade'));
+    await tocar(tester, find.text('Encerrar atividade'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Encerrar'));
+    await tocar(tester, find.text('Encerrar'));
     await tester.pumpAndSettle();
 
     expect(leiturasDaAberta(api), leituras + 1);
@@ -347,7 +348,7 @@ void main() {
     expect(find.text('Piquenique Temático de Comidas Amarelas'), findsNothing);
 
     api.falhaAoObterAberta = null;
-    await tester.tap(find.text('Tentar de novo'));
+    await tocar(tester, find.text('Tentar de novo'));
     await tester.pumpAndSettle();
     expect(
       find.text('Piquenique Temático de Comidas Amarelas'),
@@ -363,7 +364,7 @@ void main() {
       ),
     );
     await rolarAte(tester, find.byType(CartaoDeRegistro));
-    await tester.tap(find.byType(CartaoDeRegistro));
+    await tocar(tester, find.byType(CartaoDeRegistro));
     await tester.pumpAndSettle();
     expect(find.byType(VisualizadorDeFotos), findsOneWidget);
     expect(find.text('1 / 1'), findsOneWidget);
@@ -379,11 +380,11 @@ void main() {
         seletor: seletor,
       );
       await rolarAte(tester, find.text('Adicionar meu registro'));
-      await tester.tap(find.text('Adicionar meu registro'));
+      await tocar(tester, find.text('Adicionar meu registro'));
       await tester.pumpAndSettle();
       expect(find.text('Tirar foto'), findsOneWidget);
 
-      await tester.tap(find.text('Escolher da galeria'));
+      await tocar(tester, find.text('Escolher da galeria'));
       await tester.pumpAndSettle();
       expect(seletor.origens, [OrigemDaFoto.galeria]);
       expect(find.byType(TelaDeNovoRegistro), findsOneWidget);
@@ -397,9 +398,9 @@ void main() {
       seletor: SeletorDeFotoFalso(),
     );
     await rolarAte(tester, find.text('Adicionar meu registro'));
-    await tester.tap(find.text('Adicionar meu registro'));
+    await tocar(tester, find.text('Adicionar meu registro'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tirar foto'));
+    await tocar(tester, find.text('Tirar foto'));
     await tester.pumpAndSettle();
     expect(find.byType(TelaDeNovoRegistro), findsNothing);
     expect(find.byType(TelaDoFeed), findsOneWidget);
@@ -527,15 +528,15 @@ void main() {
     Future<void> abrirVisualizador(WidgetTester tester, FakeApi api) async {
       await abrirFeed(tester, api);
       await rolarAte(tester, find.byType(CartaoDeRegistro));
-      await tester.tap(find.byType(CartaoDeRegistro));
+      await tocar(tester, find.byType(CartaoDeRegistro));
       await tester.pumpAndSettle();
       expect(find.byType(VisualizadorDeFotos), findsOneWidget);
     }
 
     Future<void> apagarPeloVisualizador(WidgetTester tester) async {
-      await tester.tap(find.byTooltip('Apagar'));
+      await tocar(tester, find.byTooltip('Apagar'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Apagar').last);
+      await tocar(tester, find.text('Apagar').last);
       await tester.pumpAndSettle();
     }
 
@@ -616,7 +617,7 @@ void main() {
       await apagarPeloVisualizador(tester);
 
       expect(find.text('Só quem postou pode apagar.'), findsOneWidget);
-      await tester.tap(find.byTooltip('Fechar'));
+      await tocar(tester, find.byTooltip('Fechar'));
       await tester.pumpAndSettle();
       expect(leiturasDaAberta(api), leituras);
       expect(find.byType(CartaoDeRegistro), findsOneWidget);
@@ -628,9 +629,9 @@ void main() {
   group('encerrar que falha', () {
     Future<void> encerrarPelaTela(WidgetTester tester) async {
       await rolarAte(tester, find.text('Encerrar atividade'));
-      await tester.tap(find.text('Encerrar atividade'));
+      await tocar(tester, find.text('Encerrar atividade'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Encerrar'));
+      await tocar(tester, find.text('Encerrar'));
       await tester.pumpAndSettle();
     }
 

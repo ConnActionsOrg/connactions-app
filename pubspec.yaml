@@ -31,6 +31,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/marca/connactions.png
 
   fonts:
     - family: Epilogue

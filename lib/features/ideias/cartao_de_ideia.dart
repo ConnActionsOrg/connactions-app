@@ -30,7 +30,7 @@ class CartaoDeIdeia extends StatelessWidget {
     final formato = ideia.formato;
     return Container(
       decoration: BoxDecoration(
-        color: cores.superficieBaixa,
+        color: souEu ? cores.secundariaFixa : Cores.ceu.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(Raios.medio),
         boxShadow: Sombras.nivel1,
       ),

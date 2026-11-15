@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Paleta "Warm Scrapbook Social". Os valores vêm do `tailwind.config` das telas do Stitch
-/// (`docs/design/stitch/*/code.html`), que é o que está desenhado; o DESIGN.md diverge no
-/// primário (`#D85A38` na prosa) e perde. Esse terracota claro sobrevive só na marca.
+/// Identidade aprovada: tinta ameixa, superfícies claras e acentos pastel.
 @immutable
 class Cores extends ThemeExtension<Cores> {
   const Cores({
@@ -67,36 +65,43 @@ class Cores extends ThemeExtension<Cores> {
   final Color superficieInversa;
   final Color sobreSuperficieInversa;
 
+  static const coral = Color(0xFFF3A0A8);
+  static const damasco = Color(0xFFF6BB92);
+  static const menta = Color(0xFFA8D6B5);
+  static const ceu = Color(0xFF9BCDE4);
+  static const pervinca = Color(0xFFAFB6E9);
+  static const lilas = Color(0xFFCBB0E3);
+
   static const claras = Cores(
-    primaria: Color(0xFFA53616),
-    primariaContainer: Color(0xFFC64D2C),
+    primaria: Color(0xFF301539),
+    primariaContainer: Color(0xFF50305E),
     sobrePrimaria: Color(0xFFFFFFFF),
-    primariaFixa: Color(0xFFFFDBD1),
-    primariaFixaEscura: Color(0xFFFFB5A1),
-    sobrePrimariaFixa: Color(0xFF3C0800),
-    sobrePrimariaFixaVariante: Color(0xFF872002),
-    secundaria: Color(0xFF845400),
-    secundariaContainer: Color(0xFFFFB142),
-    secundariaFixa: Color(0xFFFFDDB6),
-    sobreSecundariaFixa: Color(0xFF2A1800),
-    terciaria: Color(0xFF48624E),
-    terciariaFixa: Color(0xFFCDEAD0),
-    terciariaFixaEscura: Color(0xFFB1CEB5),
-    superficie: Color(0xFFFDF9F2),
-    superficieBaixa: Color(0xFFF7F3EC),
-    superficieContainer: Color(0xFFF1EDE6),
-    superficieAlta: Color(0xFFEBE8E1),
-    superficieMaisAlta: Color(0xFFE6E2DB),
+    primariaFixa: Color(0xFFD7C1FF),
+    primariaFixaEscura: Color(0xFFCBB0E3),
+    sobrePrimariaFixa: Color(0xFF301539),
+    sobrePrimariaFixaVariante: Color(0xFF50305E),
+    secundaria: Color(0xFF69501B),
+    secundariaContainer: Color(0xFFF1DC87),
+    secundariaFixa: Color(0xFFF9E69F),
+    sobreSecundariaFixa: Color(0xFF301539),
+    terciaria: Color(0xFF325B42),
+    terciariaFixa: Color(0xFFC0E4CB),
+    terciariaFixaEscura: Color(0xFFA8D6B5),
+    superficie: Color(0xFFFFFFFF),
+    superficieBaixa: Color(0xFFFAF8FC),
+    superficieContainer: Color(0xFFF3EDF8),
+    superficieAlta: Color(0xFFEEE5DD),
+    superficieMaisAlta: Color(0xFFE8DEEF),
     superficieMaisBaixa: Color(0xFFFFFFFF),
-    sobreSuperficie: Color(0xFF1C1C18),
-    sobreSuperficieVariante: Color(0xFF58423C),
-    contorno: Color(0xFF8C716A),
-    contornoVariante: Color(0xFFDFC0B8),
-    erro: Color(0xFFBA1A1A),
-    erroContainer: Color(0xFFFFDAD6),
-    sobreErroContainer: Color(0xFF93000A),
-    superficieInversa: Color(0xFF31302C),
-    sobreSuperficieInversa: Color(0xFFF4F0E9),
+    sobreSuperficie: Color(0xFF301539),
+    sobreSuperficieVariante: Color(0xFF75647D),
+    contorno: Color(0xFF99869F),
+    contornoVariante: Color(0xFFE9E1EF),
+    erro: Color(0xFFA42E49),
+    erroContainer: Color(0xFFFFE8EC),
+    sobreErroContainer: Color(0xFF702032),
+    superficieInversa: Color(0xFF301539),
+    sobreSuperficieInversa: Color(0xFFFFFFFF),
   );
 
   static Cores de(BuildContext context) =>

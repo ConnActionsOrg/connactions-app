@@ -31,11 +31,13 @@ class EstadoVazio extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: cores.superficieContainer,
+                borderRadius: BorderRadius.circular(28),
+                color: cores.secundariaFixa,
+                border: Border.all(color: cores.superficieMaisBaixa, width: 4),
+                boxShadow: Sombras.nivel1,
               ),
               alignment: Alignment.center,
               child: Icon(icone, size: 32, color: cores.primaria),

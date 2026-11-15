@@ -6,6 +6,7 @@ import '../../api/mensagens.dart';
 import '../../design/medidas.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import 'ideias.dart';
 
 /// Anotar uma ideia é coisa rápida: só nome e descrição. Formato e regras se decidem no Propor.
@@ -70,6 +71,10 @@ class _TelaDeNovaIdeiaState extends ConsumerState<TelaDeNovaIdeia> {
           Espacos.xl,
         ),
         children: [
+          const AberturaDeSecao(
+            titulo: 'Teve uma ideia?\nGuarda aqui.',
+            descricao: 'Ainda não precisa ter tudo planejado.',
+          ),
           TextField(
             controller: _titulo,
             autofocus: true,

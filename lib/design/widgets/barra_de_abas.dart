@@ -31,7 +31,11 @@ class BarraDeAbas extends StatelessWidget {
     final cores = Cores.de(context);
     return Container(
       decoration: BoxDecoration(
-        color: cores.superficie,
+        color: cores.superficieMaisBaixa,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border.all(
+          color: cores.contornoVariante.withValues(alpha: 0.5),
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0F2B231E),
@@ -43,7 +47,8 @@ class BarraDeAbas extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: altura,
+          height:
+              altura + (MediaQuery.textScalerOf(context).scale(11) - 11) * 2,
           child: Row(
             children: [
               for (final (i, aba) in abas.indexed)
@@ -83,10 +88,26 @@ class _Aba extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(aba.icone, size: 24, color: cor, weight: ativa ? 600 : 400),
+            AnimatedContainer(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+              decoration: BoxDecoration(
+                color: ativa ? cores.primaria : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                aba.icone,
+                size: 24,
+                color: ativa ? cores.sobrePrimaria : cor,
+                weight: ativa ? 600 : 400,
+              ),
+            ),
             const SizedBox(height: Espacos.xs),
             Text(
               aba.rotulo,
+              textAlign: TextAlign.center,
               style: tipografia.etiquetaPequena.copyWith(
                 color: cor,
                 fontWeight: ativa ? FontWeight.w700 : FontWeight.w600,

@@ -29,8 +29,8 @@ class CoresDaPaleta {
 
 CoresDaPaleta coresDaPaleta(PaletaDoDiario paleta, Cores c) => switch (paleta) {
   PaletaDoDiario.terracota => CoresDaPaleta(
-    capa: c.primaria,
-    textoDaCapa: c.sobrePrimaria,
+    capa: Cores.coral,
+    textoDaCapa: c.sobreSuperficie,
     disco: c.primariaFixa,
     chipFundo: c.primariaFixa,
     chipBorda: c.primaria,
@@ -45,8 +45,8 @@ CoresDaPaleta coresDaPaleta(PaletaDoDiario paleta, Cores c) => switch (paleta) {
     chipTexto: c.sobreSecundariaFixa,
   ),
   PaletaDoDiario.salvia => CoresDaPaleta(
-    capa: c.terciaria,
-    textoDaCapa: c.sobrePrimaria,
+    capa: Cores.menta,
+    textoDaCapa: c.sobreSuperficie,
     disco: c.terciariaFixa,
     chipFundo: c.terciariaFixa,
     chipBorda: c.terciaria,

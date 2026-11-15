@@ -396,7 +396,9 @@ void main() {
     expect(leituras(api, 'listarIdeias'), 2);
   });
 
-  testWidgets('o fundo da tela é a superfície do Stitch', (tester) async {
+  testWidgets('o fundo da tela é a superfície da identidade pastel', (
+    tester,
+  ) async {
     await abrirComunidade(tester, apiCom());
     final scaffold = find.descendant(
       of: find.byType(TelaDaComunidade),
@@ -405,6 +407,6 @@ void main() {
     final cor =
         tester.widget<Scaffold>(scaffold).backgroundColor ??
         Theme.of(tester.element(scaffold)).scaffoldBackgroundColor;
-    expect(cor, const Color(0xFFFDF9F2));
+    expect(cor, const Color(0xFFFFFFFF));
   });
 }

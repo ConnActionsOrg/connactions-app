@@ -35,7 +35,10 @@ class CartaoDeAtividadeFeita extends StatelessWidget {
     final data = _formatoDaData.format(atividade.encerradaEm.toLocal());
     return Container(
       decoration: BoxDecoration(
-        color: cores.superficieBaixa,
+        color: cores.superficieMaisBaixa,
+        border: Border.all(
+          color: cores.contornoVariante.withValues(alpha: 0.55),
+        ),
         borderRadius: BorderRadius.circular(Raios.medio),
         boxShadow: Sombras.nivel1,
       ),

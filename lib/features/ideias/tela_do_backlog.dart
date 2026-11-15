@@ -12,6 +12,7 @@ import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
 import '../atividades/atividade_aberta.dart';
@@ -115,6 +116,10 @@ class TelaDoBacklog extends ConsumerWidget {
             Espacos.xl,
           ),
           children: [
+            const AberturaDeSecao(
+              titulo: 'Ideias de hoje.\nHistórias de amanhã.',
+              descricao: 'O cantinho das próximas aventuras.',
+            ),
             _Contador(minhas: minhasNoBacklog),
             const SizedBox(height: Espacos.md),
             FilledButton.icon(

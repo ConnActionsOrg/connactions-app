@@ -17,6 +17,7 @@ import '../../design/widgets/avatar.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/botao_carregar_mais.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../notificacoes/cartao_de_notificacoes_desligadas.dart';
 import 'cartao_de_atividade_feita.dart';
@@ -132,6 +133,10 @@ class _Corpo extends ConsumerWidget {
         Espacos.xl,
       ),
       children: [
+        const AberturaDeSecao(
+          titulo: 'Seu jeito\nde estar junto.',
+          descricao: 'Pessoas, conexões e boas histórias.',
+        ),
         _CartaoDeIdentidade(eu: eu),
         const SizedBox(height: Espacos.md),
         const CartaoDeNotificacoesDesligadas(),
@@ -173,7 +178,7 @@ class _CartaoDeIdentidade extends ConsumerWidget {
       // ser cortada; só o filho (o Stack) é cortado no raio do cartão.
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: cores.superficieBaixa,
+        color: cores.primariaFixa,
         borderRadius: BorderRadius.circular(Raios.grande),
         boxShadow: Sombras.nivel1,
       ),

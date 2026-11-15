@@ -6,6 +6,7 @@ import 'package:connactions_app/features/turmas/tela_de_nova_turma.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/visibilidade.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/preferencias_em_memoria.dart';
 
@@ -26,7 +27,7 @@ Future<void> abrirFolha(
     appDeTeste(api: api ?? duasTurmas(), preferencias: preferencias),
   );
   await tester.pumpAndSettle();
-  await tester.tap(find.byType(SeletorDeTurma));
+  await tocar(tester, find.byType(SeletorDeTurma));
   await tester.pumpAndSettle();
   expect(find.text('Suas turmas'), findsOneWidget);
 }
@@ -62,7 +63,7 @@ void main() {
     final prefs = PreferenciasEmMemoria();
     await abrirFolha(tester, preferencias: prefs);
 
-    await tester.tap(cartao('Cozinha & Prosa'));
+    await tocar(tester, cartao('Cozinha & Prosa'));
     await tester.pumpAndSettle();
 
     expect(find.text('Suas turmas'), findsNothing);
@@ -76,8 +77,12 @@ void main() {
     );
 
     // o Diário acompanha a mesma turma ativa
-    await tester.tap(find.text('Diário'));
+    await tocar(tester, find.text('Diário'));
     await tester.pumpAndSettle();
+    await ver(
+      tester,
+      find.textContaining('☕ Cozinha & Prosa vão aparecer aqui'),
+    );
     expect(
       find.textContaining('☕ Cozinha & Prosa vão aparecer aqui'),
       findsOneWidget,
@@ -88,7 +93,7 @@ void main() {
     final prefs = PreferenciasEmMemoria();
     await abrirFolha(tester, preferencias: prefs);
 
-    await tester.tap(cartao('Turma do Domingo'));
+    await tocar(tester, cartao('Turma do Domingo'));
     await tester.pumpAndSettle();
 
     expect(find.text('Suas turmas'), findsNothing);
@@ -98,7 +103,8 @@ void main() {
   testWidgets('"Ver turma" abre a tela da turma', (tester) async {
     await abrirFolha(tester);
 
-    await tester.tap(
+    await tocar(
+      tester,
       find.descendant(
         of: cartao('Cozinha & Prosa'),
         matching: find.byTooltip('Ver turma'),
@@ -112,7 +118,7 @@ void main() {
 
   testWidgets('"Criar nova turma" abre a tela de criar', (tester) async {
     await abrirFolha(tester);
-    await tester.tap(find.text('Criar nova turma'));
+    await tocar(tester, find.text('Criar nova turma'));
     await tester.pumpAndSettle();
     expect(find.byType(TelaDeNovaTurma), findsOneWidget);
     expect(find.text('Suas turmas'), findsNothing);
@@ -122,7 +128,7 @@ void main() {
     tester,
   ) async {
     await abrirFolha(tester);
-    await tester.tap(find.text('Entrar com código de convite'));
+    await tocar(tester, find.text('Entrar com código de convite'));
     await tester.pumpAndSettle();
     expect(find.byType(TelaDeEntrarNaTurma), findsOneWidget);
   });

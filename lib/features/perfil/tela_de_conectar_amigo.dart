@@ -13,6 +13,7 @@ import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../turmas/codigo_de_convite.dart';
 import 'codigo_de_amigo.dart';
 import 'codigo_em_destaque.dart';
@@ -134,6 +135,10 @@ class _TelaDeConectarAmigoState extends ConsumerState<TelaDeConectarAmigo> {
           Espacos.xl,
         ),
         children: [
+          const AberturaDeSecao(
+            titulo: 'Mais uma\nboa conexão.',
+            descricao: 'O código é o convite para se conectar.',
+          ),
           TextField(
             controller: _codigo,
             autofocus: true,
