@@ -63,7 +63,7 @@ class Tipografia extends ThemeExtension<Tipografia> {
       color: cores.sobreSuperficie,
     );
     return Tipografia(
-      displayGrande: titulo(30, 38, FontWeight.w700, -0.02),
+      displayGrande: titulo(32, 36, FontWeight.w700, -0.02),
       tituloGrande: titulo(26, 34, FontWeight.w700, -0.02),
       tituloMedio: titulo(22, 30, FontWeight.w600, -0.01),
       tituloPequeno: titulo(18, 26, FontWeight.w600, 0),

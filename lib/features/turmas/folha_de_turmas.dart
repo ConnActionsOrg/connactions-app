@@ -117,7 +117,7 @@ class CartaoDeTurma extends StatelessWidget {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
     return Material(
-      color: cores.superficieBaixa,
+      color: ativa ? cores.primariaFixa : Cores.damasco.withValues(alpha: 0.65),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Raios.medio),
         side: ativa

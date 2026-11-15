@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/visibilidade.dart';
 import '../../apoio/ciclo_de_vida.dart';
 import '../../apoio/erros_sem_dono.dart';
 import '../../apoio/notificador_falso.dart';
@@ -25,17 +26,20 @@ Future<void> abrirPerfil(
     ),
   );
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Perfil'));
+  await tocar(tester, find.text('Perfil'));
   await tester.pumpAndSettle();
   expect(find.byType(TelaDoPerfil), findsOneWidget);
   // o corpo renderizou: sem isto, "cartão ausente" passaria também no erro ou no carregando
   expect(find.text('Editar perfil'), findsOneWidget);
+  if (perguntou && notificador.permissaoAtual == PermissaoDeAviso.negada) {
+    await ver(tester, find.text(titulo));
+  }
 }
 
 Future<void> tocarEmAtivar(WidgetTester tester) async {
-  await tester.ensureVisible(find.text('Ativar'));
+  await ver(tester, find.text('Ativar'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Ativar'));
+  await tocar(tester, find.text('Ativar'));
   await tester.pumpAndSettle();
 }
 

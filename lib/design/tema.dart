@@ -19,11 +19,11 @@ ThemeData temaClaro() {
     secondary: cores.secundaria,
     onSecondary: Colors.white,
     secondaryContainer: cores.secundariaContainer,
-    onSecondaryContainer: const Color(0xFF6F4600),
+    onSecondaryContainer: cores.sobreSecundariaFixa,
     tertiary: cores.terciaria,
     onTertiary: Colors.white,
-    tertiaryContainer: const Color(0xFF607B65),
-    onTertiaryContainer: const Color(0xFFF6FFF4),
+    tertiaryContainer: cores.terciariaFixa,
+    onTertiaryContainer: cores.sobreSuperficie,
     error: cores.erro,
     onError: Colors.white,
     errorContainer: cores.erroContainer,
@@ -120,11 +120,12 @@ ThemeData temaClaro() {
       ),
     ),
     cardTheme: CardThemeData(
-      color: cores.superficieBaixa,
+      color: cores.superficieMaisBaixa,
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Raios.medio),
+        side: BorderSide(color: cores.contornoVariante),
       ),
     ),
     switchTheme: SwitchThemeData(

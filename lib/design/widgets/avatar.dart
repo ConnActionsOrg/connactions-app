@@ -66,7 +66,14 @@ class _Iniciais extends StatelessWidget {
     final cores = Cores.de(context);
     final tipografia = Tipografia.de(context);
     return Container(
-      color: cores.primariaFixa,
+      color: const [
+        Cores.coral,
+        Cores.damasco,
+        Cores.menta,
+        Cores.ceu,
+        Cores.pervinca,
+        Cores.lilas,
+      ][nome.runes.fold<int>(0, (s, r) => s + r) % 6],
       alignment: Alignment.center,
       child: Text(
         iniciaisDe(nome),

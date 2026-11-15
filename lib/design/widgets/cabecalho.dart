@@ -30,13 +30,17 @@ class Cabecalho extends StatelessWidget implements PreferredSizeWidget {
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Marca(tamanho: 32),
+                const Marca(tamanho: 36),
                 const SizedBox(width: Espacos.sm),
-                Text(
-                  'ConnActions',
-                  style: tipografia.tituloPequeno.copyWith(
-                    color: cores.primaria,
-                    letterSpacing: -0.36,
+                Flexible(
+                  child: Text(
+                    'ConnActions',
+                    style: tipografia.tituloPequeno.copyWith(
+                      color: cores.sobreSuperficie,
+                      letterSpacing: -0.36,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

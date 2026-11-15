@@ -28,7 +28,10 @@ class CartaoDaAtividade extends StatelessWidget {
     final prazo = atividade.prazo;
     return Container(
       decoration: BoxDecoration(
-        color: cores.superficieBaixa,
+        color: cores.terciariaFixa,
+        border: Border.all(
+          color: cores.contornoVariante.withValues(alpha: 0.55),
+        ),
         borderRadius: BorderRadius.circular(Raios.medio),
         boxShadow: Sombras.nivel1,
       ),
@@ -85,7 +88,7 @@ class CaixaDeRegras extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(Espacos.md),
       decoration: BoxDecoration(
-        color: cores.superficieContainer,
+        color: cores.superficieMaisBaixa.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(Raios.padrao),
       ),
       child: Column(

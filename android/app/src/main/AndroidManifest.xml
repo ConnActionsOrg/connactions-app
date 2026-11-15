@@ -6,7 +6,7 @@
     <application
         android:label="ConnActions"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/marca_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -41,7 +41,7 @@
             android:value="atividades" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_notificacao" />
+            android:resource="@drawable/marca_oficial" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/notificacao" />

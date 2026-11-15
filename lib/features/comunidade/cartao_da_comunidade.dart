@@ -111,7 +111,10 @@ class _EstadoDoCartao extends ConsumerState<CartaoDaComunidade> {
     ].join(' ');
     return Container(
       decoration: BoxDecoration(
-        color: cores.superficieBaixa,
+        color: Cores.damasco.withValues(alpha: 0.65),
+        border: Border.all(
+          color: cores.contornoVariante.withValues(alpha: 0.55),
+        ),
         borderRadius: BorderRadius.circular(Raios.medio),
         boxShadow: Sombras.nivel1,
       ),

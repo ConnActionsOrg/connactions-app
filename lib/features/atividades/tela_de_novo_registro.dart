@@ -9,6 +9,7 @@ import '../../design/cores.dart';
 import '../../design/medidas.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import 'atividade_aberta.dart';
 import 'folha_de_origem_da_foto.dart';
 
@@ -100,6 +101,10 @@ class _TelaDeNovoRegistroState extends ConsumerState<TelaDeNovoRegistro> {
           Espacos.xl,
         ),
         children: [
+          const AberturaDeSecao(
+            titulo: 'Guarde\nesse momento.',
+            descricao: 'Uma foto, a sua história.',
+          ),
           ClipRRect(
             borderRadius: BorderRadius.circular(Raios.medio),
             child: ConstrainedBox(

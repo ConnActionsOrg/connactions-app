@@ -25,8 +25,8 @@ void main() {
         ),
       ),
     );
-    expect(fundoDa(tester, 'Ativa'), const Color(0xFFFFDBD1));
-    expect(fundoDa(tester, 'Vez'), const Color(0xFFFFDDB6));
-    expect(fundoDa(tester, 'Feita'), const Color(0xFFCDEAD0));
+    expect(fundoDa(tester, 'Ativa'), const Color(0xFFD7C1FF));
+    expect(fundoDa(tester, 'Vez'), const Color(0xFFF9E69F));
+    expect(fundoDa(tester, 'Feita'), const Color(0xFFC0E4CB));
   });
 }

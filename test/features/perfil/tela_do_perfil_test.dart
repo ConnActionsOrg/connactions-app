@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/visibilidade.dart';
 import '../../apoio/autenticador_falso.dart';
 import '../../apoio/compartilhador_falso.dart';
 import '../../apoio/fake_api.dart';
@@ -50,7 +51,7 @@ Future<void> abrirPerfil(
 }) async {
   await tester.pumpWidget(appDeTeste(api: api, compartilhador: compartilhador));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Perfil'));
+  await tocar(tester, find.text('Perfil'));
   await tester.pumpAndSettle();
 }
 
@@ -123,13 +124,14 @@ void main() {
   testWidgets('o interruptor de visibilidade grava na API', (tester) async {
     final api = FakeApi(eu: euDeTeste(atividadesVisiveis: true));
     await abrirPerfil(tester, api);
+    await ver(tester, find.byType(Switch));
     expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
     expect(
       find.text('Amigos conectados veem o que você concluiu.'),
       findsOneWidget,
     );
 
-    await tester.tap(find.byType(Switch));
+    await tocar(tester, find.byType(Switch));
     await tester.pumpAndSettle();
 
     expect(api.chamadas.last, 'atualizarEu:{"atividades_visiveis":false}');
@@ -146,9 +148,10 @@ void main() {
     );
     await abrirPerfil(tester, api);
 
-    await tester.tap(find.byType(Switch));
+    await tocar(tester, find.byType(Switch));
     await tester.pumpAndSettle();
 
+    await ver(tester, find.byType(Switch));
     expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
     expect(find.text('Não consegui salvar. Tente de novo.'), findsOneWidget);
 
@@ -171,13 +174,15 @@ void main() {
     );
 
     api.falhaAoObter = null;
-    await tester.tap(find.text('Tentar de novo'));
+    await tocar(tester, find.text('Tentar de novo'));
     await tester.pumpAndSettle();
 
     expect(find.text('Marina Duarte'), findsOneWidget);
   });
 
-  testWidgets('o fundo da tela é a superfície do Stitch', (tester) async {
+  testWidgets('o fundo da tela é a superfície da identidade pastel', (
+    tester,
+  ) async {
     await abrirPerfil(tester, FakeApi(eu: euDeTeste()));
     final scaffold = find.descendant(
       of: find.byType(TelaDoPerfil),
@@ -186,7 +191,7 @@ void main() {
     final cor =
         tester.widget<Scaffold>(scaffold).backgroundColor ??
         Theme.of(tester.element(scaffold)).scaffoldBackgroundColor;
-    expect(cor, const Color(0xFFFDF9F2));
+    expect(cor, const Color(0xFFFFFFFF));
   });
 
   testWidgets('o cartão de identidade tem o botão de editar', (tester) async {
@@ -203,11 +208,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Perfil'));
+    await tocar(tester, find.text('Perfil'));
     await tester.pumpAndSettle();
     expect(find.text('Tentar de novo'), findsOneWidget);
 
-    await tester.tap(find.text('Sair da conta'));
+    await tocar(tester, find.text('Sair da conta'));
     await tester.pumpAndSettle();
 
     expect(autenticador.chamadas, ['sair']);
@@ -226,14 +231,14 @@ void main() {
       await tester.pump();
     }
 
-    await tester.tap(find.text('Perfil'));
+    await tocar(tester, find.text('Perfil'));
     await tester.pump();
     await tester.pump();
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Sair da conta'), findsOneWidget);
 
-    await tester.tap(find.text('Sair da conta'));
+    await tocar(tester, find.text('Sair da conta'));
     await tester.pump();
     api.segurarObterEu!.complete();
     await tester.pumpAndSettle();
@@ -256,12 +261,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Perfil'));
+    await tocar(tester, find.text('Perfil'));
     await tester.pumpAndSettle();
     // o botão vive no fim do ListView, abaixo da dobra no viewport de teste
     await rolarAte(tester, find.text('Sair da conta'));
 
-    await tester.tap(find.text('Sair da conta'));
+    await tocar(tester, find.text('Sair da conta'));
     await tester.pumpAndSettle();
 
     expect(api.chamadas, contains('removerDispositivo:token-fcm-1'));
@@ -313,7 +318,7 @@ void main() {
         ..falhaAoObterPerfil = const ErroDeRede('caiu');
       await tester.pumpWidget(appDeTeste(api: api));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Perfil'));
+      await tocar(tester, find.text('Perfil'));
       await tester.pump();
       await tester.pump();
 
@@ -346,7 +351,7 @@ void main() {
         lessThan(tester.getTopLeft(find.text('Caio')).dx),
       );
 
-      await tester.tap(find.text('Ver todos (2)'));
+      await tocar(tester, find.text('Ver todos (2)'));
       await tester.pumpAndSettle();
       expect(find.byType(TelaDeAmigos), findsOneWidget);
     },
@@ -369,13 +374,13 @@ void main() {
       telaAlta(tester);
       await abrirPerfil(tester, apiDoPerfil(conexoes: [(eu.id, 'pessoa-bia')]));
 
-      await tester.tap(find.text('Conectar amigo'));
+      await tocar(tester, find.text('Conectar amigo'));
       await tester.pumpAndSettle();
       expect(find.byType(TelaDeConectarAmigo), findsOneWidget);
-      await tester.tap(find.byType(BackButton));
+      await tocar(tester, find.byType(BackButton));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Bia'));
+      await tocar(tester, find.text('Bia'));
       await tester.pumpAndSettle();
       expect(find.byType(TelaDaPessoa), findsOneWidget);
       expect(find.text('Bia Souza'), findsOneWidget);
@@ -416,7 +421,7 @@ void main() {
       );
       expect(find.text('ABCDEFGH'), findsOneWidget);
       await rolarAte(tester, find.widgetWithText(FilledButton, 'Compartilhar'));
-      await tester.tap(find.widgetWithText(FilledButton, 'Compartilhar'));
+      await tocar(tester, find.widgetWithText(FilledButton, 'Compartilhar'));
       await tester.pumpAndSettle();
 
       expect(compartilhador.textos, [textoDoCodigoDeAmigo('ABCDEFGH')]);
@@ -437,7 +442,7 @@ void main() {
       expect(find.byType(LinhaDeContadores), findsOneWidget);
 
       api.falhaAoListarConexoes = null;
-      await tester.tap(find.text('Tentar de novo'));
+      await tocar(tester, find.text('Tentar de novo'));
       await tester.pumpAndSettle();
 
       expect(find.text('Não consegui carregar seus amigos.'), findsNothing);
@@ -454,7 +459,7 @@ void main() {
       ..falhaAoListarAtividadesFeitas = const ErroDeRede('caiu');
     await tester.pumpWidget(appDeTeste(api: api));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Perfil'));
+    await tocar(tester, find.text('Perfil'));
     // sem pumpAndSettle: a lista presa mostra um indicador que gira para sempre
     for (var i = 0; i < 5; i++) {
       await tester.pump();
@@ -527,7 +532,7 @@ void main() {
       final autenticador = AutenticadorFalso(conta: contaDeTeste);
       await tester.pumpWidget(appDeTeste(autenticador: autenticador, api: api));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Perfil'));
+      await tocar(tester, find.text('Perfil'));
       await tester.pumpAndSettle();
       await rolarAte(tester, find.text('Caio'));
       expect(find.text('Caio'), findsOneWidget);
@@ -535,14 +540,14 @@ void main() {
       await rolarAte(tester, find.text('Sair da conta'));
       // sem ninguém ouvindo, a lista fica parada com os amigos da conta que saiu
       expect(find.byType(FileiraDeAmigos, skipOffstage: false), findsNothing);
-      await tester.tap(find.text('Sair da conta'));
+      await tocar(tester, find.text('Sair da conta'));
       await tester.pumpAndSettle();
       api.entrarComo('pessoa-bia');
       final segurar = api.segurarListarConexoes = Completer<void>();
-      await tester.tap(find.text('Entrar com Google'));
+      await tocar(tester, find.text('Entrar com Google'));
       await tester.pumpAndSettle();
       telaAlta(tester);
-      await tester.tap(find.text('Perfil'));
+      await tocar(tester, find.text('Perfil'));
       // sem pumpAndSettle: com a lista da conta nova presa, a fileira mostra o indicador
       for (var i = 0; i < 5; i++) {
         await tester.pump();

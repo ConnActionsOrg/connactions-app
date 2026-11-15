@@ -44,7 +44,10 @@ class CartaoDoDiario extends StatelessWidget {
     final fotos = atividade.registros;
     return Container(
       decoration: BoxDecoration(
-        color: cores.superficieBaixa,
+        color: cores.superficieMaisBaixa,
+        border: Border.all(
+          color: cores.contornoVariante.withValues(alpha: 0.55),
+        ),
         borderRadius: BorderRadius.circular(Raios.medio),
         boxShadow: Sombras.nivel1,
       ),

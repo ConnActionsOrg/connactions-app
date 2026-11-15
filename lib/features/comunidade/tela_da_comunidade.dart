@@ -11,6 +11,7 @@ import '../../design/tipografia.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/botao_carregar_mais.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
 import '../ideias/ideias.dart';
@@ -93,6 +94,10 @@ class TelaDaComunidade extends ConsumerWidget {
             Espacos.xl,
           ),
           children: [
+            const AberturaDeSecao(
+              titulo: 'Uma ideia boa\nvai longe.',
+              descricao: 'Inspirações de outras turmas.',
+            ),
             if (ativa != null)
               const SeletorDeTurma()
             else

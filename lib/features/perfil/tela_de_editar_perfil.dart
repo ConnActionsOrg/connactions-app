@@ -13,6 +13,7 @@ import '../../design/medidas.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/avatar.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../atividades/folha_de_origem_da_foto.dart';
 
 /// Foto, nome, @handle e bio. Manda só o que mudou; handle em uso vira erro no campo, não aviso. A
@@ -98,66 +99,73 @@ class _TelaDeEditarPerfilState extends ConsumerState<TelaDeEditarPerfil> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: const Cabecalho(titulo: 'Editar perfil'),
-    body: ListView(
+    body: SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
         Espacos.margemDaTela,
         Espacos.md,
         Espacos.margemDaTela,
         Espacos.xl,
       ),
-      children: [
-        const _Foto(),
-        const SizedBox(height: Espacos.lg),
-        TextField(
-          controller: _nome,
-          maxLength: 80,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Nome'),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: Espacos.md),
-        TextField(
-          controller: _handle,
-          maxLength: 20,
-          autocorrect: false,
-          enableSuggestions: false,
-          inputFormatters: [
-            const _Minusculas(),
-            FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9._]')),
-          ],
-          decoration: InputDecoration(
-            labelText: '@handle',
-            prefixText: '@',
-            helperText:
-                '3 a 20 caracteres: letras minúsculas, números, ponto e sublinhado',
-            errorText: _erroDoHandle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const AberturaDeSecao(
+            titulo: 'Bem você.',
+            descricao: 'Atualize como aparece para suas conexões.',
           ),
-          onChanged: (_) => setState(() => _erroDoHandle = null),
-        ),
-        const SizedBox(height: Espacos.md),
-        TextField(
-          controller: _bio,
-          maxLength: 200,
-          maxLines: 3,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            labelText: 'Bio',
-            hintText: 'Uma frase sobre você',
+          const _Foto(),
+          const SizedBox(height: Espacos.lg),
+          TextField(
+            controller: _nome,
+            maxLength: 80,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(labelText: 'Nome'),
+            onChanged: (_) => setState(() {}),
           ),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: Espacos.xl),
-        FilledButton(
-          onPressed: _podeSalvar ? _salvar : null,
-          child: _salvando
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Salvar'),
-        ),
-      ],
+          const SizedBox(height: Espacos.md),
+          TextField(
+            controller: _handle,
+            maxLength: 20,
+            autocorrect: false,
+            enableSuggestions: false,
+            inputFormatters: [
+              const _Minusculas(),
+              FilteringTextInputFormatter.allow(RegExp(r'[a-z0-9._]')),
+            ],
+            decoration: InputDecoration(
+              labelText: '@handle',
+              prefixText: '@',
+              helperText:
+                  '3 a 20 caracteres: letras minúsculas, números, ponto e sublinhado',
+              errorText: _erroDoHandle,
+            ),
+            onChanged: (_) => setState(() => _erroDoHandle = null),
+          ),
+          const SizedBox(height: Espacos.md),
+          TextField(
+            controller: _bio,
+            maxLength: 200,
+            maxLines: 3,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Bio',
+              hintText: 'Uma frase sobre você',
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: Espacos.xl),
+          FilledButton(
+            onPressed: _podeSalvar ? _salvar : null,
+            child: _salvando
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Salvar'),
+          ),
+        ],
+      ),
     ),
   );
 }

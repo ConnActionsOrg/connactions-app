@@ -18,6 +18,7 @@ import '../../design/tipografia.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/botao_carregar_mais.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../../design/widgets/disco_de_emoji.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
@@ -270,6 +271,10 @@ class _TelaDeProporState extends ConsumerState<TelaDePropor> {
           Espacos.xl,
         ),
         children: [
+          const AberturaDeSecao(
+            titulo: 'Uma ideia.\nUm novo momento.',
+            descricao: 'É sua vez de propor para a turma.',
+          ),
           const _Heroi(),
           const SizedBox(height: Espacos.md),
           _Abas(

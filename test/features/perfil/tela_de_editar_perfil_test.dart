@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/visibilidade.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/seletor_de_foto_falso.dart';
 import '../../apoio/seletor_que_lanca.dart';
@@ -22,9 +23,9 @@ Future<void> abrirEdicao(
 }) async {
   await tester.pumpWidget(appDeTeste(api: api, seletorDeFoto: seletor));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Perfil'));
+  await tocar(tester, find.text('Perfil'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Editar perfil'));
+  await tocar(tester, find.text('Editar perfil'));
   await tester.pumpAndSettle();
   expect(find.byType(TelaDeEditarPerfil), findsOneWidget);
 }
@@ -39,9 +40,9 @@ FilledButton botaoSalvar(WidgetTester tester) =>
 
 /// O Salvar fica no fim do ListView, abaixo da dobra no viewport de teste.
 Future<void> tocarEmSalvar(WidgetTester tester) async {
-  await tester.ensureVisible(find.text('Salvar'));
+  await ver(tester, find.text('Salvar'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Salvar'));
+  await tocar(tester, find.text('Salvar'));
 }
 
 void main() {
@@ -157,7 +158,9 @@ void main() {
     expect(botaoSalvar(tester).onPressed, isNull);
   });
 
-  testWidgets('o fundo da tela é a superfície do Stitch', (tester) async {
+  testWidgets('o fundo da tela é a superfície da identidade pastel', (
+    tester,
+  ) async {
     await abrirEdicao(tester, FakeApi(eu: euDeTeste()));
     final scaffold = find.descendant(
       of: find.byType(TelaDeEditarPerfil),
@@ -166,7 +169,7 @@ void main() {
     final cor =
         tester.widget<Scaffold>(scaffold).backgroundColor ??
         Theme.of(tester.element(scaffold)).scaffoldBackgroundColor;
-    expect(cor, const Color(0xFFFDF9F2));
+    expect(cor, const Color(0xFFFFFFFF));
   });
 
   testWidgets('trocar foto passa pela folha, pelo seletor e pela API', (
@@ -176,9 +179,9 @@ void main() {
     final seletor = SeletorDeFotoFalso(foto: fotoDeTeste(nome: 'eu.jpg'));
     await abrirEdicao(tester, api, seletor: seletor);
 
-    await tester.tap(find.text('Trocar foto'));
+    await tocar(tester, find.text('Trocar foto'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tirar foto'));
+    await tocar(tester, find.text('Tirar foto'));
     await tester.pumpAndSettle();
 
     expect(seletor.origens, [OrigemDaFoto.camera]);
@@ -194,9 +197,9 @@ void main() {
     final api = FakeApi(eu: euDeTeste());
     final seletor = SeletorDeFotoFalso();
     await abrirEdicao(tester, api, seletor: seletor);
-    await tester.tap(find.text('Trocar foto'));
+    await tocar(tester, find.text('Trocar foto'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Escolher da galeria'));
+    await tocar(tester, find.text('Escolher da galeria'));
     await tester.pumpAndSettle();
     expect(seletor.origens, [OrigemDaFoto.galeria]);
     expect(api.chamadas.where((c) => c.startsWith('trocarFoto')), isEmpty);
@@ -215,9 +218,9 @@ void main() {
       api,
       seletor: SeletorDeFotoFalso(foto: fotoDeTeste()),
     );
-    await tester.tap(find.text('Trocar foto'));
+    await tocar(tester, find.text('Trocar foto'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tirar foto'));
+    await tocar(tester, find.text('Tirar foto'));
     await tester.pumpAndSettle();
     expect(
       find.text('Envie uma foto JPEG ou PNG de até 10 MB.'),
@@ -233,9 +236,9 @@ void main() {
       final api = FakeApi(eu: euDeTeste());
       await abrirEdicao(tester, api, seletor: SeletorQueLanca());
 
-      await tester.tap(find.text('Trocar foto'));
+      await tocar(tester, find.text('Trocar foto'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Tirar foto'));
+      await tocar(tester, find.text('Tirar foto'));
       await tester.pumpAndSettle();
 
       expect(find.text('Algo deu errado. Tente de novo.'), findsOneWidget);
@@ -257,15 +260,15 @@ void main() {
       );
       expect(anel, findsNothing);
 
-      await tester.tap(find.text('Trocar foto'));
+      await tocar(tester, find.text('Trocar foto'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Tirar foto'));
+      await tocar(tester, find.text('Tirar foto'));
       // sem pumpAndSettle: o anel anima para sempre
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       expect(anel, findsOneWidget);
 
-      await tester.tap(find.text('Trocar foto'));
+      await tocar(tester, find.text('Trocar foto'));
       await tester.pump(const Duration(milliseconds: 500));
       expect(find.text('Tirar foto'), findsNothing);
       expect(seletor.origens, [OrigemDaFoto.camera]);

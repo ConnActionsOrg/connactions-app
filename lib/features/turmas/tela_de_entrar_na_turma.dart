@@ -9,6 +9,7 @@ import '../../design/medidas.dart';
 import '../../design/tipografia.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import 'codigo_de_convite.dart';
 import 'turmas.dart';
 
@@ -70,6 +71,10 @@ class _TelaDeEntrarNaTurmaState extends ConsumerState<TelaDeEntrarNaTurma> {
           Espacos.xl,
         ),
         children: [
+          const AberturaDeSecao(
+            titulo: 'Tem lugar\npara mais um.',
+            descricao: 'Cole ou digite o código que sua turma compartilhou.',
+          ),
           Text(
             'Peça o código de convite para alguém da turma.',
             style: tipografia.corpoMedio.copyWith(

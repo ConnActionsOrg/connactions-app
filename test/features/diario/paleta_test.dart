@@ -20,9 +20,9 @@ void main() {
       final fundos = {
         for (final p in PaletaDoDiario.values) p: coresDaPaleta(p, cores).capa,
       };
-      expect(fundos[PaletaDoDiario.terracota], cores.primaria);
+      expect(fundos[PaletaDoDiario.terracota], Cores.coral);
       expect(fundos[PaletaDoDiario.ambar], cores.secundariaContainer);
-      expect(fundos[PaletaDoDiario.salvia], cores.terciaria);
+      expect(fundos[PaletaDoDiario.salvia], Cores.menta);
       expect(fundos[PaletaDoDiario.areia], cores.superficieAlta);
       expect(fundos.values.toSet(), hasLength(PaletaDoDiario.values.length));
     },

@@ -16,6 +16,7 @@ import '../../design/tipografia.dart';
 import '../../design/widgets/avatar.dart';
 import '../../design/widgets/aviso.dart';
 import '../../design/widgets/cabecalho.dart';
+import '../../design/widgets/abertura_de_secao.dart';
 import '../../design/widgets/estado_de_erro.dart';
 import '../../design/widgets/estado_vazio.dart';
 import '../../design/widgets/etiqueta.dart';
@@ -71,27 +72,36 @@ class _SemTurmas extends StatelessWidget {
   const _SemTurmas();
 
   @override
-  Widget build(BuildContext context) => EstadoVazio(
-    icone: Symbols.local_cafe,
-    titulo: 'Nenhuma turma por aqui ainda',
-    texto:
-        'Crie uma turma para os seus amigos ou entre numa com o código de convite.',
-    acao: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FilledButton.icon(
-          onPressed: () => context.push('/turmas/nova'),
-          icon: const Icon(Symbols.add),
-          label: const Text('Criar turma'),
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.all(Espacos.margemDaTela),
+    children: [
+      const AberturaDeSecao(
+        titulo: 'Bora fazer\nalgo juntos?',
+        descricao: 'Um lugar para os seus grupos.',
+      ),
+      EstadoVazio(
+        icone: Symbols.local_cafe,
+        titulo: 'Nenhuma turma por aqui ainda',
+        texto:
+            'Crie uma turma para os seus amigos ou entre numa com o código de convite.',
+        acao: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FilledButton.icon(
+              onPressed: () => context.push('/turmas/nova'),
+              icon: const Icon(Symbols.add),
+              label: const Text('Criar turma'),
+            ),
+            const SizedBox(height: Espacos.sm),
+            TextButton.icon(
+              onPressed: () => context.push('/turmas/entrar'),
+              icon: const Icon(Symbols.key),
+              label: const Text('Entrar com código'),
+            ),
+          ],
         ),
-        const SizedBox(height: Espacos.sm),
-        TextButton.icon(
-          onPressed: () => context.push('/turmas/entrar'),
-          icon: const Icon(Symbols.key),
-          label: const Text('Entrar com código'),
-        ),
-      ],
-    ),
+      ),
+    ],
   );
 }
 
@@ -125,6 +135,10 @@ class _ComTurma extends ConsumerWidget {
           Espacos.xl,
         ),
         children: [
+          const AberturaDeSecao(
+            titulo: 'Bora fazer\nalgo juntos?',
+            descricao: 'Um novo momento para a sua turma.',
+          ),
           const SeletorDeTurma(),
           const SizedBox(height: Espacos.md),
           // só aqui, com turma: antes da primeira não há vez de ninguém para avisar
@@ -221,7 +235,7 @@ class _CartaoDaVez extends StatelessWidget {
           );
     return Container(
       decoration: BoxDecoration(
-        color: cores.secundariaFixa,
+        color: cores.primariaFixa,
         borderRadius: BorderRadius.circular(Raios.medio),
       ),
       padding: const EdgeInsets.all(Espacos.cartao),
@@ -286,7 +300,7 @@ class _FaixaDoProponente extends StatelessWidget {
     final quem = souEu ? 'Você' : atividade.proponente.primeiroNome;
     return Container(
       decoration: BoxDecoration(
-        color: cores.secundariaFixa,
+        color: cores.primariaFixa,
         borderRadius: BorderRadius.circular(Raios.medio),
       ),
       padding: const EdgeInsets.all(Espacos.md),

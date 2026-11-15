@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/visibilidade.dart';
 import '../../apoio/compartilhador_falso.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/navegar.dart';
@@ -58,7 +59,7 @@ int conectares(FakeApi api) =>
 Future<void> conectar(WidgetTester tester, String texto) async {
   await tester.enterText(find.byType(TextField), texto);
   await tester.pump();
-  await tester.tap(find.widgetWithText(FilledButton, 'Conectar'));
+  await tocar(tester, find.widgetWithText(FilledButton, 'Conectar'));
   await tester.pumpAndSettle();
 }
 
@@ -98,7 +99,7 @@ void main() {
       );
       await tester.pump();
       expect(campo(tester).controller!.text, 'BEAZ2345');
-      await tester.tap(find.widgetWithText(FilledButton, 'Conectar'));
+      await tocar(tester, find.widgetWithText(FilledButton, 'Conectar'));
       await tester.pumpAndSettle();
 
       expect(api.chamadas, contains('conectar:BEAZ2345'));
@@ -208,10 +209,10 @@ void main() {
     await tester.enterText(find.byType(TextField), 'BEAZ2345');
     await tester.pump();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Conectar'));
+    await tocar(tester, find.widgetWithText(FilledButton, 'Conectar'));
     await tester.pump();
     // com a chamada no ar o botão mostra o progresso no lugar do texto
-    await tester.tap(find.byType(FilledButton).first, warnIfMissed: false);
+    await tocar(tester, find.byType(FilledButton).first, warnIfMissed: false);
     await tester.pump();
 
     expect(conectares(api), 1);
@@ -230,11 +231,11 @@ void main() {
       final segurar = api.segurarConectar = Completer<void>();
       await tester.enterText(find.byType(TextField), 'BEAZ2345');
       await tester.pump();
-      await tester.tap(find.widgetWithText(FilledButton, 'Conectar'));
+      await tocar(tester, find.widgetWithText(FilledButton, 'Conectar'));
       await tester.pump();
 
       // o pageBack procura o tooltip "Back", e o app é em português
-      await tester.tap(find.byType(BackButton));
+      await tocar(tester, find.byType(BackButton));
       await tester.pumpAndSettle();
       expect(find.byType(TelaDeConectarAmigo), findsNothing);
       segurar.complete();
@@ -271,14 +272,14 @@ void main() {
       expect(find.text('Seu código'), findsOneWidget);
       expect(find.text('ABCDEFGH'), findsOneWidget);
 
-      await tester.tap(find.text('Copiar'));
+      await tocar(tester, find.text('Copiar'));
       await tester.pumpAndSettle();
       expect(copiados, [
         {'text': 'ABCDEFGH'},
       ]);
       expect(find.text('Código copiado'), findsOneWidget);
 
-      await tester.tap(find.text('Compartilhar'));
+      await tocar(tester, find.text('Compartilhar'));
       await tester.pumpAndSettle();
       expect(compartilhador.textos, [textoDoCodigoDeAmigo('ABCDEFGH')]);
       await esperarOAvisoSair(tester);
@@ -291,7 +292,7 @@ void main() {
       final api = apiCom();
       await abrir(tester, api);
 
-      await tester.tap(find.text('Gerar código novo'));
+      await tocar(tester, find.text('Gerar código novo'));
       await tester.pumpAndSettle();
       expect(find.text('Gerar um código novo?'), findsOneWidget);
       expect(
@@ -302,7 +303,7 @@ void main() {
       );
       expect(find.text('Cancelar'), findsOneWidget);
 
-      await tester.tap(find.text('Gerar'));
+      await tocar(tester, find.text('Gerar'));
       await tester.pumpAndSettle();
 
       expect(api.chamadas, contains('regenerarCodigoDeAmigo'));
@@ -317,9 +318,9 @@ void main() {
     final api = apiCom();
     await abrir(tester, api);
 
-    await tester.tap(find.text('Gerar código novo'));
+    await tocar(tester, find.text('Gerar código novo'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancelar'));
+    await tocar(tester, find.text('Cancelar'));
     await tester.pumpAndSettle();
 
     expect(api.chamadas, isNot(contains('regenerarCodigoDeAmigo')));
@@ -333,12 +334,13 @@ void main() {
     await abrir(tester, api);
     final segurar = api.segurarRegenerarCodigoDeAmigo = Completer<void>();
 
-    await tester.tap(find.text('Gerar código novo'));
+    await tocar(tester, find.text('Gerar código novo'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Gerar'));
+    await tocar(tester, find.text('Gerar'));
     // o diálogo termina de sair; a chamada continua presa
     await tester.pumpAndSettle();
-    await tester.tap(
+    await tocar(
+      tester,
       find.widgetWithText(TextButton, 'Gerar código novo'),
       warnIfMissed: false,
     );

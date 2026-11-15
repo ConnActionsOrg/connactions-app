@@ -40,47 +40,72 @@ class _TelaDeEntradaState extends ConsumerState<TelaDeEntrada> {
     final tipografia = Tipografia.de(context);
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Espacos.margemDaTela),
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              const Marca(tamanho: 96),
-              const SizedBox(height: Espacos.lg),
-              Text(
-                'ConnActions',
-                style: tipografia.displayGrande.copyWith(color: cores.primaria),
-              ),
-              const SizedBox(height: Espacos.sm),
-              Text(
-                'Propor, viver e guardar momentos com quem você gosta.',
-                style: tipografia.corpoGrande.copyWith(
-                  color: cores.sobreSuperficieVariante,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.all(Espacos.lg),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: (constraints.maxHeight - 48).clamp(
+                  0,
+                  double.infinity,
                 ),
-                textAlign: TextAlign.center,
               ),
-              const Spacer(flex: 4),
-              FilledButton.icon(
-                onPressed: _entrando ? null : _entrar,
-                icon: _entrando
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Symbols.login),
-                label: Text(_entrando ? 'Entrando…' : 'Entrar com Google'),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Marca(tamanho: 36),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Text(
+                          'ConnActions',
+                          style: tipografia.tituloPequeno,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                  const Marca(tamanho: 160),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Cada amizade\ntem suas cores.',
+                    style: tipografia.displayGrande,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: Espacos.md),
+                  Text(
+                    'Mais planos. Mais histórias.\nSempre juntos, de onde estiverem.',
+                    style: tipografia.corpoGrande.copyWith(
+                      color: cores.sobreSuperficieVariante,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 36),
+                  FilledButton.icon(
+                    onPressed: _entrando ? null : _entrar,
+                    icon: _entrando
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Symbols.login),
+                    label: Text(_entrando ? 'Entrando…' : 'Entrar com Google'),
+                  ),
+                  const SizedBox(height: Espacos.md),
+                  Text(
+                    'Turmas por convite. Sem cadastro, sem senha.',
+                    style: tipografia.corpoPequeno.copyWith(
+                      color: cores.sobreSuperficieVariante,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              const SizedBox(height: Espacos.md),
-              Text(
-                'Turmas por convite. Sem cadastro, sem senha.',
-                style: tipografia.corpoPequeno.copyWith(
-                  color: cores.sobreSuperficieVariante,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: Espacos.lg),
-            ],
+            ),
           ),
         ),
       ),

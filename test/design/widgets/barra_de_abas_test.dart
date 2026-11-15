@@ -33,9 +33,7 @@ void main() {
     expect(escolhido, 3);
   });
 
-  testWidgets('a aba ativa fica em terracota e as outras em cinza quente', (
-    tester,
-  ) async {
+  testWidgets('a aba ativa tem ícone branco na pílula ameixa', (tester) async {
     await tester.pumpWidget(
       montar(
         Align(
@@ -47,7 +45,7 @@ void main() {
 
     expect(
       tester.widget<Icon>(find.byIcon(Symbols.local_cafe)).color,
-      Cores.claras.primaria,
+      Cores.claras.sobrePrimaria,
     );
     expect(
       tester.widget<Icon>(find.byIcon(Symbols.person)).color,

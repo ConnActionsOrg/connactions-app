@@ -15,6 +15,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/visibilidade.dart';
 import '../../apoio/fake_api.dart';
 
 /// Segura `listarDiario` até o teste liberar e conta os pedidos que chegaram, presos ou não.
@@ -56,7 +57,7 @@ void main() {
   Future<void> abrirDiario(WidgetTester tester, FakeApi api) async {
     await tester.pumpWidget(appDeTeste(api: api, agora: agora));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Diário'));
+    await tocar(tester, find.text('Diário'));
     await tester.pumpAndSettle();
   }
 
@@ -98,6 +99,7 @@ void main() {
       FakeApi(eu: euDeTeste(), turmas: [turmaDeTeste()]),
     );
     expect(find.byType(SeletorDeTurma), findsOneWidget);
+    await ver(tester, find.text('O diário da turma começa vazio'));
     expect(find.text('O diário da turma começa vazio'), findsOneWidget);
     expect(
       find.text(
@@ -195,7 +197,8 @@ void main() {
         },
       ),
     );
-    await tester.tap(
+    await tocar(
+      tester,
       find
           .descendant(
             of: find.byType(CartaoDoDiario),
@@ -217,6 +220,7 @@ void main() {
       diarioPor: {'turma-1': _encerradas(22)},
     );
     await abrirDiario(tester, api);
+    await ver(tester, find.text('Atividade 1'));
     expect(find.byType(CartaoDoDiario), findsWidgets);
     final lista = listaDoDiario();
 
@@ -225,7 +229,7 @@ void main() {
       300,
       scrollable: lista,
     );
-    await tester.tap(find.text('Carregar mais'));
+    await tocar(tester, find.text('Carregar mais'));
     await tester.pumpAndSettle();
 
     expect(api.chamadas.last, 'listarDiario:turma-1:20');
@@ -251,8 +255,9 @@ void main() {
       findsOneWidget,
     );
     api.falhaAoListarDiario = null;
-    await tester.tap(find.text('Tentar de novo'));
+    await tocar(tester, find.text('Tentar de novo'));
     await tester.pumpAndSettle();
+    await ver(tester, find.text('O diário da turma começa vazio'));
     expect(find.text('O diário da turma começa vazio'), findsOneWidget);
   });
 
@@ -266,7 +271,7 @@ void main() {
       final segurar = api.segurarListarDiario = Completer<void>();
       await tester.pumpWidget(appDeTeste(api: api, agora: agora));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Diário'));
+      await tocar(tester, find.text('Diário'));
       // sem pumpAndSettle: a leitura está presa e o indicador gira para sempre
       for (var i = 0; i < 20; i++) {
         await tester.pump();
@@ -279,6 +284,7 @@ void main() {
       segurar.complete();
       await tester.pumpAndSettle();
       expect(find.byType(CircularProgressIndicator), findsNothing);
+      await ver(tester, find.text('O diário da turma começa vazio'));
       expect(find.text('O diário da turma começa vazio'), findsOneWidget);
     },
   );
@@ -300,12 +306,12 @@ void main() {
       final pedidosAntes = api.pedidos;
       final segurar = api.segurarListarDiario = Completer<void>();
 
-      await tester.tap(find.text('Carregar mais'));
+      await tocar(tester, find.text('Carregar mais'));
       await tester.pump();
       expect(find.text('Carregar mais', skipOffstage: false), findsNothing);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       // o botão está desabilitado: tocar de novo não dispara outro pedido
-      await tester.tap(find.byType(TextButton));
+      await tocar(tester, find.byType(TextButton));
       await tester.pump();
       expect(api.pedidos, pedidosAntes + 1);
 
@@ -333,7 +339,7 @@ void main() {
     );
 
     api.falhaAoListarDiario = const ErroDeRede('caiu');
-    await tester.tap(find.text('Carregar mais'));
+    await tocar(tester, find.text('Carregar mais'));
     await tester.pumpAndSettle();
 
     expect(
@@ -354,7 +360,7 @@ void main() {
       findsNothing,
     );
     api.falhaAoListarDiario = null;
-    await tester.tap(find.text('Carregar mais'));
+    await tocar(tester, find.text('Carregar mais'));
     await tester.pumpAndSettle();
     await conferirFimSemBotao(tester);
   });
@@ -387,6 +393,7 @@ void main() {
     await tester.fling(listaDoDiario(), const Offset(0, 300), 1000);
     await tester.pumpAndSettle();
 
+    await ver(tester, find.text('Recém-encerrada'));
     expect(find.text('Recém-encerrada'), findsOneWidget);
     final leituras = api.chamadas.where((c) => c == 'listarDiario:turma-1:');
     expect(leituras, hasLength(2));
@@ -410,6 +417,7 @@ void main() {
       findsOneWidget,
     );
     // a lista carregada fica, sem o erro de tela cheia
+    await ver(tester, find.text('Atividade 1'));
     expect(find.text('Atividade 1'), findsOneWidget);
     expect(find.text('Algo não deu certo'), findsNothing);
 
@@ -422,7 +430,7 @@ void main() {
       300,
       scrollable: listaDoDiario(),
     );
-    await tester.tap(find.text('Carregar mais'));
+    await tocar(tester, find.text('Carregar mais'));
     await tester.pumpAndSettle();
 
     expect(api.chamadas.last, 'listarDiario:turma-1:20');
@@ -556,7 +564,8 @@ void main() {
       ),
     );
 
-    await tester.tap(
+    await tocar(
+      tester,
       find
           .descendant(
             of: find.byType(CartaoDoDiario),
@@ -591,6 +600,7 @@ void main() {
       "d 'de' MMMM",
       'pt_BR',
     ).format(encerradaEm.toLocal());
+    await ver(tester, find.text('Proposta por Marina · $esperada'));
     expect(find.text('Proposta por Marina · $esperada'), findsOneWidget);
   });
 }

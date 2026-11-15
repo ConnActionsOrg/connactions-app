@@ -28,7 +28,7 @@ class CartaoDoBacklog extends ConsumerWidget {
         : minhasLivres(ideias, euId);
     return Container(
       decoration: BoxDecoration(
-        color: cores.superficieBaixa,
+        color: cores.secundariaFixa,
         borderRadius: BorderRadius.circular(Raios.medio),
         boxShadow: Sombras.nivel1,
       ),

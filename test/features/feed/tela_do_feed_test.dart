@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../apoio/app_de_teste.dart';
+import '../../apoio/visibilidade.dart';
 import '../../apoio/compartilhador_falso.dart';
 import '../../apoio/fake_api.dart';
 import '../../apoio/preferencias_em_memoria.dart';
@@ -53,14 +54,14 @@ void main() {
     );
     expect(find.byType(SeletorDeTurma), findsNothing);
 
-    await tester.tap(find.text('Criar turma'));
+    await tocar(tester, find.text('Criar turma'));
     await tester.pumpAndSettle();
     expect(find.byType(TelaDeNovaTurma), findsOneWidget);
   });
 
   testWidgets('"Entrar com código" abre a tela de entrar', (tester) async {
     await abrirFeed(tester, api: FakeApi(eu: euDeTeste()));
-    await tester.tap(find.text('Entrar com código'));
+    await tocar(tester, find.text('Entrar com código'));
     await tester.pumpAndSettle();
     expect(find.byType(TelaDeEntrarNaTurma), findsOneWidget);
   });
@@ -116,7 +117,7 @@ void main() {
     );
 
     api.falhaAoListarTurmas = null;
-    await tester.tap(find.text('Tentar de novo'));
+    await tocar(tester, find.text('Tentar de novo'));
     await tester.pumpAndSettle();
 
     expect(naPilula('Turma do Domingo'), findsOneWidget);
@@ -137,7 +138,7 @@ void main() {
     );
 
     api.falhaAoObter = null;
-    await tester.tap(find.text('Tentar de novo'));
+    await tocar(tester, find.text('Tentar de novo'));
     await tester.pumpAndSettle();
 
     expect(naPilula('Turma do Domingo'), findsOneWidget);
@@ -170,9 +171,9 @@ void main() {
 
     // o botão está na faixa que a barra de abas cobre: `ensureVisible` rola até ele de verdade
     // (`scrollUntilVisible` pararia logo, porque o botão já está construído na folga da lista)
-    await tester.ensureVisible(find.text('Convidar amigos'));
+    await ver(tester, find.text('Convidar amigos'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Convidar amigos'));
+    await tocar(tester, find.text('Convidar amigos'));
     await tester.pumpAndSettle();
 
     expect(compartilhador.textos.single, contains('ABCD2345'));
@@ -183,7 +184,7 @@ void main() {
       tester,
       api: FakeApi(eu: euDeTeste(), turmas: [turmaDeTeste()]),
     );
-    await tester.tap(find.text('1 membro'));
+    await tocar(tester, find.text('1 membro'));
     await tester.pumpAndSettle();
     expect(find.byType(TelaDaTurma), findsOneWidget);
   });
@@ -215,7 +216,9 @@ void main() {
     expect(naPilula('Turma do Domingo'), findsOneWidget);
   });
 
-  testWidgets('o fundo da tela é a superfície do Stitch', (tester) async {
+  testWidgets('o fundo da tela é a superfície da identidade pastel', (
+    tester,
+  ) async {
     await abrirFeed(
       tester,
       api: FakeApi(eu: euDeTeste(), turmas: [turmaDeTeste()]),
@@ -227,6 +230,6 @@ void main() {
     final cor =
         tester.widget<Scaffold>(scaffold).backgroundColor ??
         Theme.of(tester.element(scaffold)).scaffoldBackgroundColor;
-    expect(cor, const Color(0xFFFDF9F2));
+    expect(cor, const Color(0xFFFFFFFF));
   });
 }
